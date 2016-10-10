@@ -1,11 +1,17 @@
 import quickfix as fix
 import sys
 import time
+from enum import Enum
+
+class DatabaseRespond(Enum):
+	SUCCESS = 0
+	FAILURE = 1
 
 class Application(fix.Application):
 	orderID = 0
 	execID = 0
 
+	#TODO FIX COMMUNICATION
 	def onCreate(self, sessionID): return
 	def onLogon(self, sessionID): return
 	def onLogout(self, sessionID): return
@@ -74,8 +80,36 @@ class Application(fix.Application):
 	def genExecID(self):
 		self.execID = self.execID+1
 		return self.execID
+	
+	#TODO SERVER LOGIC
+	def process_login_request(self, username, password, timestamp):
+		return 0
+
+	def process_ask_request(self, symbol, n_shares):
+		return 0 : OrderLogic
+
+	def process_bid_request(self, symbol, n_shares):
+		return 0
+
+	def process_stock_request(self):
+		return 0
+		
+	#TODO send SQL Queries
+	def send_client_match_query(self):
+
+	def send_add_bid_order_query(self, symbol, price, n_shares, bidder_id):
+		#send query
+		return DatabaseRespond.SUCCESS
+
+	def send_remove_bid_order_query(self, bidder_id):
+		return DatabaseRespond.SUCCESS
+	def send_remove_bid_order_query(self, bidder_id, ):
+		return DatabaseRespond.SUCCESS
+	def request_historic_data(self, timestamp):
 
 
+	#TODO market simulation
+	def request_market(self, symbols):
 
 try:
 	file = sys.argv[1] if len(sys.argv) == 2 else "server.cfg"

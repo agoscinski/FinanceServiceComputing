@@ -7,6 +7,8 @@ import quickfix44 as fix44
 from datetime import datetime
 import client_app as app
 
+# TODO Client GUI
+
 
 fileName = sys.argv[1] if len(sys.argv) == 2 else "client.cfg"
 settings = fix.SessionSettings (fileName)
