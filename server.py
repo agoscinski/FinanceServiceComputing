@@ -66,7 +66,7 @@ class ServerFIXHandler(fix.Application):
         msg_type = message.getHeader().getField(fix.MsgType())
 
         if msg_type.getString() == fix.MsgType_Logon:
-            self.__handle_logon_request(message, session_id)
+            self.__handle_logon_request(message)
         else:
             #TODO send error: MsgType not understand
             pass
@@ -144,11 +144,7 @@ class ServerFIXHandler(fix.Application):
         except fix.SessionNotFound as e:
             return
 
-    def __handle_logon_request(self, message, session_id):
-        are_all_fields_set, missing_field = self.__are_all_fields_set(message, fix.RawData(), fix.SenderSubID())
-        if not are_all_fields_set:
-            respond = Message(ServerRespond.REJECT_LOGON_REQUEST, missing_field.__class__.__name__+" field is missing")
-            self.__send_reject_message(respond, session_id)
+    def __handle_logon_request(self, message):
         password = message.getField(fix.RawData())
         user_id = message.getField(fix.SenderSubID())
         logon_respond = self.server_logic.authenticate_user(user_id, password)
@@ -206,26 +202,6 @@ class ServerFIXHandler(fix.Application):
         message = self.__pack_market_data_reply()
         self.__send_message(message, sessionID)
         pass
-
-    def __are_all_fields_set(self, message, *fields):
-        """Process market data request
-
-        Used for server initialization to fetch data
-
-        Args:
-            fields (objects): fix fields like fix.MsgType
-
-        Returns:
-            int: if a field is missing
-            object: first fix fields which is missing
-        """
-        pass
-        for i in range(len(fields)):
-            if not message.isSetField(fields[i]):
-                return 0, fields[i]
-        return 1, None
-
-
 
 
 class ServerLogic:
