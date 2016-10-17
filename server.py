@@ -145,10 +145,10 @@ class ServerFIXHandler(fix.Application):
             return
 
     def __handle_logon_request(self, message, session_id):
-        #are_all_fields_set, missing_field = self.__are_all_fields_set(message, fix.RawData(), fix.SenderSubID())
-        #if not are_all_fields_set:
-        #    respond = Message(ServerRespond.REJECT_LOGON_REQUEST, missing_field.__class__.__name__+" field is missing")
-        #    self.__send_reject_message(respond, session_id)
+        are_all_fields_set, missing_field = self.__are_all_fields_set(message, fix.RawData(), fix.SenderSubID())
+        if not are_all_fields_set:
+            respond = Message(ServerRespond.REJECT_LOGON_REQUEST, missing_field.__class__.__name__+" field is missing")
+            self.__send_reject_message(respond, session_id)
         password = message.getField(fix.RawData())
         user_id = message.getField(fix.SenderSubID())
         logon_respond = self.server_logic.authenticate_user(user_id, password)
