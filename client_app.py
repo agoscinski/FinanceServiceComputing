@@ -36,7 +36,7 @@ class FIXApplication(fix.Application):
 
     def _handle_logon_request(self, message):
         message.setField(fix.RawData(self.password))
-        message.setField(fix.RawDataLength(sys.getsizeof(self.password))+10)
+        message.setField(fix.RawDataLength(sys.getsizeof(self.password)))
         message.setField(fix.SenderSubID(self.user_id))
         #message.getHeader().setField(fix.BodyLength(110))
         del self.user_id
@@ -131,8 +131,7 @@ class ClientLogic():
         self.gui_handler.start_gui()
 
 
-    def client_logon(self):
-        user_id, password = self.gui_handler.request_logon_information()
+    def client_logon(self, user_id, password):
         respond = self.client_fix_handler.send_logon_request(user_id, password)
         # handle respond with gui
         return
@@ -153,7 +152,7 @@ class GUIHandler():
             input = raw_input()
             print
             if input == '1':
-                self.client_logic.client_logon()
+                self.request_logon_information()
             elif input == '2':
                 break
             else:
@@ -162,4 +161,5 @@ class GUIHandler():
     def request_logon_information(self):
         user_id = "John"
         password = "hashedpw"
+        self.client_logic.client_logon(user_id, password)
         return user_id, password
