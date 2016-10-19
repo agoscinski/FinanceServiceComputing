@@ -1,94 +1,81 @@
 import sys
-import os
-import time
-import thread
 import quickfix as fix
 import quickfix44 as fix44
 from datetime import datetime
-import cPickle as p
+import pdb
 
+class FIXApplication(fix.Application):
 
-class MinInc(fix.DoubleField):
-    def __init__(self, data=None):
-        if data == None:
-            fix.DoubleField.__init__(self, 6350)
-        else:
-            fix.DoubleField.__init__(self, 6350, data)
+    def onCreate(self, session_id):
+        print ("Application created - session: " + session_id.toString())
 
+    def onLogon(self, session_id):
+        print "Logon", session_id
 
-class MinBr(fix.DoubleField):
-    def __init__(self, data=None):
-        if data == None:
-            fix.DoubleField.__init__(self, 6351)
-        else:
-            fix.DoubleField.__init__(self, 6351, data)
+    def onLogout(self, session_id):
+        print "Logout", session_id
 
-
-class YTM(fix.DoubleField):
-    def __init__(self, data=None):
-        if data == None:
-            fix.DoubleField.__init__(self, 6360)
-        else:
-            fix.DoubleField.__init__(self, 6360, data)
-
-
-class YTW(fix.DoubleField):
-    def __init__(self, data=None):
-        if data == None:
-            fix.DoubleField.__init__(self, 6361)
-        else:
-            fix.DoubleField.__init__(self, 6361, data)
-
-class Application(fix.Application):
-
-    current_order_id = 0
-
-    def onCreate(self, sessionID):
-        self.sessionID = sessionID
-        print ("Application created - session: " + sessionID.toString())
-
-    def onLogon(self, sessionID):
-        print "Logon", sessionID
-
-    def onLogout(self, sessionID):
-        print "Logout", sessionID
-
-    def toAdmin(self, message, sessionID):
+    def toAdmin(self, message, session_id):
+        msg_type = message.getHeader().getField(fix.MsgType())
+        if msg_type.getString() == fix.MsgType_Logon:
+            self._handle_logon_request(message)
+        #if Logon request
+        #send username and password
+        #then flush it
         pass
 
-    def fromAdmin(self, message, sessionID):
+    def fromAdmin(self, message, session_id):
         pass
 
-    def fromApp(self, message, sessionID):
-        self.onMessage(message, sessionID)
+    def fromApp(self, message, session_id):
+        self.onMessage(message, session_id)
         print "IN", message
 
-    def toApp(self, message, sessionID):
+    def toApp(self, message, session_id):
         print "OUT", message
 
-    def run(self):
-        print '''
-        input 1 to send query order,
-        input 2 to quit
-        input 3 to request market data
-        input 4 to make an order
-        '''
-        while True:
-            input = raw_input()
+    def _handle_logon_request(self, message):
+        message.setField(fix.RawData(self.password))
+        message.setField(fix.RawDataLength(sys.getsizeof(self.password))+10)
+        message.setField(fix.SenderSubID(self.user_id))
+        #message.getHeader().setField(fix.BodyLength(110))
+        del self.user_id
+        del self.password
 
-            if input == '1':
-                self.queryEnterOrder()
-            elif input == '2':
-                break
-            elif input == '3':
-                pass
-            else:
-                continue
+    def set_user_id(self, user_id):
+        self.user_id = user_id
 
-    def logon(self):
+    def set_password(self, password):
+        self.password = password
+
+    def _calculate_checksum(self):
         pass
 
+
+class ClientFIXHandler():
+    def __init__(self, client_logic, client_config_file_name):
+        self.client_logic = client_logic
+        self.client_config_file_name = client_config_file_name
+
+    def _init_fix_settings(self):
+        settings = fix.SessionSettings(self.client_config_file_name)
+        self.fix_application = FIXApplication()
+        storeFactory = fix.FileStoreFactory(settings)
+        logFactory = fix.ScreenLogFactory(settings)
+        self.socket_initiator = fix.SocketInitiator(self.fix_application, storeFactory, settings, logFactory)
+
+    def send_logon_request(self, user_id, password):
+        self._init_fix_settings()
+        self.fix_application.set_user_id(user_id)
+        self.fix_application.set_password(password)
+        self.socket_initiator.start()
+        return
+
+    def send_logout_request(self):
+        self.initiator.stop()
+
     def queryEnterOrder(self):
+        # example for some functionalities,
         print ("\nTradeCaptureReport (AE)\n")
         trade = fix.Message()
         trade.getHeader().setField(fix.BeginString(fix.BeginString_FIX44))
@@ -127,4 +114,52 @@ class Application(fix.Application):
 
     def genOrderID(self):
         self.current_order_id += 1
-        return str(self.current_order_id)
+        return str(self.cuzrrent_order_id)
+
+
+class ClientLogic():
+    def __init__(self, client_config_file_name):
+        self.client_fix_handler = ClientFIXHandler(self, client_config_file_name)
+        self.gui_handler = GUIHandler(self)
+
+    def request_logon_information(self):
+        user_id, password = self.gui_handler.request_logon_information()
+        return user_id, password
+
+    def start_client(self):
+        # start some gui stuff and other things, for now only
+        self.gui_handler.start_gui()
+
+
+    def client_logon(self):
+        user_id, password = self.gui_handler.request_logon_information()
+        respond = self.client_fix_handler.send_logon_request(user_id, password)
+        # handle respond with gui
+        return
+
+
+class GUIHandler():
+    def __init__(self, client_logic):
+        self.client_logic = client_logic
+        pass
+
+    def start_gui(self):
+        # here the gui stuff should be started, for now console
+        while True:
+            print '''
+                    input 1 to logon
+                    input 2 to quit
+                    '''
+            input = raw_input()
+            print
+            if input == '1':
+                self.client_logic.client_logon()
+            elif input == '2':
+                break
+            else:
+                continue
+
+    def request_logon_information(self):
+        user_id = "John"
+        password = "hashedpw"
+        return user_id, password
