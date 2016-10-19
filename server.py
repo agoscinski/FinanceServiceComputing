@@ -5,37 +5,32 @@ import pdb
 from enum import Enum
 
 
-
-
-
 class Message():
     def __init__(self, code, description):
         self.code = code
         self.description = description
 
 
-
 class ServerRespond(Enum):
     REJECT_LOGON_REQUEST = 0
+
 
 class ServerLogicRespond(Enum):
     AUTHENTICATION_SUCCESS = 0
     AUTHENTICATION_FAILED_WRONG_USER_PASSWORD = 1
+
 
 class DatabaseRespond(Enum):
     SUCCESS = 0
     FAILURE = 1
 
 
+class ServerFIXApplication(fix.Application):
+    def __init__(self, server_fix_handler):
+        self.server_fix_handler = server_fix_handler
+        super(ServerFIXApplication, self).__init__()
 
-
-class ServerFIXHandler(fix.Application):
-    orderID = 0
-    execID = 0
-
-    # TODO FIX COMMUNICATION
     def onCreate(self, session_id):
-        self.server_logic = ServerLogic()
         return
 
     def onLogon(self, session_id):
@@ -62,13 +57,12 @@ class ServerFIXHandler(fix.Application):
             nothing
         """
 
-        begin_string = message.getHeader().getField(fix.BeginString())  # returns 'FIX::FieldBase *'
+        #begin_string = message.getHeader().getField(fix.BeginString())  # returns 'FIX::FieldBase *'
         msg_type = message.getHeader().getField(fix.MsgType())
-
         if msg_type.getString() == fix.MsgType_Logon:
-            self.__handle_logon_request(message)
+            self.server_fix_handler.handle_logon_request(message)
         else:
-            #TODO send error: MsgType not understand
+            # TODO send error: MsgType not understand
             pass
 
         return
@@ -88,65 +82,44 @@ class ServerFIXHandler(fix.Application):
             session_id (Swig Object of type 'FIX::SessionID *'): The received message
 
         Returns:
+
             nothing
         """
+        #TODO
         # msgType = fix.MsgType()
         print("Received message")
         # contains FIX version
         beginString = message.getHeader().getField(fix.BeginString())
         msgType = message.getHeader().getField(fix.MsgType())
 
-        # contains basic information of message
-        symbol = fix.Symbol()
-        side = fix.Side()
-        ordType = fix.OrdType()
-        orderQty = fix.OrderQty()
-        price = fix.Price()
-        clOrdID = fix.ClOrdID()
 
-        # check if msgType is valid
-        message.getField(ordType)
-        if ordType.getValue() != fix.OrdType_LIMIT:
-            raise fix.IncorrectTagValue(ordType.getField())
+class ServerFIXHandler():
+    def __init__(self, server_logic, server_config_file_name):
+        self.server_logic = server_logic
+        self.server_config_file_name = server_config_file_name
+        self.fix_application = None
+        self.socket_acceptor = None
 
-        # get basic information of message
-        message.getField(symbol)
-        message.getField(side)
-        message.getField(orderQty)
-        message.getField(price)
-        message.getField(clOrdID)
+    def start(self):
+        self.init_fix_settings()
+        self.socket_acceptor.start()
 
-        executionReport = fix.Message()
-        executionReport.getHeader().setField(beginString)
-        executionReport.getHeader().setField(fix.MsgType(fix.MsgType_ExecutionReport))
+    def stop(self):
+        self.socket_acceptor.stop()
 
-        executionReport.setField(fix.OrderID(self.genOrderID()))
-        executionReport.setField(fix.ExecID(self.genExecID()))
-        executionReport.setField(fix.OrdStatus(fix.OrdStatus_FILLED))
-        executionReport.setField(symbol)
-        executionReport.setField(side)
-        executionReport.setField(fix.CumQty(orderQty.getValue()))
-        executionReport.setField(fix.AvgPx(price.getValue()))
-        executionReport.setField(fix.LastShares(orderQty.getValue()))
-        executionReport.setField(fix.LastPx(price.getValue()))
-        executionReport.setField(clOrdID)
-        executionReport.setField(orderQty)
+    def init_fix_settings(self):
+        settings = fix.SessionSettings(self.server_config_file_name)
+        self.application = ServerFIXApplication(self)
+        storeFactory = fix.FileStoreFactory(settings)
+        # logFactory = fix.FileLogFactory(settings)
+        logFactory = fix.ScreenLogFactory(settings)
+        self.socket_acceptor = fix.SocketAcceptor(self.application, storeFactory, settings, logFactory)
 
-        if beginString.getValue() == fix.BeginString_FIX40 or beginString.getValue() == fix.BeginString_FIX41 or beginString.getValue() == fix.BeginString_FIX42:
-            executionReport.setField(fix.ExecTransType(fix.ExecTransType_NEW))
-
-        if beginString.getValue() >= fix.BeginString_FIX41:
-            executionReport.setField(fix.ExecType(fix.ExecType_FILL))
-            executionReport.setField(fix.LeavesQty(0))
-
-        try:
-            fix.Session.sendToTarget(executionReport, session_id)
-        except fix.SessionNotFound as e:
-            return
-
-    def __handle_logon_request(self, message):
+    def handle_logon_request(self, message):
         password = message.getField(fix.RawData())
-        user_id = message.getField(fix.SenderSubID())
+        user_id = message.getHeader().getField(fix.SenderSubID())
+        print "\n"+user_id.getString() + "\n"
+        print password.getString()+"\n"
         logon_respond = self.server_logic.authenticate_user(user_id, password)
         if logon_respond == ServerLogicRespond.AUTHENTICATION_FAILED_WRONG_USER_PASSWORD:
             # TODO reject client AUTHENTICATION_FAILED_WRONG_USER_PASSWORD
@@ -154,26 +127,25 @@ class ServerFIXHandler(fix.Application):
 
         return
 
-    def __send_reject_message(self, respond, session_id):
+    def send_reject_message(self, respond, session_id):
         pass
 
-
-    def __unpack_logon_request(self, username, password, timestamp):
+    def unpack_logon_request(self, username, password, timestamp):
         pass
 
-    def __unpack_logout_request(self, username, password, timestamp):
+    def unpack_logout_request(self, username, password, timestamp):
         pass
 
-    def __unpack_execution_report(self):
+    def unpack_execution_report(self):
         pass
 
-    def __unpack_order_request(self, symbol, n_shares):
+    def unpack_order_request(self, symbol, n_shares):
         pass
 
-    def __unpack_order_cancel_request(self):
+    def unpack_order_cancel_request(self):
         pass
 
-    def __unpack_market_data_request(self):
+    def unpack_market_data_request(self):
         """Process market data request
 
 		Used for server initialization to fetch data
@@ -186,39 +158,49 @@ class ServerFIXHandler(fix.Application):
 		"""
         pass
 
-    def __pack_order_status_request(self):
+    def pack_order_status_request(self):
         pass
 
-    def __pack_market_data_reply(self):
+    def pack_market_data_reply(self):
         pass
 
     # To use for the server
     def send_order_status_request(self, sessionID):
-        message = self.__pack_order_status_request()
-        self.__send_message(message, sessionID)
+        message = self.pack_order_status_request()
+        self.send_message(message, sessionID)
         pass
 
     def send_market_data_reply(self, sessionID):
         message = self.__pack_market_data_reply()
-        self.__send_message(message, sessionID)
+        self.send_message(message, sessionID)
         pass
 
 
 class ServerLogic:
-    def __init__(self):
-        pass
+    def __init__(self, server_config_file_name):
+        self.server_fix_handler = ServerFIXHandler(self, server_config_file_name)
+        self.server_database_handler = ServerDatabaseHandler()
+        self.market_simulation_handler = MarketSimulationHandler()
+
+    def start_server(self):
+        self.server_fix_handler.start()
+        while 1: time.sleep(1)
+        self.stop_server()
+
+    def stop_server(self):
+        self.server_fix_handler.stop()
 
     def authenticate_user(self, user_id, password):
         """Authenticates user
 
-        Checks if user is in database
+        Checks if user with the given id and password exists in database
 
         Args:
-            message (Swig Object of type 'FIX::Message *'): The received message
-            session_id (Swig Object of type 'FIX::SessionID *'): The received message
+            user_id (string): The user id
+            password (string): The password
 
         Returns:
-            nothing
+            if
         """
         # TODO #29 add authentication
         return ServerLogicRespond.AUTHENTICATION_SUCCESS
@@ -267,6 +249,9 @@ class ServerLogic:
 
 class ServerDatabaseHandler:
     # TODO send SQL Queries
+    def __init__(self):
+        pass
+
     def send_client_match_query(self):
         pass
 
@@ -304,14 +289,7 @@ class MarketSimulationHandler:
 
 try:
     file = sys.argv[1] if len(sys.argv) == 2 else "server.cfg"
-    settings = fix.SessionSettings(file)
-    application = ServerFIXHandler()
-    storeFactory = fix.FileStoreFactory(settings)
-    # logFactory = fix.FileLogFactory(settings)
-    logFactory = fix.ScreenLogFactory(settings)
-    acceptor = fix.SocketAcceptor(application, storeFactory, settings, logFactory)
-    acceptor.start()
-    while 1: time.sleep(1)
-# acceptor.stop()
+    server = ServerLogic(file)
+    server.start_server()
 except fix.ConfigError, e:
     print e
