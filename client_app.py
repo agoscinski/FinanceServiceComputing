@@ -80,11 +80,11 @@ class ClientFIXHandler():
 
     def handle_logon_request(self, message):
         message.setField(fix.RawData(self.fix_application.get_password()))
-        message.setField(fix.RawDataLength(sys.getsizeof(self.fix_application.get_password())))
+        message.setField(fix.RawDataLength(len(self.fix_application.get_password())))
         message.getHeader().setField(fix.SenderSubID(self.fix_application.get_user_id()))
         #TODO recalculate checksum
-        #message.getHeader().setField(fix.BodyLength(110))
-        message.getHeader().setField(fix.CheckSum(3))
+        #message.getHeader().setField(fix.BodyLength(200))
+        #message.getHeader().setField(fix.CheckSum(3))
         #self.fix_application.del_user_id()
         #self.fix_application.del_password()
 
@@ -113,10 +113,7 @@ class GUIHandler():
     def start_gui(self):
         # here the gui stuff should be started, for now console
         while True:
-            print '''
-                    input 1 to logon
-                    input 2 to quit
-                    '''
+            print '''input 1 to logon\ninput 2 to quit'''
             input = raw_input()
             print
             if input == '1':
@@ -130,3 +127,4 @@ class GUIHandler():
         user_id = "John"
         password = "hashedpw"
         self.client_logic.logon(user_id, password)
+

@@ -118,8 +118,6 @@ class ServerFIXHandler():
     def handle_logon_request(self, message):
         password = message.getField(fix.RawData())
         user_id = message.getHeader().getField(fix.SenderSubID())
-        print "\n"+user_id.getString() + "\n"
-        print password.getString()+"\n"
         logon_respond = self.server_logic.authenticate_user(user_id, password)
         if logon_respond == ServerLogicRespond.AUTHENTICATION_FAILED_WRONG_USER_PASSWORD:
             # TODO reject client AUTHENTICATION_FAILED_WRONG_USER_PASSWORD
