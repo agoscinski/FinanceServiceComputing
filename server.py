@@ -5,24 +5,9 @@ import pdb
 from enum import Enum
 
 
-class Message():
-    def __init__(self, code, description):
-        self.code = code
-        self.description = description
-
-
 class ServerRespond(Enum):
-    REJECT_LOGON_REQUEST = 0
-
-
-class ServerLogicRespond(Enum):
-    AUTHENTICATION_SUCCESS = 0
-    AUTHENTICATION_FAILED_WRONG_USER_PASSWORD = 1
-
-
-class DatabaseRespond(Enum):
-    SUCCESS = 0
-    FAILURE = 1
+    AUTHENTICATION_FAILED = 0
+    AUTHENTICATION_SUCCESS = 1
 
 
 class ServerFIXApplication(fix.Application):
@@ -45,19 +30,18 @@ class ServerFIXApplication(fix.Application):
     def fromAdmin(self, message, session_id):
         """React to admin level messages
 
-        When a message is received on admin level like Logon or Logout,
-        this function is invoked with the message
-        TODO are there any other admin messages which are relevant for us?
+        This function is invoked when administrative message is received. For example: Logon, Logout, Heartbeat.
+        TODO what is a administrative message?
 
         Args:
             message (Swig Object of type 'FIX::Message *'): The received message
             session_id (Swig Object of type 'FIX::SessionID *'): The received message
 
         Returns:
-            nothing
+            None
         """
 
-        #begin_string = message.getHeader().getField(fix.BeginString())  # returns 'FIX::FieldBase *'
+        # begin_string = message.getHeader().getField(fix.BeginString())  # returns 'FIX::FieldBase *'
         msg_type = message.getHeader().getField(fix.MsgType())
         if msg_type.getString() == fix.MsgType_Logon:
             self.server_fix_handler.handle_logon_request(message)
@@ -71,29 +55,23 @@ class ServerFIXApplication(fix.Application):
         return
 
     def fromApp(self, message, session_id):
-        """React to admin level messages
+        """React to application level messages
 
-        When a message is received on application level like ...,
-        this function is invoked with the message
-        TODO what kind of messages go through here?
+        This function is invoked when a application level request is received.
+        TODO What is a application level request?
 
         Args:
             message (Swig Object of type 'FIX::Message *'): The received message
             session_id (Swig Object of type 'FIX::SessionID *'): The received message
 
         Returns:
-
-            nothing
+            None
         """
-        #TODO
-        # msgType = fix.MsgType()
-        print("Received message")
-        # contains FIX version
-        beginString = message.getHeader().getField(fix.BeginString())
+        # beginString = message.getHeader().getField(fix.BeginString())
         msgType = message.getHeader().getField(fix.MsgType())
 
 
-class ServerFIXHandler():
+class ServerFIXHandler:
     def __init__(self, server_logic, server_config_file_name):
         self.server_logic = server_logic
         self.server_config_file_name = server_config_file_name
@@ -109,23 +87,23 @@ class ServerFIXHandler():
 
     def init_fix_settings(self):
         settings = fix.SessionSettings(self.server_config_file_name)
-        self.application = ServerFIXApplication(self)
-        storeFactory = fix.FileStoreFactory(settings)
+        self.fix_application = ServerFIXApplication(self)
+        self.storeFactory = fix.FileStoreFactory(settings)
         # logFactory = fix.FileLogFactory(settings)
-        logFactory = fix.ScreenLogFactory(settings)
-        self.socket_acceptor = fix.SocketAcceptor(self.application, storeFactory, settings, logFactory)
+        self.logFactory = fix.ScreenLogFactory(settings)
+        self.socket_acceptor = fix.SocketAcceptor(self.fix_application, self.storeFactory, settings, self.logFactory)
 
     def handle_logon_request(self, message):
         password = message.getField(fix.RawData())
         user_id = message.getHeader().getField(fix.SenderSubID())
-        logon_respond = self.server_logic.authenticate_user(user_id, password)
-        if logon_respond == ServerLogicRespond.AUTHENTICATION_FAILED_WRONG_USER_PASSWORD:
-            # TODO reject client AUTHENTICATION_FAILED_WRONG_USER_PASSWORD
+        logon_respond = self.server_logic.process_logon(user_id, password)
+        if logon_respond == ServerRespond.AUTHENTICATION_FAILED:
+            # TODO reject client AUTHENTICATION_FAILED
             pass
 
         return
 
-        def unpack_market_data_request(self):
+        def handle_market_data_request(self, message):
             """Process market data request
             TODO @husein
 
@@ -133,9 +111,9 @@ class ServerFIXHandler():
     			symbols (list of str): A list of symbol tickers.
 
     		Returns:
-    			bool: The return value. True for success, False otherwise.
+    			None
     		"""
-            pass
+            return
 
         def send_market_data_respond(self, market_data):
             """Send market data respond
@@ -143,12 +121,13 @@ class ServerFIXHandler():
             TODO @husein
 
             Args:
-                market_data (??): ...
+                market_data (?): ...
 
             Returns:
-                ???
+                None
             """
-            pass
+            return
+
 
 class ServerLogic:
     def __init__(self, server_config_file_name):
@@ -164,6 +143,22 @@ class ServerLogic:
     def stop_server(self):
         self.server_fix_handler.stop()
 
+    def process_logon(self, user_id, password):
+        respond = self.authenticate_user(user_id, password)
+        return respond
+
+    def process_market_data_request(self, symbols):
+        """Process market data request
+
+
+		Args:
+			symbols (list of str): A list of symbol tickers.
+
+		Returns:
+			bool: The return value. True for success, False otherwise.
+		"""
+        pass
+
     def authenticate_user(self, user_id, password):
         """Authenticates user
 
@@ -174,23 +169,10 @@ class ServerLogic:
             password (string): The password
 
         Returns:
-            if
+            success (ServerRespond): success of authentication
         """
         # TODO #29 add authentication
-        return ServerLogicRespond.AUTHENTICATION_SUCCESS
-
-    def process_market_data_request(self, symbols):
-        """Process market data request
-
-		Used for server initialization to fetch data
-
-		Args:
-			symbols (list of str): A list of symbol tickers.
-
-		Returns:
-			bool: The return value. True for success, False otherwise.
-		"""
-        pass
+        return ServerRespond.AUTHENTICATION_SUCCESS
 
 
 class ServerDatabaseHandler:
@@ -203,13 +185,13 @@ class ServerDatabaseHandler:
 
     def send_add_bid_order_query(self, symbol, price, n_shares, bidder_id):
         # send query
-        return DatabaseRespond.SUCCESS
+        return 0
 
     def send_remove_bid_order_query(self, bidder_id):
-        return DatabaseRespond.SUCCESS
+        return 0
 
     def send_remove_bid_order_query(self, bidder_id):
-        return DatabaseRespond.SUCCESS
+        return 0
 
     def request_historic_data(self, timestamp):
         pass

@@ -1,7 +1,5 @@
 import sys
 import quickfix as fix
-import quickfix44 as fix44
-from datetime import datetime
 import pdb
 
 
@@ -22,7 +20,7 @@ class ClientFIXApplication(fix.Application):
     def toAdmin(self, message, session_id):
         msg_type = message.getHeader().getField(fix.MsgType())
         if msg_type.getString() == fix.MsgType_Logon:
-            self.client_fix_handler.handle_logon_request(message)
+            self.client_fix_handler.handle_to_be_sent_logon_request(message)
 
     def fromAdmin(self, message, session_id):
         pass
@@ -49,7 +47,8 @@ class ClientFIXHandler():
         self.password = None
 
     def init_fix_settings(self, default_client_config_file_name=None):
-        client_config_file_name_ = self.client_config_file_name if default_client_config_file_name is None else default_client_config_file_name
+        client_config_file_name_ = self.client_config_file_name if default_client_config_file_name is None \
+            else default_client_config_file_name
         settings = fix.SessionSettings(client_config_file_name_)
         self.fix_application = ClientFIXApplication(self)
         self.storeFactory = fix.FileStoreFactory(settings)
@@ -63,34 +62,44 @@ class ClientFIXHandler():
         self.socket_initiator.start()
         return
 
-    def send_logon_request(self, user_id, password):
+    def connect_to_server(self, user_id, password):
         self.set_user_id(user_id)
         self.set_password(password)
         self.init_fix_settings()
         self.socket_initiator.start()
         return
 
-    def handle_logon_request(self, message):
-        self.set_user_id_in_message(message)
-        self.set_password_in_message(message)
-        # if Logon request
-        # send username and password
-        # then flush it
+    def handle_to_be_sent_logon_request(self, message):
+        """Handle a logon request which is about to be sent
+
+        Before the logon request is sent to the server, this function handles the message and modifies fields.
+
+        Args:
+            message (Swig Object of type 'FIX::Message *'): the message to be sent
+        """
+        self.add_user_id_to_message(message)
+        self.add_password_to_message(message)
+        # TODO @alex flush password
         # self.fix_application.del_user_id()
         # self.fix_application.del_password()
 
-    def pack_market_data_request(self):
-        """Process market data request
+    def send_market_data_request(self):
+        """Sends a market data request to server
 
-        TODO @husein
-        Used for server initialization to fetch data
+        TODO @husein description if needed
+
+        Args:
+            TODO @husein args
+
+        Returns:
+
         """
         pass
 
-    def unpack_market_respond(self, message):
-        """Handle market data respond
+    def handle_market_data_respond(self, message):
+        """Handles market data respond
 
-        TODO @husein ...
+        TODO @husein description if needed
 
         Args:
             message (FIX::Message): Market data message to be handled.
@@ -100,11 +109,11 @@ class ClientFIXHandler():
         """
         pass
 
-    def set_user_id_in_message(self, message):
+    def add_user_id_to_message(self, message):
         message.setField(fix.RawData(self.get_password()))
         message.setField(fix.RawDataLength(len(self.get_password())))
 
-    def set_password_in_message(self, message):
+    def add_password_to_message(self, message):
         message.getHeader().setField(fix.SenderSubID(self.get_user_id()))
 
     def send_logout_request(self):
@@ -135,17 +144,28 @@ class ClientLogic():
         self.gui_handler = GUIHandler(self)
 
     def start_client(self):
-        # start some gui stuff and other things, for now only
+        # start some gui stuff and other things, for now only gui
         self.gui_handler.start_gui()
 
     def logon(self, user_id, password):
-        self.client_fix_handler.send_logon_request(user_id, password)
+        self.client_fix_handler.connect_to_server(user_id, password)
 
     def logout(self):
         self.client_fix_handler.send_logout_request()
 
+    def process_market_data_respond(self, message):
+        """Process market data respond
 
-class GUIHandler():
+        Args:
+            message (list of str): .
+
+        Returns:
+            None
+        """
+        return
+
+
+class GUIHandler:
     def __init__(self, client_logic):
         self.client_logic = client_logic
         pass
