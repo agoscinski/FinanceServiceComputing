@@ -125,54 +125,30 @@ class ServerFIXHandler():
 
         return
 
-    def send_reject_message(self, respond, session_id):
-        pass
+        def unpack_market_data_request(self):
+            """Process market data request
+            TODO @husein
 
-    def unpack_logon_request(self, username, password, timestamp):
-        pass
+    		Args:
+    			symbols (list of str): A list of symbol tickers.
 
-    def unpack_logout_request(self, username, password, timestamp):
-        pass
+    		Returns:
+    			bool: The return value. True for success, False otherwise.
+    		"""
+            pass
 
-    def unpack_execution_report(self):
-        pass
+        def send_market_data_respond(self, market_data):
+            """Send market data respond
 
-    def unpack_order_request(self, symbol, n_shares):
-        pass
+            TODO @husein
 
-    def unpack_order_cancel_request(self):
-        pass
+            Args:
+                market_data (??): ...
 
-    def unpack_market_data_request(self):
-        """Process market data request
-
-		Used for server initialization to fetch data
-
-		Args:
-			symbols (list of str): A list of symbol tickers.
-
-		Returns:
-			bool: The return value. True for success, False otherwise.
-		"""
-        pass
-
-    def pack_order_status_request(self):
-        pass
-
-    def pack_market_data_reply(self):
-        pass
-
-    # To use for the server
-    def send_order_status_request(self, sessionID):
-        message = self.pack_order_status_request()
-        self.send_message(message, sessionID)
-        pass
-
-    def send_market_data_reply(self, sessionID):
-        message = self.__pack_market_data_reply()
-        self.send_message(message, sessionID)
-        pass
-
+            Returns:
+                ???
+            """
+            pass
 
 class ServerLogic:
     def __init__(self, server_config_file_name):
@@ -203,21 +179,6 @@ class ServerLogic:
         # TODO #29 add authentication
         return ServerLogicRespond.AUTHENTICATION_SUCCESS
 
-    def process_logon_request(self, username, password, timestamp):
-        pass
-
-    def process_logout_request(self, username, password, timestamp):
-        pass
-
-    def process_execution_report(self):
-        pass
-
-    def process_order_request(self, symbol, n_shares):
-        pass
-
-    def process_order_cancel_request(self):
-        pass
-
     def process_market_data_request(self, symbols):
         """Process market data request
 
@@ -229,19 +190,6 @@ class ServerLogic:
 		Returns:
 			bool: The return value. True for success, False otherwise.
 		"""
-        pass
-
-    def __match_orders(self):
-        """Process market data request
-
-        Used for server initialization to fetch data
-
-        Args:
-            symbols (list of str): A list of symbol tickers.
-
-        Returns:
-            bool: The return value. True for success, False otherwise.
-        """
         pass
 
 
