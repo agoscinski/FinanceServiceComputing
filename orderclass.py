@@ -37,6 +37,14 @@ class Order(object):
     def getPrice(self):
         return self.Price
         
+    "sets new amount of shares to buy"
+    def setBuy(self, shares):
+        self.Buy = shares
+        
+    "sets new amount of shares to sell"
+    def setSell(self, shares):
+        self.Sell = shares
+        
     "returns true if it is a buy order"
     def qbuy(self):
         if self.Buy>0:
