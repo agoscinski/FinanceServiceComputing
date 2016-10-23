@@ -7,7 +7,13 @@ Created on Sun Oct 23 17:08:29 2016
 
 import orderclass
 
-""""""
+"""matching algorithm using pro rata algorithm
+@parameter:
+    buy: list with buy orders
+    sell: list with sell orders
+    marketprice: actual markeprice
+return void
+set buy and sell shares to new amount"""
 def match(buy, sell, marketprice):
     
     "Initialize lists for buy and sell with shares which can be traded"
