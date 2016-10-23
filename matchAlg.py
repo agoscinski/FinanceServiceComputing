@@ -5,7 +5,7 @@ Created on Sun Oct 23 17:08:29 2016
 @author: Emely
 """
 
-import orderclass.py
+import orderclass
 
 """"""
 def match(buy, sell, marketprice):
