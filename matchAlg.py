@@ -26,7 +26,7 @@ def match(buy, sell, marketprice):
         elif(buy[i].getPrice >= marketprice):
             b.add(buy[i])
             
-    "get list with tradeable share"
+    "get list with tradeable shares"
     for i in range(len(sell)):
         if(sell[i].qprice == False):
             s.add(sell[i])
