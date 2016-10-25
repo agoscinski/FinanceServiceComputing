@@ -6,6 +6,7 @@ Created on Sun Oct 23 17:08:29 2016
 """
 
 import orderclass
+import _ctypes
 
 """matching algorithm using pro rata algorithm
 @parameter:
@@ -17,41 +18,42 @@ set buy and sell shares to new amount"""
 def match(buy, sell, marketprice):
     
     "Initialize lists for buy and sell with shares which can be traded"
-    b=[], s=[]
+    b=[]
+    s=[]
     
     "get list with tradeable shares"
     for i in range(len(buy)):
-        if(buy[i].qprice == False):
-            b.add(buy[i])
-        elif(buy[i].getPrice >= marketprice):
-            b.add(buy[i])
+        if(buy[i].qprice() == False):
+            b = [b, buy[i]]
+        elif(buy[i].getPrice() >= marketprice):
+            b = [b, buy[i]]
             
     "get list with tradeable shares"
     for i in range(len(sell)):
-        if(sell[i].qprice == False):
-            s.add(sell[i])
-        elif(sell[i].getPrice <= marketprice):
-            s.add(sell[i])
+        if(sell[i].qprice() == False):
+            s = [s, sell[i]]
+        elif(sell[i].getPrice() <= marketprice):
+            s = [s, sell[i]]
             
     "get total volume of buy"
     volbuy = 0
-    for i in range(len(b)):
-        volbuy += b[i].getBuy
+    for i in range(1,len(b)):
+        volbuy += b[i].getBuy()
 
     "get total volume of sell"
     volsell = 0
-    for i in range(len(s)):
-        volsell += s[i].getSell
+    for i in range(1,len(s)):
+        volsell += s[i].getSell()
 
     "pro rata algorithm:"
-    for i in range(len(s)):
+    for i in range(1,len(s)):
         shares = 0
-        shares = s[i].getSell - (s[i].getSell/volsell) * volbuy
+        shares = s[i].getSell() - (s[i].getSell()/volsell) * volbuy
         s[i].setSell(shares)
         
-    for i in range(len(b)):
+    for i in range(1,len(b)):
         shares = 0
-        shares = b[i].getBuy - (b[i].getBuy/volbuy) * volsell
+        shares = b[i].getBuy() - (b[i].getBuy()/volbuy) * volsell
         b[i].setBuy(shares)
             
             
