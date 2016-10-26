@@ -1,7 +1,53 @@
 import sys
 import quickfix as fix
 import pdb
+import htmlPy
+import json
+sys.path.append('GUI')
+from frontEnd import htmlPy_app
 
+class GUISignal(htmlPy.Object):
+    # GUI callable functions have to be inside a class.
+    # The class should be inherited from htmlPy.Object.
+
+    def __init__(self,g):
+        super(GUISignal,self).__init__()
+        self.gui_handler=g
+        # Initialize the class here, if required.
+        return
+
+    @htmlPy.Slot(str,str,result=str)
+    def logIn(self,usr,psw):
+        #login
+        usr=str(usr)
+        psw=str(psw)
+        print usr,psw
+        if(self.gui_handler.logon_option(usr,psw)):
+            return_message='{"success":true,"userName":"'+usr+'"}'
+        else:
+            return_message='{"success":false,"msg":"username or password is wrong"}'
+        return return_message
+
+    @htmlPy.Slot()
+    def logOut(self):
+        self.gui_handler.logout_option()
+
+
+    @htmlPy.Slot(str, result=str)
+    def get_form_data(self, json_data):
+        # @htmlPy.Slot(arg1_type, arg2_type, ..., result=return_type)
+        # This function can be used for GUI forms.
+        #
+        form_data = json.loads(json_data)
+        print form_data
+        print json.dumps(form_data)
+        return json.dumps(form_data)
+
+    @htmlPy.Slot()
+    def javascript_function(self):
+        # Any function decorated with @htmlPy.Slot decorater can be called
+        # using javascript in GUI
+        return
 
 class ClientFIXApplication(fix.Application):
     def __init__(self, client_fix_handler):
@@ -148,7 +194,10 @@ class ClientLogic():
         self.gui_handler.start_gui()
 
     def logon(self, user_id, password):
+
         self.client_fix_handler.connect_to_server(user_id, password)
+        #Notice that we should validate here
+        return True
 
     def logout(self):
         self.client_fix_handler.send_logout_request()
@@ -172,7 +221,26 @@ class GUIHandler:
 
     def start_gui(self):
         # here the gui stuff should be started, for now console
-        self.wait_for_input()
+        while(True):
+            print '''input 1 to run in terminal\ninput 2 to start gui\ninput 3 to quit'''
+            input = raw_input()
+            #input='2'
+            if(input=='1'):
+                self.wait_for_input()
+            elif(input=='2'):
+                file=open("rawData.json","r")
+                rawData=file.read()
+                json={
+                    "rawData":rawData
+                }
+                htmlPy_app.template = ("index.html", json)
+                htmlPy_app.bind(GUISignal(self))
+                htmlPy_app.start()
+            elif(input=='3'):
+                break
+            else:
+                continue
+        
 
     def wait_for_input(self):
         while True:
@@ -187,15 +255,14 @@ class GUIHandler:
             else:
                 continue
 
-    def logon_option(self):
-        user_id, password = self.request_logon_information()
-        self.client_logic.logon(user_id, password)
-        return
-
+    def logon_option(self,user_id, password):
+        return self.client_logic.logon(user_id, password)
+    '''
     def request_logon_information(self):
         user_id = "John"
         password = "hashedpw"
         return user_id, password
+    '''
 
     def logout_option(self):
         respond = self.client_logic.logout()

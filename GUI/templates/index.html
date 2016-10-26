@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Le styles -->
+  <link href="{{ 'css/bootstrap.css'|staticfile }}" rel="stylesheet">
+  <link href="{{ 'css/user.css'|staticfile }}" rel="stylesheet">
+  <link href="{{ 'css/bootstrap-responsive.css'|staticfile }}" rel="stylesheet">
+  <!-- echart -->
+  <script src="{{ 'js/echarts.min.js'|staticfile }}"></script>
+</head>
+
+<body>
+  <div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar-inner">
+      <div class="container-fluid">
+        <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="brand" href="#">Stock Trading</a>
+        <div class="nav-collapse collapse">
+          <p class="navbar-text pull-right">
+            <a href="showLoginModal()" class="navbar-link" id="logInA" data-bind="true">Log in</a>
+            <a href="#" class="navbar-link hide" id="Name">name</a>
+            <span>|</span>
+            <a href="logOut()" class="navbar-link" data-bind="true">Log out</a>
+          </p>
+          <ul class="nav">
+            <li><a href="#">some function</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    <div class="fsc-width-2">
+      <form class="fsc-search-form navbar-search">
+        <input type="text" class="search-query" placeholder="Search111">
+      </form>
+      <div class="fsc-info">
+        <div class="text-center">
+          <h4>Stock Info</h4>
+        </div>
+        <div class="row-fluid">
+          <div class="span6"><h6>Price: 100$</h6></div>
+          <div class="span6"><h6>High: 120$</h6></div>
+        </div>
+        <div class="row-fluid">
+          <div class="span6"><h6>Low: 90$</h6></div>
+          <div class="span6"><h6>Other: 120$</h6></div>
+        </div>
+      </div>
+      <div class="fsc-trade">
+        <div class="tabbable"> <!-- Only required for left/right tabs -->
+          <ul class="nav nav-tabs">
+            <li class="active"><a href="#tab1" data-toggle="tab">Buy</a></li>
+            <li><a href="#tab2" data-toggle="tab">Sell</a></li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane active" id="tab1">
+              <form class="navbar-form pull-left">
+                <div>
+                  <span>P:</span>
+                  <input type="text" placeholder="Price">
+                </div>
+                <div>
+                  <span>Q:</span>
+                  <input type="text" placeholder="Quantity">
+                </div>
+                <div class="text-center">
+                  <button class="btn btn-info" type="button">Buy</button>
+                </div>
+              </form>
+            </div>
+            <div class="tab-pane" id="tab2">
+              <form class="navbar-form pull-left">
+                <div>
+                  <span>P:</span>
+                  <input type="text" placeholder="Price">
+                </div>
+                <div>
+                  <span>Q:</span>
+                  <input type="text" placeholder="Quantity">
+                </div>
+                <div class="text-center">
+                  <button class="btn btn-info" type="button">Sell</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="fsc-width-4">
+      <div class="fsc-chart-container">
+        <div id="main" class="fsc-chart"></div>
+      </div>
+    </div>
+    <div class="fsc-width-4">
+      <div class="fsc-transaction text-center">
+        <h4>Order Book</h4>
+        <table class="table table-striped">
+          <tbody>
+            <tr>
+              <td>Sell-5</td>
+              <td>100$</td>
+              <td>20</td>
+            </tr>
+            <tr>
+              <td>Sell-4</td>
+              <td>200$</td>
+              <td>300</td>
+            </tr>
+            <tr>
+              <td>Sell-3</td>
+              <td>200$</td>
+              <td>300</td>
+            </tr>
+
+            <tr>
+              <td>Sell-2</td>
+              <td>200$</td>
+              <td>300</td>
+            </tr>
+
+            <tr>
+              <td>Sell-1</td>
+              <td>200$</td>
+              <td>300</td>
+            </tr>
+            <tr>
+              <td class="done">done</td>
+              <td class="done">100$</td>
+              <td class="done">20</td>
+            </tr>
+            <tr>
+              <td>Buy-1</td>
+              <td>100$</td>
+              <td>20</td>
+            </tr>
+            <tr>
+              <td>Buy-2</td>
+              <td>200$</td>
+              <td>300</td>
+            </tr>
+            <tr>
+              <td>Buy-3</td>
+              <td>200$</td>
+              <td>300</td>
+            </tr>
+
+            <tr>
+              <td>Buy-4</td>
+              <td>200$</td>
+              <td>300</td>
+            </tr>
+
+            <tr>
+              <td>Buy-5</td>
+              <td>200$</td>
+              <td>300</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fsc-history text-center">
+        <h4>Trading Transaction</h4>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>time</th>
+              <th>price</th>
+              <th>quantity</th>
+              <th>side</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2016-01-02</td>
+              <td>100$</td>
+              <td>20</td>
+              <td>buy</td>
+            </tr>
+            <tr>
+              <td>2016-01-02</td>
+              <td>100$</td>
+              <td>20</td>
+              <td>buy</td>
+            </tr>
+            <tr>
+              <td>2016-01-02</td>
+              <td>100$</td>
+              <td>20</td>
+              <td>buy</td>
+            </tr>
+            <tr>
+              <td>2016-01-02</td>
+              <td>100$</td>
+              <td>20</td>
+              <td>buy</td>
+            </tr>
+            <tr>
+              <td>2016-01-02</td>
+              <td>100$</td>
+              <td>20</td>
+              <td>buy</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div id="logInModal" class="modal hide fade in" style="display: none; ">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header"> 
+            <a class="close" data-dismiss="modal">×</a> 
+            <h3>Log in to system</h3> 
+          </div> 
+          <div class="modal-body">
+            <div class="login-div">
+              <input type="text" id="userName" placeholder="Name"> 
+              <input type="password" id="password" placeholder="password"> 
+            </div>
+            
+          </div> 
+          <div class="modal-footer"> 
+            <a href="logIn()" class="btn btn-success"  data-bind="true">login</a> 
+          </div>
+        </div>
+      </div>
+    </div> 
+    
+  </div>
+  <script type="text/javascript">
+    //js must be edited here
+    
+
+
+    function showLoginModal(){
+      $('#logInModal').modal('show');
+    }
+
+    function logIn(){
+      var userName=$('#userName').val();
+      var password=$('#password').val();
+      var msg=GUISignal.logIn(userName,password);
+      msg=JSON.parse(msg);
+      if(msg.success){
+        $('#logInA').hide();
+        $('#Name').show();
+        $('#Name').text(msg.userName);
+        $('#logInModal').modal('hide');
+      }
+      else{
+        alert(msg.msg);
+      }
+    }
+
+    function logOut(){
+      GUISignal.logOut();
+      $('#Name').hide();
+      $('#logInA').show();
+    }
+
+    function splitData(rawData) {
+      var categoryData = [];
+      var values = [];
+      var volumns = [];
+      for (var i = 0; i < rawData.length; i++) {
+          categoryData.push(rawData[i].splice(0, 1)[0]);
+          values.push(rawData[i]);
+          volumns.push(rawData[i][4]);
+      }
+      return {
+          categoryData: categoryData,
+          values: values,
+          volumns: volumns
+      };
+    }
+
+    function calculateMA(dayCount, data) {
+        var result = [];
+        for (var i = 0, len = data.values.length; i < len; i++) {
+            if (i < dayCount) {
+                result.push('-');
+                continue;
+            }
+            var sum = 0;
+            for (var j = 0; j < dayCount; j++) {
+                sum += data.values[i - j][1];
+            }
+            result.push(+(sum / dayCount).toFixed(3));
+        }
+        return result;
+    }
+
+    var rawData={{rawData}};
+    var data = splitData(rawData);
+
+    var myChart = echarts.init(document.getElementById('main'));
+
+    myChart.setOption(option = {
+      backgroundColor: '#eee',
+      animation: false,
+      legend: {
+        //图例
+        top: 10,
+        left: 'center',
+        data: ['Dow-Jones index', 'MA5', 'MA10', 'MA20', 'MA30']
+      },
+      tooltip: {
+        //提示框
+        show:false,
+        trigger: 'axis',
+        axisPointer: {
+          type: 'line'
+        }
+      },
+      toolbox: {
+        //工具盒子
+        show:false,
+        feature: {
+          dataZoom: {
+            yAxisIndex: false
+          },
+          brush: {
+            type: ['lineX', 'clear']
+          }
+        }
+      },
+      brush: {
+        //选中一部分数据
+        xAxisIndex: 'all',
+        brushLink: 'all',
+        outOfBrush: {
+          colorAlpha: 0.1
+        }
+      },
+      grid: [
+      //放置位置
+      {
+        left: '10%',
+        right: '8%',
+        height: '50%'
+      },
+      {
+        left: '10%',
+        right: '8%',
+        top: '63%',
+        height: '16%'
+      }
+      ],
+      xAxis: [
+      {
+        type: 'category',
+        data: data.categoryData,
+        scale: true,
+        boundaryGap : false,
+        axisLine: {onZero: false},
+        splitLine: {show: false},
+        splitNumber: 20,
+        min: 'dataMin',
+        max: 'dataMax'
+      },
+      {
+        type: 'category',
+        gridIndex: 1,
+        data: data.categoryData,
+        scale: true,
+        boundaryGap : false,
+        axisLine: {onZero: false},
+        axisTick: {show: false},
+        splitLine: {show: false},
+        axisLabel: {show: false},
+        splitNumber: 20,
+        min: 'dataMin',
+        max: 'dataMax'
+      }
+      ],
+      yAxis: [
+      {
+        scale: true,
+        splitArea: {
+          show: true
+        }
+      },
+      {
+        scale: true,
+        gridIndex: 1,
+        splitNumber: 2,
+        axisLabel: {show: false},
+        axisLine: {show: false},
+        axisTick: {show: false},
+        splitLine: {show: false}
+      }
+      ],
+      dataZoom: [
+      //显示区域
+      {
+        type: 'inside',
+        xAxisIndex: [0, 1],
+        startValue: "2016-04-12",
+        endValue: "2016-06-22"
+      },
+      {
+        show: true,
+        xAxisIndex: [0, 1],
+        type: 'slider',
+        top: '85%',
+        startValue: "2016-04-12",
+        endValue: "2016-06-22"
+      }
+      ],
+      series: [
+      {
+        name: 'Dow-Jones index',
+        type: 'candlestick',
+        data: data.values,
+        itemStyle: {
+          normal: {
+            borderColor: null,
+            borderColor0: null
+          }
+        },
+        tooltip: {
+          formatter: function (param) {
+            var param = param[0];
+            return [
+            'Date: ' + param.name + '<hr size=1 style="margin: 3px 0">',
+            'Open: ' + param.data[0] + '<br/>',
+            'Close: ' + param.data[1] + '<br/>',
+            'Lowest: ' + param.data[2] + '<br/>',
+            'Highest: ' + param.data[3] + '<br/>'
+            ].join('');
+          }
+        }
+      },
+      {
+        name: 'MA5',
+        type: 'line',
+        data: calculateMA(5, data),
+        smooth: true,
+        lineStyle: {
+          normal: {opacity: 0.5}
+        }
+      },
+      {
+        name: 'MA10',
+        type: 'line',
+        data: calculateMA(10, data),
+        smooth: true,
+        lineStyle: {
+          normal: {opacity: 0.5}
+        }
+      },
+      {
+        name: 'MA20',
+        type: 'line',
+        data: calculateMA(20, data),
+        smooth: true,
+        lineStyle: {
+          normal: {opacity: 0.5}
+        }
+      },
+      {
+        name: 'MA30',
+        type: 'line',
+        data: calculateMA(30, data),
+        smooth: true,
+        lineStyle: {
+          normal: {opacity: 0.5}
+        }
+      },
+      {
+        name: 'Volumn',
+        type: 'bar',
+        xAxisIndex: 1,
+        yAxisIndex: 1,
+        data: data.volumns
+      }
+      ]
+    }, true);
+
+    //选中区域
+    myChart.dispatchAction({
+      type: 'brush',
+      areas: [
+      {
+        brushType: 'lineX',
+        coordRange: ['2016-06-02', '2016-06-20'],
+        xAxisIndex: 0
+      }
+      ]
+    });
+    
+    
+  </script>
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+
+    
+    <script src="{{ 'js/jquery.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-transition.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-alert.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-modal.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-dropdown.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-scrollspy.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-tab.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-tooltip.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-popover.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-button.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-collapse.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-carousel.js'|staticfile }}"></script>
+    <script src="{{ 'js/bootstrap-typeahead.js'|staticfile }}"></script>
+
+
+
+  </body></html>
