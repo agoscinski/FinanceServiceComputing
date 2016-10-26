@@ -1,7 +1,9 @@
 import sys
 import quickfix as fix
 import quickfix42 as fix42
+from TradingClass import MarketDataResponse
 import pdb
+
 
 
 class ClientFIXApplication(fix.Application):
@@ -95,23 +97,23 @@ class ClientFIXHandler():
         TODO @husein description if needed
 
         Args:
-            TODO @husein args
+            symbol (string): the ticker symbol of a stock
 
         Returns:
 
         """
+        #Create Fix Message for Market Data Request
         message = fix.Message();
         header = message.getHeader();
-        header.setField(fix.BeginString("FIX.4.2"))
-        header.setField(fix.BodyLength())
+#        header.setField(fix.BeginString("FIX.4.2"))
+#        header.setField(fix.BodyLength())
+#        header.setField(fix.SenderCompID("client"))
+#        header.setField(fix.TargetCompID("server"))
         header.setField(fix.MsgType(fix.MsgType_MarketDataRequest))
-        header.setField(fix.SenderCompID("client"))
-        header.setField(fix.TargetCompID("server"))
         header.setField(fix.MsgSeqNum(1))
         header.setField(fix.SendingTime())
-
         message.setField(fix.MDReqID('1'))
-        message.setField(fix.SubscriptionRequestType(fix.SubscriptionRequestType_SNAPSHOT_PLUS_UPDATES))
+        message.setField(fix.SubscriptionRequestType(fix.SubscriptionRequestType_SNAPSHOT))
         message.setField(fix.MarketDepth(1))
         message.setField(fix.NoMDEntryTypes(10))
         message.setField(fix.MDUpdateType(fix.MDUpdateType_FULL_REFRESH))
@@ -138,6 +140,10 @@ class ClientFIXHandler():
         group.setField(fix.MDEntryType(fix.MDEntryType_TRADING_SESSION_VWAP_PRICE))
         message.addGroup(group)
 
+        symbolGroup = fix42.MarketDataRequest().NoRelatedSym()
+        symbolGroup.setField(fix.Symbol(symbol))
+        message.addGroup(symbolGroup)
+
         """ --- Used if List of symbol sent ---
         symbolArray=[symbol,symbol]
         message.setField(fix.NoRelatedSym(len(symbolArray)))
@@ -147,12 +153,8 @@ class ClientFIXHandler():
             message.addGroup(symbolGroup)
         """
 
-        symbolGroup = fix42.MarketDataRequest().NoRelatedSym()
-        symbolGroup.setField(fix.Symbol(symbol))
-        message.addGroup(symbolGroup)
-
+        #Send Fix Message to Server
         fix.Session.sendToTarget(message,self.fix_application.sessionID)
-        #self.fix_application.toApp(message,self.fix_application.sessionID)
 
         return
 
@@ -167,6 +169,8 @@ class ClientFIXHandler():
         Returns:
             TODO how does the return value look like
         """
+
+        #Retrieve Market Data Response Type Full Refresh/Snapshot
         mdReqID = fix.MDReqID()
         #securityType=fix.SecurityType()
         #maturityMonthYear=fix.MaturityMonthYear()
@@ -181,14 +185,17 @@ class ClientFIXHandler():
         mdEntryTime=fix.MDEntryTime()
         currency=fix.Currency()
         numberOfOrder=fix.NumberOfOrders()
+        mdEntryTypeList=[]
+        mdEntryPxList=[]
+        mdEntrySizeList=[]
+        mdEntryTimeList=[]
+        currencyList=[]
+        numberOfOrdersList=[]
 
         message.getField(mdReqID)
         message.getField(noMDEntries)
         message.getField(symbol)
         message.getField(totalVolumeTraded)
-        print("id: "+mdReqID.getValue()+" s: "+symbol.getValue())
-        print(noMDEntries.getValue())
-        print(totalVolumeTraded.getValue())
 
         groupMD= fix42.MarketDataSnapshotFullRefresh.NoMDEntries()
         for MDIndex in range(noMDEntries.getValue()):
@@ -199,14 +206,30 @@ class ClientFIXHandler():
             groupMD.getField(mdEntryTime)
             groupMD.getField(currency)
             groupMD.getField(numberOfOrder)
-            print(mdEntryType.getValue())
-            print(mdEntryPx.getValue())
-            print(mdEntrySize.getValue())
-            print(mdEntryTime.getString())
-            print(currency.getValue())
-            print(numberOfOrder.getValue())
+            mdEntryTypeList.append(mdEntryType.getValue())
+            mdEntryPxList.append(mdEntryPx.getValue())
+            mdEntrySizeList.append(mdEntrySize.getValue())
+            mdEntryTimeList.append(mdEntryTime.getString())
+            currencyList.append(currency.getValue())
+            numberOfOrdersList.append(numberOfOrder.getValue())
 
-        self.client_logic.process_market_data_request(message)
+        #Encapsulate data into market data response object
+        marketData= MarketDataResponse(mdReqID, noMDEntries.getValue(), symbol, totalVolumeTraded, mdEntryTypeList,
+                                            mdEntryPxList, mdEntrySizeList, mdEntryTimeList, currencyList,
+                                            numberOfOrdersList)
+
+        #Should be done in client gui or client logic can be moved by passing object to another class for now as example
+        print marketData.get_no_md_entries()
+        print marketData.get_symbol()
+        print marketData.get_total_volume_traded()
+        for j in range (marketData.get_no_md_entries()):
+            print(marketData.get_md_entry_type()[j])
+            print(marketData.get_md_entry_px()[j])
+            print(marketData.get_md_entry_size()[j])
+            print(marketData.get_md_entry_time()[j])
+            print(marketData.get_currency()[j])
+            print(marketData.get_number_of_orders()[j])
+
         pass
 
     def add_user_id_to_message(self, message):
@@ -256,7 +279,7 @@ class ClientLogic():
     def process_market_data_request(self, symbol):
         self.client_fix_handler.send_market_data_request(symbol)
 
-    def process_market_data_respond(self, message):
+    def process_market_data_respond(self, marketData):
         """Process market data respond
 
         Args:
