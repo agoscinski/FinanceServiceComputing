@@ -42,6 +42,11 @@ sudo pip install jinja2
 sudo apt-get install python-qt4
 ```
 
+## Pytest
+```
+pip install -U pytest
+```
+
 #Demo
 ##Database
 ###Prepare:
@@ -100,4 +105,9 @@ try:
 
 except MySQLdb.Error,e:
     print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+```
+##Pytest
+After you created the database
+```
+py.test test_server.py
 ```
