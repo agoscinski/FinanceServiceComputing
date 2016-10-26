@@ -1,26 +1,55 @@
 #
 Python coding guidelines: https://www.python.org/dev/peps/pep-0008/
 Documentation style demo: http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
-#Database
-##OS: Ubuntu 16.04 LTS
+#Installation
+##Database
 
-##mysql version: 5.7.15
+###mysql version: 5.7.15
 Install Mysql on ubuntu: 
   use "sudo apt-get install mysql-client mysql-server" command in Terminal of Ubuntu
 
-##python version:2.7.12
+###python version:2.7.12
 
-##library used: MySQL-python-1.2.5
+###library used: MySQL-python-1.2.5
 Install library: 
    1) sudo apt-get install libmysqlclient-dev
    2) sudo pip install MySQL-python  (you need to make sure that pip is installed)
 
-##Prepare:
+
+##htmlPy
+
+1) Installing python package manager: pip
+```
+sudo apt-get install python-pip
+```
+
+2) Installing htmlPy
+```
+pip install htmlPy
+```
+
+3) Installing PySide
+```
+sudo apt-get install python-pyside
+```
+4) Installing jinja2, which is depended by htmlPy.
+```
+sudo pip install jinja2
+```
+
+5) Installing PyQt4
+```
+sudo apt-get install python-qt4
+```
+
+#Demo
+##Database
+###Prepare:
 Create database "FSC":
   1) use "mysql -u root -p" command to open mysql client in Terminal
   2) use "create datebase FSC" command in mysql client
   
-##Create table in FSC:
+###Create table in FSC:
 ```python
 # -*- coding: utf-8 -*-
 import MySQLdb
@@ -37,7 +66,7 @@ except MySQLdb.Error,e:
     print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 ```
 
-##Insert
+###Insert
 ```python
 # -*- coding: utf-8 -*-
 import MySQLdb
@@ -54,7 +83,7 @@ except MySQLdb.Error,e:
     print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 ```
 
-##Query
+###Query
 ```python
 # -*- coding: utf-8 -*-
 import MySQLdb
