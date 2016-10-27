@@ -136,7 +136,7 @@ class ServerLogic:
         self.server_fix_handler = ServerFIXHandler(self, server_config_file_name)
         self.server_database_handler = ServerDatabaseHandler()
         self.market_simulation_handler = MarketSimulationHandler()
-        self.initialize_new_stocks = True
+        self.initialize_new_stocks = False
 
     def start_server(self):
         if self.initialize_new_stocks:
@@ -156,7 +156,6 @@ class ServerLogic:
     def process_market_data_request(self, symbols):
         """Process market data request
 
-
 		Args:
 			symbols (list of str): A list of symbol tickers.
 
@@ -164,6 +163,22 @@ class ServerLogic:
 			bool: The return value. True for success, False otherwise.
 		"""
         pass
+
+    def process_order_request(self, order):
+        """Process an order request from the FIX Handler
+
+
+        Args:
+            order (Order): One order object
+
+        Returns:
+            None
+        """
+        self.server_database_handler.insert_order(order)
+        stock = None
+        # stock = Stock(Order.stock_ticker)
+        buy_orders, sell_orders = self.server_database_handler.request_orders_for_stock(stock)
+        self.matching_algorithm.match_orders()
 
     def authenticate_user(self, user_id, password):
         """Authenticates user
@@ -180,14 +195,20 @@ class ServerLogic:
         # TODO #29 add authentication
         return ServerRespond.AUTHENTICATION_SUCCESS
 
+
 class ServerDatabaseHandler:
     # TODO send SQL Queries
     def __init__(self):
+        self.user_name = "root"
+        self.user_password = "root"
+        self.database_name = "FSCDatabase"
+        self.database_port = 3306
         pass
 
     def delete_all_stock_data(self):
         try:
-            conn = MySQLdb.connect(host='localhost', user='root', passwd='root', db='FSCDatabase', port=3306)
+            conn = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+                                   db=self.database_name, port=self.database_port)
             cur = conn.cursor()
             execution = ("delete from Stock")
             cur.execute(execution)
@@ -196,10 +217,10 @@ class ServerDatabaseHandler:
         except MySQLdb.Error, e:
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 
-
-    def delete_stock_data(self,stock):
+    def delete_stock_data(self, stock):
         try:
-            conn = MySQLdb.connect(host='localhost', user='root', passwd='root', db='FSCDatabase', port=3306)
+            conn = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+                                   db=self.database_name, port=self.database_port)
             cur = conn.cursor()
             execution = ("delete from Stock where Ticker = '%s' limit 1" % stock.ticker)
             cur.execute(execution)
@@ -210,14 +231,41 @@ class ServerDatabaseHandler:
 
     def insert_stock_data(self, stock):
         try:
-            conn = MySQLdb.connect(host='localhost', user='root', passwd='root', db='FSCDatabase', port=3306)
+            conn = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+                                   db=self.database_name, port=self.database_port)
             cur = conn.cursor()
-            execution = ("insert into Stock(Ticker, CompanyName, CurrentPrice, CurrentVolume) values( '%s', '%s', '%s', '%s')" % (stock.ticker, stock.company_name, stock.current_price, stock.current_volume))
+            execution = (
+                "insert into Stock(Ticker, CompanyName, CurrentPrice, CurrentVolume) values( '%s', '%s', '%s', '%s')" % (
+                    stock.ticker, stock.company_name, stock.current_price, stock.current_volume))
             cur.execute(execution)
             conn.commit()
             conn.close()
         except MySQLdb.Error, e:
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+
+    def request_orders_of_type(self, order):
+        """Returns all orders for the same stock as the given order
+
+
+        Args:
+            order (string): The user id
+            password (string): The password
+
+        Returns:
+            success (ServerRespond): success of authentication
+        """
+
+    def request_orders_for_stock(self, stock):
+        """Returns all orders for the same stock as the given order
+
+
+        Args:
+            stock (Stock): The stock for which the orders are searched for
+
+        Returns:
+            buy_orders (list<Order>): list of buying orders for the stock
+            sell_orders (list<Order>): list of selling orders for the stock
+        """
 
     def send_client_match_query(self):
         pass
@@ -237,7 +285,6 @@ class ServerDatabaseHandler:
 
 
 class MarketSimulationHandler:
-
     def __init__(self):
         self.stock_list_file_name = "stock_list.cfg"
         self.stock_list = read_file_values(self.stock_list_file_name)
@@ -255,12 +302,12 @@ class MarketSimulationHandler:
 		"""
         for stock in self.stock_list:
             share = yahoo_finance.Share(stock)
-            new_stock = Stock(share.data_set["symbol"], share.data_set["Name"], share.data_set["LastTradePriceOnly"], share.data_set["Volume"])
+            new_stock = Stock(share.data_set["symbol"], share.data_set["Name"], share.data_set["LastTradePriceOnly"],
+                              share.data_set["Volume"])
             ServerDatabaseHandler().insert_stock_data(new_stock)
 
 
 class Stock:
-
     def __init__(self, ticker, company_name=None, current_price=None, current_volume=None):
         self.ticker = ticker
         self.company_name = company_name
@@ -278,7 +325,6 @@ class Stock:
 
     def get_current_volume(self):
         return self.current_volume
-
 
 
 def read_file_values(file_name):
