@@ -178,7 +178,10 @@ class ServerLogic:
         stock = None
         # stock = Stock(Order.stock_ticker)
         buy_orders, sell_orders = self.server_database_handler.request_orders_for_stock(stock)
-        self.matching_algorithm.match_orders()
+        matching_matrix = self.matching_algorithm.match_orders(buy_orders, sell_orders)
+        # inform each client being matched
+        self.resolve_matching_matrix(matching_matrix)
+
 
     def authenticate_user(self, user_id, password):
         """Authenticates user
