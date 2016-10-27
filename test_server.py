@@ -11,11 +11,9 @@ def teardown_module(module):
     """ teardown any state that was previously setup with a setup_module
     method.
     """
-    server.ServerDatabaseHandler().delete_stock_data(nasdaq_stock)
 
-class TestMarketSimulator:
-    market_simulation_handler = server.MarketSimulationHandler()
-    market_simulation_handler.stock_list = [nasdaq_stock_ticker]
+class TestStaticFunctions:
 
-    def test_load_market_data_into_database(self):
-        self.market_simulation_handler.load_market_data_into_database()
+    def test_read_file(self):
+        value = server.read_file("./test_file.txt")
+        assert value == "word1;\nword2;\n"
