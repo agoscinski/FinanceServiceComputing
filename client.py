@@ -24,7 +24,7 @@ class GUISignal(htmlPy.Object):
         usr=str(usr)
         psw=str(psw)
         print usr,psw
-        if(self.gui_handler.logon_option(usr,psw)):
+        if(self.gui_handler.button_login_actuated(usr,psw)):
             return_message='{"success":true,"userName":"'+usr+'"}'
         else:
             return_message='{"success":false,"msg":"username or password is wrong"}'
@@ -32,7 +32,7 @@ class GUISignal(htmlPy.Object):
 
     @htmlPy.Slot()
     def logOut(self):
-        self.gui_handler.logout_option()
+        self.gui_handler.button_logout_actuated()
 
 
     @htmlPy.Slot(str, result=str)
@@ -319,8 +319,17 @@ class ClientLogic():
     def logon(self, user_id, password):
 
         self.client_fix_handler.connect_to_server(user_id, password)
+
+        #TODO block mechanism
+        self.block_gui()
+
+        return self.succes
+
         #Notice that we should validate here
         return True
+
+    def block_gui(self):
+        pass
 
     def logout(self):
         self.client_fix_handler.send_logout_request()
@@ -338,6 +347,12 @@ class ClientLogic():
             None
         """
         return
+
+    def request_trading_transactions(self, user_name):
+        #TODO alex write database request/fetch
+        #TODO FIRST yelinsheng sample data
+        trading_transaction = None
+        return trading_transaction
 
 
 class GUIHandler:
@@ -366,16 +381,16 @@ class GUIHandler:
                 break
             else:
                 continue
-        
+
 
     def wait_for_input(self):
         while True:
             print '''input 1 to logon\ninput 2 to logout\ninput 3 to send market request\ninput4 to quit'''
             input = raw_input()
             if input == '1':
-                self.logon_option()
+                self.button_login_actuated("john","papapa")
             elif input == '2':
-                self.logout_option()
+                self.button_logout_actuated()
             elif input == '3':
                 self.send_market_data_request_option("CNNA")
             elif input =='4':
@@ -383,22 +398,65 @@ class GUIHandler:
             else:
                 continue
 
-    def logon_option(self,user_id, password):
-        return self.client_logic.logon(user_id, password)
-    '''
-    def request_logon_information(self):
-        user_id = "John"
-        password = "hashedpw"
-        return user_id, password
-    '''
+    def button_login_actuated(self, user_name, user_password):
+        """This function is activated when the login button is pushed"""
+        return self.client_logic.logon(user_name, user_password)
 
-    def logout_option(self):
+
+    def request_trading_transactions(self, user_name):
+        """Request trading transactions
+
+        Args:
+            user_name (string): .
+
+        Returns:
+        trading_transactions (string): json string of trading transaction
+        """
+        trading_transactions = self.client_logic.request_trading_transactions(user_name)
+        #TODO yenlinsheng finish this function
+        trading_transactions_json = self.extract_trading_transactions_json(trading_transactions)
+        pass
+
+    def button_logout_actuated(self):
+        """This function is activated when the login button is pushed"""
         respond = self.client_logic.logout()
-        # TODO case for failure
-        print "Logout successful\n"
 
+<<<<<<< HEAD
     def send_market_data_request_option(self, symbol):
         self.client_logic.process_market_data_request(symbol)
+=======
+    def button_buy_actuated(self, stock_ticker, price, quantity):
+        #TODO alex
+        pass
+
+    def search_for_stock_actuated(self, searching_value):
+        """This function is called when the user enters a search request
+
+        Args:
+            searching_value (string): The value of the user input
+
+        Returns:
+            None
+        """
+        #TODO alex
+        pass
+
+    def refresh_charts(self, market_data):
+        #TODO yenlinsheng finish these functions
+        quantity_chart_json = self.extract_quantity_chart_json(market_data)
+        stock_course_chart_json = self.extract_quantity_chart_json(market_data)
+        stock_information_json =  self.extract_stock_information_json(market_data)
+        order_book_json = self.extract_order_book_json(market_data)
+        pass
+
+    def refresh_trading_transaction_list(self, trading_data):
+        #TODO yenlinsheng finish this function
+        trading_data_json = self.extract_trading_data_json(trading_data)
+        pass
+
+#TODO FIRST yenlinsheng MarketData class
+#TODO FIRST yelinsheng TradingTransaction class
+>>>>>>> add_matching_algorithm_outline
 
 client_config_file_name = sys.argv[1] if len(sys.argv) == 2 else "client.cfg"
 client = ClientLogic(client_config_file_name)
