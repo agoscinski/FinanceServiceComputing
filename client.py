@@ -444,18 +444,73 @@ class GUIHandler:
     def refresh_charts(self, market_data):
         #TODO yenlinsheng finish these functions
         quantity_chart_json = self.extract_quantity_chart_json(market_data)
-        stock_course_chart_json = self.extract_quantity_chart_json(market_data)
+        stock_course_chart_json = self.extract_course_chart_json(market_data)
         stock_information_json =  self.extract_stock_information_json(market_data)
         order_book_json = self.extract_order_book_json(market_data)
         pass
 
-    def refresh_trading_transaction_list(self, trading_data):
+    def refresh_trading_transaction_list(self, trading_transaction):
         #TODO yenlinsheng finish this function
-        trading_data_json = self.extract_trading_data_json(trading_data)
+        trading_transaction_json = self.extract_trading_transaction_json(trading_transaction)
+        pass
+    def extract_quantity_chart_json(self,market_data):
+        pass
+    def extract_course_chart_json(market_data):
+        pass
+    def extract_stock_information_json(market_data):
+        pass
+    def extract_order_book_json(market_data):
+        pass
+    def extract_trading_transaction_json(trading_transaction):
         pass
 
 #TODO FIRST yenlinsheng MarketData class
+#DONE by yelinsheng 2016-10-28
+class StockInformation():
+    def __init__(self,p_price,p_high,p_low):
+        self.price=p_price
+        self.high=p_high
+        self.low=p_low
+class StockHistory():
+    def __init__(self,p_time,p_price,p_quantity):
+        #time,price,quantity are list type
+        self.time=p_time
+        self.price=p_price
+        self.quantity=p_quantity
+class OrderBookBuy():
+    def __init__(self,p_price,p_quantity):
+        #price,quantity are list type, with length of 5
+        self.price=p_price
+        self.quantity=p_quantity
+class OrderBookSell():
+    def __init__(self,p_price,p_quantity):
+        #price,quantity are list type, with length of 5
+        self.price=p_price
+        self.quantity=p_quantity
+class MarketData():
+    def __init__(self,p_stock_information,p_stock_history,p_order_book_buy,p_order_book_sell):
+        #type of parameters:
+        #stock_information -> StockInformation
+        #stock_history -> StockHistory
+        #order_book_buy -> OrderBookBuy
+        #order_book_sell -> OrderBookSell
+        self.stock_information=p_stock_information
+        self.stock_history=p_stock_history
+        self.order_book_buy=p_order_book_buy
+        self.order_book_sell=p_order_book_sell
+
+
 #TODO FIRST yelinsheng TradingTransaction class
+#DONE by yelinsheng 2016-10-28
+class TradingTransaction():
+    def __init__(self,p_time,p_price,p_quantity,p_side):
+        #side: True means buy, False means sell 
+        self.time=p_time
+        self.price=p_price
+        self.quantity=p_quantity
+        self.side=p_side
+
+
 >>>>>>> add_matching_algorithm_outline
 
 client_config_file_name = sys.argv[1] if len(sys.argv) == 2 else "client.cfg"
