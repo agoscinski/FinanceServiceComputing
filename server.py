@@ -16,6 +16,8 @@ class ServerRespond(Enum):
 
 
 class ServerFIXApplication(fix.Application):
+    exec_id=0
+
     def __init__(self, server_fix_handler):
         self.server_fix_handler = server_fix_handler
         super(ServerFIXApplication, self).__init__()
@@ -78,7 +80,13 @@ class ServerFIXApplication(fix.Application):
         if msg_Type.getString() == fix.MsgType_MarketDataRequest:
             print '''IN MarketDataRequest'''
             self.server_fix_handler.handle_market_data_request(message)
+        if msg_Type.getString() == fix.MsgType_NewOrderSingle:
+            print '''IN NewSingleOrder'''
+            self.server_fix_handler.handle_order_request(message)
 
+    def gen_exec_id(self):
+        self.exec_id = self.exec_id+1
+        return self.exec_id
 
 class ServerFIXHandler:
     def __init__(self, server_logic, server_config_file_name):
@@ -123,48 +131,47 @@ class ServerFIXHandler:
     			None
     		"""
         # Retrieving Fix Data from market data request sent by client
-        mdReqID = fix.MDReqID()
-        subscriptionRequestType = fix.SubscriptionRequestType()
-        marketDepth = fix.MarketDepth()
-        mdUpdateType = fix.MDUpdateType()
-        noMDEntryType = fix.NoMDEntryTypes()
-        mdEntryType = fix.MDEntryType()
-        noRelatedSym = fix.NoRelatedSym()
+        md_req_id_fix = fix.MDReqID()
+        subscription_request_type_fix = fix.SubscriptionRequestType()
+        market_depth_fix = fix.MarketDepth()
+        no_md_entry_types_fix = fix.NoMDEntryTypes()
+        md_entry_type_fix = fix.MDEntryType()
+        no_related_sym_fix = fix.NoRelatedSym()
 
-        message.getField(mdReqID)
-        message.getField(subscriptionRequestType)
-        message.getField(marketDepth)
-        message.getField(mdUpdateType)
-        message.getField(noMDEntryType)
-        message.getField(noRelatedSym)
+        message.getField(md_req_id_fix)
+        message.getField(subscription_request_type_fix)
+        message.getField(market_depth_fix)
+        message.getField(no_md_entry_types_fix)
+        message.getField(no_related_sym_fix)
 
-        groupMD = fix42.MarketDataRequest().NoMDEntryTypes()
-        mdEntries = []
-        for MDIndex in range(noMDEntryType.getValue()):
-            message.getGroup(MDIndex + 1, groupMD)
-            groupMD.getField(mdEntryType)
-            mdEntries.append(mdEntryType.getValue())
+        group_md = fix42.MarketDataRequest().NoMDEntryTypes()
+        md_entries = []
+        for md_idx in range(no_md_entry_types_fix.getValue()):
+            message.getGroup(md_idx + 1, group_md)
+            group_md.getField(md_entry_type_fix)
+            md_entries.append(md_entry_type_fix.getValue())
 
-        symbolGroup = fix42.MarketDataRequest().NoRelatedSym()
+        group_symbol = fix42.MarketDataRequest().NoRelatedSym()
         symbols = []
         symbol = fix.Symbol()
-        for asymbol in range(noRelatedSym.getValue()):
-            message.getGroup(asymbol + 1, symbolGroup)
-            symbolGroup.getField(symbol)
+        for symbol_idx in range(no_related_sym_fix.getValue()):
+            message.getGroup(symbol_idx + 1, group_symbol)
+            group_symbol.getField(symbol)
             symbols.append(symbol.getValue())
 
         # Encapsulate data into market data request object
-        marketDataReq = MarketDataRequest(mdReqID.getValue(), subscriptionRequestType.getValue(), marketDepth.getValue()
-                                          , mdUpdateType.getValue(), noMDEntryType.getValue(), mdEntries, symbols)
+        md_request = MarketDataRequest(md_req_id_fix.getValue(), subscription_request_type_fix.getValue()
+            , market_depth_fix.getValue(),no_md_entry_types_fix.getValue(),md_entries, no_related_sym_fix.getValue()
+            , symbols)
 
         # Market data Object sent to server logic to be processed
-        self.server_logic.process_market_data_request(marketDataReq)
+        self.server_logic.process_market_data_request(md_request)
         return
 
     # return_to_gui: current_price, day_high, day_low : json_string;
     # time_stamp, price, quantity : json_string; orderstuff : json
 
-    def send_market_data_respond(self, marketData):
+    def send_market_data_respond(self, market_data):
         """Send market data respond
 
             TODO @husein
@@ -177,50 +184,123 @@ class ServerFIXHandler:
             """
         message = fix.Message()
         header = message.getHeader()
-        #       header.setField(fix.BeginString("FIX.4.2"))
-        #       header.setField(fix.BodyLength())
-        #       header.setField(fix.SenderCompID("server"))
-        #       header.setField(fix.TargetCompID("client"))
         header.setField(fix.MsgType(fix.MsgType_MarketDataSnapshotFullRefresh))
         header.setField(fix.MsgSeqNum(1))
         header.setField(fix.SendingTime())
+        message.setField(fix.MDReqID(market_data.get_md_req_id()))
+        message.setField(fix.NoMDEntries(market_data.get_no_md_entry_types()))
+        message.setField(fix.Symbol(market_data.get_symbol()))
 
-        message.setField(fix.MDReqID(marketData.get_md_req_id()))
-        # message.setField(fix.SecurityType('CS'))
-        # message.setField(fix.MaturityMonthYear("201712"))
-        # message.setField(fix.PutOrCall('0'))
-        # message.setField(fix.StrikePrice(100.00))
-        message.setField(fix.NoMDEntries(marketData.get_no_md_entries()))
-        message.setField(fix.Symbol(marketData.get_symbol()))
-        message.setField(fix.TotalVolumeTraded(marketData.get_total_volume_traded()))
-
-        group = fix42.MarketDataSnapshotFullRefresh.NoMDEntries()
-        mdEntries = marketData.get_md_entry_type()
-        mdEntryPx = marketData.get_md_entry_px()
-        mdEntrySize = marketData.get_md_entry_size()
-        mdEntryTime = marketData.get_md_entry_time()
-        currency = marketData.get_currency()
-        numberOfOrders = marketData.get_number_of_orders()
-        """ Used if handling with list of symbol
-        symbols= mdreq.get_symbols()
-        for asymbol in range(symbols)):
-            print("Symbol "+symbols[asymbol])
-        """
-
-        for MDIndex in range(marketData.get_no_md_entries()):
-            group.setField(fix.MDEntryType(mdEntries[MDIndex]))
-            group.setField(fix.MDEntryPx(mdEntryPx[MDIndex]))
-            group.setField(fix.MDEntrySize(mdEntrySize[MDIndex]))
-            # group.setField(fix.MDEntryTime(mdEntryTime[MDIndex])) not sure why cannot instantiate object with int var
-            group.setField(fix.MDEntryTime())
-            group.setField(fix.Currency(currency[MDIndex]))
-            group.setField(fix.NumberOfOrders(numberOfOrders[MDIndex]))
-            message.addGroup(group)
+        group_md_entry = fix42.MarketDataSnapshotFullRefresh.NoMDEntries()
+        md_entry_type = market_data.get_md_entry_type_list()
+        md_entry_px = market_data.get_md_entry_px_list()
+        md_entry_size = market_data.get_md_entry_size_list()
+        md_entry_date = market_data.get_md_entry_date_list()
+        md_entry_time = market_data.get_md_entry_time_list()
+        for md_index in range(market_data.get_no_md_entry_types()):
+            group_md_entry.setField(fix.MDEntryType(md_entry_type[md_index]))
+            group_md_entry.setField(fix.MDEntryPx(md_entry_px[md_index]))
+            group_md_entry.setField(fix.MDEntrySize(md_entry_size[md_index]))
+            # group.setField(fix.MDEntryTime(md_entry_time_list[md_index])) not sure why cannot instantiate object with int var
+            # group.setField(fix.MDEntryDate(md_entry_date_list[md_index])) not sure why cannot instantiate object with int var
+            group_md_entry.setField(fix.MDEntryDate())
+            group_md_entry.setField(fix.MDEntryTime())
+            message.addGroup(group_md_entry)
 
         fix.Session.sendToTarget(message, self.fix_application.sessionID)
 
         return
 
+    def handle_order_request(self, message):
+        """Process market data request
+            TODO @husein
+
+            Args:
+            message :  order fix message received from client
+
+            Returns:
+            None
+        """
+        # Retrieving Fix Data from order request sent by client
+        cl_ord_id_fix = fix.ClOrdID()
+        handl_inst_fix = fix.HandlInst()
+        exec_inst_fix = fix.ExecInst()
+        symbol_fix = fix.Symbol()
+        maturity_month_year_fix = fix.MaturityMonthYear()
+        maturity_day_fix = fix.MaturityDay()
+        side_fix = fix.Side()
+        transact_time_fix = fix.TransactTime()
+        order_qty_fix = fix.OrderQty()
+        ord_type_fix = fix.OrdType()
+        price_fix = fix.Price()
+        stop_px_fix = fix.StopPx()
+
+        message.getField(cl_ord_id_fix)
+        message.getField(handl_inst_fix)
+        message.getField(exec_inst_fix)
+        message.getField(symbol_fix)
+        message.getField(maturity_month_year_fix)
+        message.getField(maturity_day_fix)
+        message.getField(side_fix)
+        message.getField(transact_time_fix)
+        message.getField(order_qty_fix)
+        message.getField(ord_type_fix)
+        message.getField(price_fix)
+        message.getField(stop_px_fix)
+
+        print("clord,handlinst,execinst,symol,matmonthyear,matday,side,transactime,orderqty,ordertype")
+        print(cl_ord_id_fix.getValue())
+        print(handl_inst_fix.getValue())
+        print(exec_inst_fix.getValue())
+        print(symbol_fix.getValue())
+        print(maturity_month_year_fix.getString())
+        print(maturity_day_fix.getString())
+        print(side_fix.getValue())
+        print(transact_time_fix.getString())
+        print(order_qty_fix.getValue())
+        print(ord_type_fix.getValue())
+        print(price_fix.getValue())
+        print(stop_px_fix.getValue())
+
+        #Execution Report Temp
+        message = fix.Message()
+        header = message.getHeader()
+        header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
+        header.setField(fix.MsgSeqNum(1))
+
+        header.setField(fix.SendingTime())
+        message.setField(fix.OrderID(ord_type_fix.getValue()))
+        message.setField(fix.ClOrdID(cl_ord_id_fix.getValue()))
+        message.setField(fix.ExecID(str(self.fix_application.gen_exec_id())))
+        message.setField(fix.ExecTransType('0')) #0 = New,1 = Cancel,2 = Correct,3 = Status
+        message.setField(fix.ExecType('2')) #0 = New,1 = Partially filled,2 = Filled,3 = Done for day,4 = Canceled
+        message.setField(fix.OrdStatus('2'))#0 = New,1 = Partially filled,2 = Filled,3 = Done for day,4 = Canceled
+        message.setField(fix.Symbol(symbol_fix.getValue()))
+        message.setField(fix.Side(side_fix.getValue()))
+        message.setField(fix.LeavesQty(0))
+        message.setField(fix.CumQty(200))
+        message.setField(fix.AvgPx(999))
+        message.setField(fix.Price(900))
+        message.setField(fix.StopPx(1000))
+        #message.setField(fix.PegDifference(20))
+
+        fix.Session.sendToTarget(message, self.fix_application.sessionID)
+
+        return
+
+    def send_order_execution_respond(self, order_execution):
+        """Send order execution respond
+
+            TODO @husein
+
+            Args:
+                order execution object
+
+            Returns:
+                None
+            """
+
+        return
 
 class ServerLogic:
     def __init__(self, server_config_file_name):
@@ -244,7 +324,7 @@ class ServerLogic:
         respond = self.authenticate_user(user_id, password)
         return respond
 
-    def process_market_data_request(self, mdreq):
+    def process_market_data_request(self, md_request):
         """Process market data request
 
 		Args:
@@ -255,47 +335,38 @@ class ServerLogic:
 		"""
 
         # Subscribe means will be sent periodically, so for now we use snapshot
-        if mdreq.get_subscription_request_type() == 0:
+        if md_request.get_subscription_request_type() == 0:
             print("0 = Snapshot")
-        elif mdreq.get_subscription_request_type() == 1:
+        elif md_request.get_subscription_request_type() == 1:
             print("1 = Snapshot + Updates (Subscribe)")
-        elif mdreq.get_subscription_request_type() == 2:
-            print("2 = Disable previous Snapshot + Update Request (Unsubscribe)")
-
-        # Now we will only support Full Refresh which is only sent with 1 symbol
-        if mdreq.get_md_update_type() == 0:
-            print("Full Refresh")  # Return W Full Refresh/Snapshot Message
-        elif mdreq.get_md_update_type() == 1:
-            print("Incremental Refresh")  # Return X Incremental Refresh Message
+        elif md_request.get_subscription_request_type() == 2:
+            print("2 = Disable previous Snapshot + Update Request (Un-subscribe)")
 
         # Now we wll only support Top of Book (only best prices quoted), Full of Book means all the traded data.
-        if mdreq.get_market_depth() == 0:
+        if md_request.get_market_depth() == 0:
             print("Full Book")
-        elif mdreq.get_market_depth() == 1:
+        elif md_request.get_market_depth() == 1:
             print("Top of Book")
 
-        mdReqID = mdreq.get_md_req_id()
-        noMDEntries = mdreq.get_no_md_entry_type()
-        symbol = mdreq.get_symbols(0)
-        totalVolumeTraded = 1000
-        mdEntries = mdreq.get_md_entries()
-        mdEntryPxList = []
-        mdEntrySizeList = []
-        mdEntryTimeList = []
-        currencyList = []
-        numberOfOrdersList = []
+        md_req_id = md_request.get_md_req_id()
+        no_md_entries = md_request.get_no_md_entry_types()
+        symbol = md_request.get_symbol(0)
+        md_entry_type_list = md_request.get_md_entry_type_list()
+        md_entry_px_list = []
+        md_entry_size_list = []
+        md_entry_date_list = []
+        md_entry_time_list = []
 
         # Should be retrieving Market Data using Required Symbol and Parameter
-        for MDIndex in range(mdreq.get_no_md_entry_type()):
-            mdEntryPxList.append(100)
-            mdEntrySizeList.append(5)
-            mdEntryTimeList.append(time.time())
-            currencyList.append("CNY" + mdEntries[MDIndex])
-            numberOfOrdersList.append(9)
+        for MDIndex in range(md_request.get_no_md_entry_types()):
+            md_entry_px_list.append(100)
+            md_entry_size_list.append(5)
+            md_entry_date_list.append(20130201)
+            md_entry_time_list.append(time.time())
 
         # Encapsulate data into market data response object
-        market_data = MarketDataResponse(mdReqID, noMDEntries, symbol, totalVolumeTraded, mdEntries, mdEntryPxList,
-                                         mdEntrySizeList, mdEntryTimeList, currencyList, numberOfOrdersList)
+        market_data = MarketDataResponse(md_req_id, no_md_entries, symbol, md_entry_type_list, md_entry_px_list,
+                                         md_entry_size_list, md_entry_date_list, md_entry_time_list)
 
         # Send Market Data to Fix Handler
         self.server_fix_handler.send_market_data_respond(market_data)
@@ -341,7 +412,7 @@ class ServerDatabaseHandler:
     # TODO send SQL Queries
     def __init__(self):
         self.user_name = "root"
-        self.user_password = "root"
+        self.user_password = "root" #
         self.database_name = "FSCDatabase"
         self.database_port = 3306
         self.database_creation_file_path = "./database/server_database.sql"
