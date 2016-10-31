@@ -2,201 +2,177 @@ class MarketDataRequest(object):
 
     """Constructor of class MarketDataRequest:
         @Parameter:
-            mdReqID : market data request IDD (string)
-            subscriptionRequestType : Type of subscription of market data request
-            marketDepth : market depth of market data request
-            mdUpdateType : market data update type
-            noMDEntryType : number of market data entry requested
-            mdEntries : list of market data entries (int)
-            symbols : list of ticker symbol (string)
+            md_req_id : market data request IDD (string)
+            subscription_request_type : Type of subscription of market data request
+            market_depth : market depth of market data request
+            no_md_entry_types : number of market data entry requested
+            md_entry_type_list : list of market data entries (int)
+            no_related_sym : number of symbols requested
+            symbol_list : list of ticker symbol (string)
     """
-    def __init__(self, mdReqID, subscriptionRequestType, marketDepth, mdUpdateType, noMDEntryType, mdEntries,
-                 symbols):
-        self.mdReqID = mdReqID
-        self.subscriptionRequestType = subscriptionRequestType
-        self.marketDepth = marketDepth
-        self.mdUpdateType = mdUpdateType
-        self.noMDEntryType = noMDEntryType
-        self.mdEntries=mdEntries
-        self.symbols=symbols
+    def __init__(self, md_req_id, subscription_request_type, market_depth, no_md_entry_types, md_entry_type_list,
+                 no_related_sym,symbol_list):
+        self.md_req_id = md_req_id
+        self.subscription_request_type = subscription_request_type
+        self.market_depth = market_depth
+        self.no_md_entry_types = no_md_entry_types
+        self.md_entry_type_list=md_entry_type_list
+        self.no_related_sym=no_related_sym
+        self.symbol_list=symbol_list
 
     "return market data request ID"
     def get_md_req_id(self):
-        return self.mdReqID
+        return self.md_req_id
 
     "return subscription request type "
     def get_subscription_request_type(self):
-        return self.subscriptionRequestType
+        return self.subscription_request_type
 
     "return market depth (top or full or N tier market depth)"
     def get_market_depth(self):
-        return self.marketDepth
-
-    "return market data update type"
-    def get_md_update_type(self):
-        return self.mdUpdateType
+        return self.market_depth
 
     "return number of market data entry requested"
-    def get_no_md_entry_type(self):
-        return self.noMDEntryType
+    def get_no_md_entry_types(self):
+        return self.no_md_entry_types
 
     "return list of md entry requested"
-    def get_md_entries(self):
-        return self.mdEntries
+    def get_md_entry_type_list(self):
+        return self.md_entry_type_list
+
+    "return number of symbol requested"
+    def get_no_related_symbol(self):
+        return self.no_related_symbol
 
     "return list of symbol requested"
-    def get_symbols(self):
-        return self.symbols
+    def get_symbol_list(self):
+        return self.symbol_list
 
     "return symbol from list of symbol in i index requested"
-    def get_symbols(self,i):
-        return self.symbols[i]
+    def get_symbol(self,i):
+        return self.symbol_list[i]
 
 
     "set market data request ID"
-    def set_md_req_id(self, mdReqID):
-        self.mdReqID = mdReqID
+    def set_md_req_id(self, md_req_id):
+        self.md_req_id = md_req_id
 
     "set subscription request type "
-    def set_subscription_request_type(self, subscriptionRequestType):
-        self.subscriptionRequestType = subscriptionRequestType
+    def set_subscription_request_type(self, subscription_request_type):
+        self.subscription_request_type = subscription_request_type
 
     "set market depth (top or full or N tier market depth)"
-    def set_market_depth(self, marketDepth):
-        self.marketDepth = marketDepth
-
-    "set market data update type"
-    def set_md_update_type(self, mdUpdateType):
-        self.mdUpdateType = mdUpdateType
+    def set_market_depth(self, market_depth):
+        self.market_depth = market_depth
 
     "set number of market data entry requested"
-    def set_no_md_entry_type(self, noMDEntryType):
-        self.noMDEntryType = noMDEntryType
+    def set_no_md_entry_types(self, no_md_entry_types):
+        self.no_md_entry_types = no_md_entry_types
 
     "set list of md entry requested"
-    def set_md_entries(self, mdEntries):
-        self.mdEntries = mdEntries
+    def set_md_entry_type_list(self, md_entry_type_list):
+        self.md_entry_type_list = md_entry_type_list
+
+    "return number of symbol requested"
+    def set_no_related_symbol(self,no_related_symbol):
+        self.no_related_symbol=no_related_symbol
 
     "set list of symbol requested"
-    def set_symbols(self, symbols):
-        self.symbols = symbols
+    def set_symbol_list(self, symbol_list):
+        self.symbol_list = symbol_list
 
-    def set_symbols(self,i,symbol):
-        self.symbols[i]= symbol
+    def set_symbol(self,i,symbol):
+        self.symbol_list[i]= symbol
 
 
 class MarketDataResponse(object):
 
     """Constructor of class MarketDataResponse:
         @Parameter:
-            mdReqID : market data response ID related to market data request ID (string)
-            noMDEntries = noMDEntries
+            md_req_id : market data response ID related to market data request ID (string)
+            no_md_entry_types = no_md_entry_types
             symbol = symbol
-            totalVolumeTraded = 0
-            mdEntryType = mdEntryType
-            mdEntryPx = mdEntryPx
-            mdEntrySize = mdEntrySize
-            mdEntryTime = mdEntryTime
-            currency = currency
-            numberOfOrders = numberOfOrders
+            md_entry_type_list = md_entry_type_list
+            md_entry_px_list = md_entry_px_list
+            md_entry_size_list = md_entry_size_list
+            md_entry_date_list = md_entry_date_list
+            md_entry_time_list = md_entry_time_list
+dl            currency = currency
+dl            number_of_orders = number_of_orders
     """
-    def __init__(self, mdReqID, noMDEntries, symbol, totalVolumeTraded, mdEntryType, mdEntryPx, mdEntrySize, mdEntryTime,
-                 currency, numberOfOrders):
-        self.mdReqID = mdReqID
+    def __init__(self, md_req_id, no_md_entry_types, symbol, md_entry_type_list, md_entry_px_list,
+                 md_entry_size_list, md_entry_time_list, md_entry_date_list):
+        self.md_req_id = md_req_id
 
-        self.noMDEntries = noMDEntries
+        self.no_md_entry_types = no_md_entry_types
         self.symbol = symbol
-        self.totalVolumeTraded = totalVolumeTraded
-        self.mdEntryType = mdEntryType
-        self.mdEntryPx = mdEntryPx
-        self.mdEntrySize = mdEntrySize
-        self.mdEntryTime = mdEntryTime
-        self.currency = currency
-        self.numberOfOrders = numberOfOrders
-        #self.securityType = securityType
-        #self.maturityMonthYear = maturityMonthYear
-        #self.putOrCall = putOrCall
-        #self.strikePrice = strikePrice
-
+        self.md_entry_type_list = md_entry_type_list
+        self.md_entry_px_list = md_entry_px_list
+        self.md_entry_size_list = md_entry_size_list
+        self.md_entry_date_list= md_entry_date_list
+        self.md_entry_time_list = md_entry_time_list
 
     "return market data request ID"
     def get_md_req_id(self):
-        return self.mdReqID
+        return self.md_req_id
 
     "return number of market data entries response"
-    def get_no_md_entries(self):
-        return self.noMDEntries
+    def get_no_md_entry_types(self):
+        return self.no_md_entry_types
 
-    "return list of symbol requested"
+    "return symbol requested"
     def get_symbol(self):
         return self.symbol
 
-    "return total volume traded for certain stock"
-    def get_total_volume_traded(self):
-        return self.totalVolumeTraded
-
     "return list of market data entries"
-    def get_md_entry_type(self):
-        return self.mdEntryType
+    def get_md_entry_type_list(self):
+        return self.md_entry_type_list
 
     "return list of market data price"
-    def get_md_entry_px(self):
-        return self.mdEntryPx
+    def get_md_entry_px_list(self):
+        return self.md_entry_px_list
 
     "return list of market data entry size"
-    def get_md_entry_size(self):
-        return self.mdEntrySize
+    def get_md_entry_size_list(self):
+        return self.md_entry_size_list
+
+    "return list of market data entry date"
+    def get_md_entry_date_list(self):
+        return self.md_entry_date_list
 
     "return list of market data entry time"
-    def get_md_entry_time(self):
-        return self.mdEntryTime
-
-    "return list of market data entry currency"
-    def get_currency(self):
-        return self.currency
-
-    "return market data entry number of orders"
-    def get_number_of_orders(self):
-        return self.numberOfOrders
+    def get_md_entry_time_list(self):
+        return self.md_entry_time_list
 
     "set market data request ID"
-    def set_md_req_id(self, mdReqID):
-        self.mdReqID=mdReqID
+    def set_md_req_id(self, md_req_id):
+        self.md_req_id=md_req_id
 
     "set number of market data entries response"
-    def set_no_md_entries(self, noMDEntries):
-        self.noMDEntries=noMDEntries
+    def set_no_md_entry_types(self, no_md_entry_types):
+        self.no_md_entry_types=no_md_entry_types
 
     "set a symbol"
     def set_symbol(self, symbol):
         self.symbol=symbol
 
-    "set total volume traded for certain stock"
-    def set_total_volume_traded(self, totalVolumeTraded):
-        self.totalVolumeTraded = totalVolumeTraded
-
     "set list of market data entries"
-    def set_md_entry_type(self, mdEntryType):
-        self.mdEntryType = mdEntryType
+    def set_md_entry_type_list(self, md_entry_type_list):
+        self.md_entry_type_list = md_entry_type_list
 
     "set list of market data price"
-    def set_md_entry_px(self, mdEntryPx):
-        self.mdEntryPx = mdEntryPx
+    def set_md_entry_px_list(self, md_entry_px_list):
+        self.md_entry_px_list = md_entry_px_list
 
     "set list of market data entry size"
-    def set_md_entry_size(self, mdEntrySize):
-        self.mdEntrySize = mdEntrySize
+    def set_md_entry_size_list(self, md_entry_size_list):
+        self.md_entry_size_list = md_entry_size_list
+
+    "set list of market data entry date"
+    def set_md_entry_date_list(self, md_entry_date_list):
+        self.md_entry_date_list = md_entry_date_list
 
     "set list of market data entry time"
-    def set_md_entry_time(self, mdEntryTime):
-        self.mdEntryTime = mdEntryTime
-
-    "set list of market data entry currency"
-    def set_currency(self, currency):
-        self.currency = currency
-
-    "set market data entry number of orders"
-    def set_number_of_orders(self, numberOfOrders):
-        self.numberOfOrders = numberOfOrders
-
+    def set_md_entry_time_list(self, md_entry_time_list):
+        self.md_entry_time_list = md_entry_time_list
 

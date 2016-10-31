@@ -1,5 +1,6 @@
 import sys
 import quickfix as fix
+from quickfix import Side_BUY, Side_SELL
 import quickfix42 as fix42
 from TradingClass import MarketDataResponse
 import pdb
@@ -53,6 +54,9 @@ class GUISignal(htmlPy.Object):
 
 
 class ClientFIXApplication(fix.Application):
+    order_id = 0
+    market_data_request_id = 0
+
     def __init__(self, client_fix_handler):
         self.client_fix_handler = client_fix_handler
         super(ClientFIXApplication, self).__init__()
@@ -82,11 +86,23 @@ class ClientFIXApplication(fix.Application):
             print "MarketDataSnapshotFullRefresh"
             self.client_fix_handler.handle_market_data_respond(message)
 
+        if(msg_Type.getString() ==fix.MsgType_ExecutionReport):
+            print "ExecutionReport"
+            self.client_fix_handler.handle_execution_report(message)
+
     def toApp(self, message, session_id):
         print "OUT", message
 
     def _calculate_checksum(self):
         pass
+
+    def gen_order_id(self):
+        self.order_id = self.order_id+1
+        return self.order_id
+
+    def gen_market_data_request_id(self):
+        self.market_data_request_id = self.market_data_request_id+1
+        return self.market_data_request_id
 
 
 class ClientFIXHandler():
@@ -151,53 +167,39 @@ class ClientFIXHandler():
         #Create Fix Message for Market Data Request
         message = fix.Message();
         header = message.getHeader();
-#        header.setField(fix.BeginString("FIX.4.2"))
-#        header.setField(fix.BodyLength())
-#        header.setField(fix.SenderCompID("client"))
-#        header.setField(fix.TargetCompID("server"))
         header.setField(fix.MsgType(fix.MsgType_MarketDataRequest))
-        header.setField(fix.MsgSeqNum(1))
+        header.setField(fix.MsgSeqNum(self.fix_application.order_id))
         header.setField(fix.SendingTime())
-        message.setField(fix.MDReqID('1'))
+        message.setField(fix.MDReqID(str(self.fix_application.gen_market_data_request_id())))
         message.setField(fix.SubscriptionRequestType(fix.SubscriptionRequestType_SNAPSHOT))
         message.setField(fix.MarketDepth(1))
         message.setField(fix.NoMDEntryTypes(10))
-        message.setField(fix.MDUpdateType(fix.MDUpdateType_FULL_REFRESH))
 
-        group= fix42.MarketDataRequest().NoMDEntryTypes()
-        group.setField(fix.MDEntryType(fix.MDEntryType_BID))
-        message.addGroup(group)
-        group.setField(fix.MDEntryType(fix.MDEntryType_OFFER))
-        message.addGroup(group)
-        group.setField(fix.MDEntryType(fix.MDEntryType_TRADE))
-        message.addGroup(group)
-        group.setField(fix.MDEntryType(fix.MDEntryType_INDEX_VALUE))
-        message.addGroup(group)
-        group.setField(fix.MDEntryType(fix.MDEntryType_OPENING_PRICE))
-        message.addGroup(group)
-        group.setField(fix.MDEntryType(fix.MDEntryType_CLOSING_PRICE))
-        message.addGroup(group)
-        group.setField(fix.MDEntryType(fix.MDEntryType_SETTLEMENT_PRICE))
-        message.addGroup(group)
-        group.setField(fix.MDEntryType(fix.MDEntryType_TRADING_SESSION_HIGH_PRICE))
-        message.addGroup(group)
-        group.setField(fix.MDEntryType(fix.MDEntryType_TRADING_SESSION_LOW_PRICE))
-        message.addGroup(group)
-        group.setField(fix.MDEntryType(fix.MDEntryType_TRADING_SESSION_VWAP_PRICE))
-        message.addGroup(group)
+        group_md_entry= fix42.MarketDataRequest().NoMDEntryTypes()
+        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_BID))
+        message.addGroup(group_md_entry)
+        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_OFFER))
+        message.addGroup(group_md_entry)
+        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_TRADE))
+        message.addGroup(group_md_entry)
+        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_INDEX_VALUE))
+        message.addGroup(group_md_entry)
+        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_OPENING_PRICE))
+        message.addGroup(group_md_entry)
+        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_CLOSING_PRICE))
+        message.addGroup(group_md_entry)
+        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_SETTLEMENT_PRICE))
+        message.addGroup(group_md_entry)
+        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_TRADING_SESSION_HIGH_PRICE))
+        message.addGroup(group_md_entry)
+        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_TRADING_SESSION_LOW_PRICE))
+        message.addGroup(group_md_entry)
+        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_TRADING_SESSION_VWAP_PRICE))
+        message.addGroup(group_md_entry)
 
-        symbolGroup = fix42.MarketDataRequest().NoRelatedSym()
-        symbolGroup.setField(fix.Symbol(symbol))
-        message.addGroup(symbolGroup)
-
-        """ --- Used if List of symbol sent ---
-        symbolArray=[symbol,symbol]
-        message.setField(fix.NoRelatedSym(len(symbolArray)))
-        symbolGroup = fix42.MarketDataRequest().NoRelatedSym()
-        for asymbol in symbolArray:
-            symbolGroup.setField(fix.Symbol(asymbol))
-            message.addGroup(symbolGroup)
-        """
+        group_symbol = fix42.MarketDataRequest().NoRelatedSym()
+        group_symbol.setField(fix.Symbol(symbol))
+        message.addGroup(group_symbol)
 
         #Send Fix Message to Server
         fix.Session.sendToTarget(message,self.fix_application.sessionID)
@@ -217,66 +219,165 @@ class ClientFIXHandler():
         """
 
         #Retrieve Market Data Response Type Full Refresh/Snapshot
-        mdReqID = fix.MDReqID()
-        #securityType=fix.SecurityType()
-        #maturityMonthYear=fix.MaturityMonthYear()
-        #putOrCall=fix.PutOrCall()
-        #strikePrice=fix.StrikePrice()
-        noMDEntries= fix.NoMDEntries()
-        symbol=fix.Symbol()
-        totalVolumeTraded=fix.TotalVolumeTraded()
-        mdEntryType=fix.MDEntryType()
-        mdEntryPx=fix.MDEntryPx()
-        mdEntrySize=fix.MDEntrySize()
-        mdEntryTime=fix.MDEntryTime()
-        currency=fix.Currency()
-        numberOfOrder=fix.NumberOfOrders()
-        mdEntryTypeList=[]
-        mdEntryPxList=[]
-        mdEntrySizeList=[]
-        mdEntryTimeList=[]
-        currencyList=[]
-        numberOfOrdersList=[]
+        md_req_id_fix = fix.MDReqID()
+        no_md_entries_fix= fix.NoMDEntries()
+        symbol_fix=fix.Symbol()
+        md_entry_type_fix=fix.MDEntryType()
+        md_entry_px_fix=fix.MDEntryPx()
+        md_entry_size_fix=fix.MDEntrySize()
+        md_entry_date_fix=fix.MDEntryDate()
+        md_entry_time_fix=fix.MDEntryTime()
+        md_entry_type_list=[]
+        md_entry_px_list=[]
+        md_entry_size_list=[]
+        md_entry_date_list=[]
+        md_entry_time_list=[]
 
-        message.getField(mdReqID)
-        message.getField(noMDEntries)
-        message.getField(symbol)
-        message.getField(totalVolumeTraded)
+        message.getField(md_req_id_fix)
+        message.getField(no_md_entries_fix)
+        message.getField(symbol_fix)
 
         groupMD= fix42.MarketDataSnapshotFullRefresh.NoMDEntries()
-        for MDIndex in range(noMDEntries.getValue()):
+        for MDIndex in range(no_md_entries_fix.getValue()):
             message.getGroup(MDIndex+1,groupMD)
-            groupMD.getField(mdEntryType)
-            groupMD.getField(mdEntryPx)
-            groupMD.getField(mdEntrySize)
-            groupMD.getField(mdEntryTime)
-            groupMD.getField(currency)
-            groupMD.getField(numberOfOrder)
-            mdEntryTypeList.append(mdEntryType.getValue())
-            mdEntryPxList.append(mdEntryPx.getValue())
-            mdEntrySizeList.append(mdEntrySize.getValue())
-            mdEntryTimeList.append(mdEntryTime.getString())
-            currencyList.append(currency.getValue())
-            numberOfOrdersList.append(numberOfOrder.getValue())
+            groupMD.getField(md_entry_type_fix)
+            groupMD.getField(md_entry_px_fix)
+            groupMD.getField(md_entry_size_fix)
+            groupMD.getField(md_entry_date_fix)
+            groupMD.getField(md_entry_time_fix)
+            md_entry_type_list.append(md_entry_type_fix.getValue())
+            md_entry_px_list.append(md_entry_px_fix.getValue())
+            md_entry_size_list.append(md_entry_size_fix.getValue())
+            md_entry_date_list.append(md_entry_date_fix.getString())
+            md_entry_time_list.append(md_entry_time_fix.getString())
 
         #Encapsulate data into market data response object
-        marketData= MarketDataResponse(mdReqID, noMDEntries.getValue(), symbol, totalVolumeTraded, mdEntryTypeList,
-                                            mdEntryPxList, mdEntrySizeList, mdEntryTimeList, currencyList,
-                                            numberOfOrdersList)
+        market_data= MarketDataResponse(md_req_id_fix.getValue(), no_md_entries_fix.getValue(), symbol_fix.getValue()
+            , md_entry_type_list, md_entry_px_list, md_entry_size_list, md_entry_date_list, md_entry_time_list)
 
         #Should be done in client gui or client logic can be moved by passing object to another class for now as example
-        print marketData.get_no_md_entries()
-        print marketData.get_symbol()
-        print marketData.get_total_volume_traded()
-        for j in range (marketData.get_no_md_entries()):
-            print(marketData.get_md_entry_type()[j])
-            print(marketData.get_md_entry_px()[j])
-            print(marketData.get_md_entry_size()[j])
-            print(marketData.get_md_entry_time()[j])
-            print(marketData.get_currency()[j])
-            print(marketData.get_number_of_orders()[j])
-
+        print "tes1"
+        print market_data.get_no_md_entry_types()
+        print market_data.get_symbol()
+        for j in range (market_data.get_no_md_entry_types()):
+            print(market_data.get_md_entry_type_list()[j])
+            print(market_data.get_md_entry_px_list()[j])
+            print(market_data.get_md_entry_size_list()[j])
+            print(market_data.get_md_entry_date_list()[j])
+            print(market_data.get_md_entry_time_list()[j])
+        print "tes2"
         pass
+
+    def send_order(self, order):
+        """Sends an order to server
+
+        TODO @husein description if needed
+
+        Args:
+            order (class order): s
+
+        Returns:
+
+        """
+
+        #First Retrieve Input From GUI using order object
+        #                 Left Blank
+
+        #Create Fix Message for Order
+        message = fix.Message()
+        header = message.getHeader()
+        header.setField(fix.MsgType(fix.MsgType_NewOrderSingle))
+        header.setField(fix.MsgSeqNum(self.fix_application.order_id))
+        header.setField(fix.SendingTime())
+
+        #Set Message with ExecInst 2, Side Buy and Ord Type Market
+        message.setField(fix.ClOrdID(str(self.fix_application.gen_order_id())))
+        message.setField(fix.HandlInst('1'))
+        message.setField(fix.ExecInst('2')) #2 allow partial order, G All or None
+        message.setField(fix.Symbol("XEN"))
+        message.setField(fix.Side(Side_BUY)) #1 buy, 2 sell
+        message.setField(fix.MaturityMonthYear("201601"))
+        message.setField(fix.MaturityDay("20"))
+        message.setField(fix.TransactTime())
+        message.setField(fix.OrderQty(10))
+        message.setField(fix.OrdType('1')) #1 = Market, 2 = Limit,3 = Stop // optional,4 = Stop limit // optional,
+        message.setField(fix.Price(1000))
+        message.setField(fix.StopPx(10000))
+
+        #Send Fix Message to Server
+        fix.Session.sendToTarget(message,self.fix_application.sessionID)
+
+        #Simulate possible Order Type with Side=Buy and Exec Inst =2
+        for i in range(3):
+            message.setField(fix.OrdType(str(i+2)))
+            fix.Session.sendToTarget(message,self.fix_application.sessionID)
+        #Simulate possible Order Type with Side=Buy and Exec Inst =G
+        message.setField(fix.ExecInst('G'))
+        for j in range(4):
+            message.setField(fix.OrdType(str(j+1)))
+            fix.Session.sendToTarget(message,self.fix_application.sessionID)
+
+        #Set Order with Side Sell
+        message.setField(fix.Side(Side_SELL)) #1 buy, 2 sell
+
+        #Simulate Order Type with Sell and Exec Inst =2
+        message.setField(fix.ExecInst('2'))
+        for k in range(4):
+            message.setField(fix.OrdType(str(k+1)))
+            fix.Session.sendToTarget(message,self.fix_application.sessionID)
+        #Simulate Order Type with Buy and Exec Inst =G
+        message.setField(fix.ExecInst('G'))
+        for l in range(4):
+            message.setField(fix.OrdType(str(l+1)))
+            fix.Session.sendToTarget(message,self.fix_application.sessionID)
+
+        return
+
+    def handle_execution_report(self,message):
+
+        order_id_fix = fix.ClOrdID()
+        exec_id_fix = fix.ExecID()
+        exec_trans_type_fix = fix.ExecTransType()
+        exec_type_fix = fix.ExecType()
+        ord_status_fix = fix.OrdStatus()
+        symbol_fix = fix.Symbol()
+        side_fix = fix.Side()
+        leaves_qty_fix = fix.LeavesQty()
+        cum_qty_fix = fix.CumQty()
+        avg_px_fix = fix.AvgPx()
+        price_fix = fix.Price()
+        stop_px_fix = fix.StopPx()
+
+        message.getField(order_id_fix)
+        message.getField(exec_id_fix)
+        message.getField(exec_trans_type_fix)
+        message.getField(exec_type_fix)
+        message.getField(ord_status_fix)
+        message.getField(symbol_fix)
+        message.getField(side_fix)
+        message.getField(leaves_qty_fix)
+        message.getField(cum_qty_fix)
+        message.getField(avg_px_fix)
+        message.getField(price_fix)
+        message.getField(stop_px_fix)
+
+        #Suppose this should be done in client logic/ GUI
+        print("exec_id_fix, exec_trans_type_fix,exec_type_fix,ord_status_fix,symbol_fix,side_fix,eaves_qty_fix,"
+              "cum_qty_fix,avg_px_fix,price_fix,stop_px_fix,")
+        print(order_id_fix.getValue())
+        print(exec_id_fix.getValue())
+        print(exec_trans_type_fix.getValue())
+        print(exec_type_fix.getValue())
+        print(ord_status_fix.getValue())
+        print(symbol_fix.getValue())
+        print(side_fix.getValue())
+        print(leaves_qty_fix.getValue())
+        print(cum_qty_fix.getValue())
+        print(avg_px_fix.getValue())
+        print(price_fix.getValue())
+        print(stop_px_fix.getValue())
+
+        return
 
     def add_user_id_to_message(self, message):
         message.setField(fix.RawData(self.get_password()))
@@ -323,7 +424,7 @@ class ClientLogic():
         #TODO block mechanism
         self.block_gui()
 
-        return self.succes
+        #return self.success
 
         #Notice that we should validate here
         return True
@@ -346,6 +447,10 @@ class ClientLogic():
         Returns:
             None
         """
+        return
+
+    def process_order_request(self,order):
+        self.client_fix_handler.send_order(order)
         return
 
     def request_trading_transactions(self, user_name):
@@ -385,7 +490,7 @@ class GUIHandler:
 
     def wait_for_input(self):
         while True:
-            print '''input 1 to logon\ninput 2 to logout\ninput 3 to send market request\ninput4 to quit'''
+            print '''input 1 to logon\ninput 2 to logout\ninput 3 to send market request\ninput 4 to order\ninput 5 to quit'''
             input = raw_input()
             if input == '1':
                 self.button_login_actuated("john","papapa")
@@ -394,6 +499,8 @@ class GUIHandler:
             elif input == '3':
                 self.send_market_data_request_option("CNNA")
             elif input =='4':
+                self.send_order_request_option("order")
+            elif input =='5':
                 break
             else:
                 continue
@@ -421,10 +528,14 @@ class GUIHandler:
         """This function is activated when the login button is pushed"""
         respond = self.client_logic.logout()
 
-<<<<<<< HEAD
+#<<<<<<< HEAD
     def send_market_data_request_option(self, symbol):
         self.client_logic.process_market_data_request(symbol)
-=======
+
+    def send_order_request_option(self, order):
+        self.client_logic.process_order_request(order)
+
+#=======
     def button_buy_actuated(self, stock_ticker, price, quantity):
         #TODO alex
         pass
@@ -511,7 +622,7 @@ class TradingTransaction():
         self.side=p_side
 
 
->>>>>>> add_matching_algorithm_outline
+#>>>>>>> add_matching_algorithm_outline
 
 client_config_file_name = sys.argv[1] if len(sys.argv) == 2 else "client.cfg"
 client = ClientLogic(client_config_file_name)
