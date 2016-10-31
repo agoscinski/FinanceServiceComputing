@@ -256,7 +256,6 @@ class ClientFIXHandler():
             , md_entry_type_list, md_entry_px_list, md_entry_size_list, md_entry_date_list, md_entry_time_list)
 
         #Should be done in client gui or client logic can be moved by passing object to another class for now as example
-        print "tes1"
         print market_data.get_no_md_entry_types()
         print market_data.get_symbol()
         for j in range (market_data.get_no_md_entry_types()):
@@ -265,7 +264,6 @@ class ClientFIXHandler():
             print(market_data.get_md_entry_size_list()[j])
             print(market_data.get_md_entry_date_list()[j])
             print(market_data.get_md_entry_time_list()[j])
-        print "tes2"
         pass
 
     def send_order(self, order):

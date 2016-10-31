@@ -412,7 +412,7 @@ class ServerDatabaseHandler:
     # TODO send SQL Queries
     def __init__(self):
         self.user_name = "root"
-        self.user_password = "123456" #
+        self.user_password = "root" #
         self.database_name = "FSCDatabase"
         self.database_port = 3306
         self.database_creation_file_path = "./database/server_database.sql"
