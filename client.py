@@ -3,6 +3,12 @@ import quickfix as fix
 from quickfix import Side_BUY, Side_SELL
 import quickfix42 as fix42
 from TradingClass import MarketDataResponse
+from TradingClass import OrderExecution
+from TradingClass import FixOrder
+from TradingClass import DateFix
+from TradingClass import YearMonthFix
+from TradingClass import DateTimeUTCFix
+from TradingClass import TimeFix
 import pdb
 import htmlPy
 import json
@@ -82,11 +88,10 @@ class ClientFIXApplication(fix.Application):
     def fromApp(self, message, session_id):
         print "IN", message
         msg_Type = message.getHeader().getField(fix.MsgType())
-        if(msg_Type.getString() ==fix.MsgType_MarketDataSnapshotFullRefresh):
+        if(msg_Type.getString() == fix.MsgType_MarketDataSnapshotFullRefresh):
             print "MarketDataSnapshotFullRefresh"
             self.client_fix_handler.handle_market_data_respond(message)
-
-        if(msg_Type.getString() ==fix.MsgType_ExecutionReport):
+        elif(msg_Type.getString() ==fix.MsgType_ExecutionReport):
             print "ExecutionReport"
             self.client_fix_handler.handle_execution_report(message)
 
@@ -174,7 +179,6 @@ class ClientFIXHandler():
         message.setField(fix.SubscriptionRequestType(fix.SubscriptionRequestType_SNAPSHOT))
         message.setField(fix.MarketDepth(1))
         message.setField(fix.NoMDEntryTypes(10))
-
         group_md_entry= fix42.MarketDataRequest().NoMDEntryTypes()
         group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_BID))
         message.addGroup(group_md_entry)
@@ -237,6 +241,8 @@ class ClientFIXHandler():
         message.getField(no_md_entries_fix)
         message.getField(symbol_fix)
 
+        a_date= DateFix(2000,1,1)
+        a_time= TimeFix(0,0,0)
         groupMD= fix42.MarketDataSnapshotFullRefresh.NoMDEntries()
         for MDIndex in range(no_md_entries_fix.getValue()):
             message.getGroup(MDIndex+1,groupMD)
@@ -245,29 +251,23 @@ class ClientFIXHandler():
             groupMD.getField(md_entry_size_fix)
             groupMD.getField(md_entry_date_fix)
             groupMD.getField(md_entry_time_fix)
+            a_date.set_date_string(md_entry_date_fix.getString())
+            a_time.set_time_string(md_entry_time_fix.getString())
             md_entry_type_list.append(md_entry_type_fix.getValue())
             md_entry_px_list.append(md_entry_px_fix.getValue())
             md_entry_size_list.append(md_entry_size_fix.getValue())
-            md_entry_date_list.append(md_entry_date_fix.getString())
-            md_entry_time_list.append(md_entry_time_fix.getString())
+            md_entry_date_list.append(a_date)
+            md_entry_time_list.append(a_time)
 
         #Encapsulate data into market data response object
         market_data= MarketDataResponse(md_req_id_fix.getValue(), no_md_entries_fix.getValue(), symbol_fix.getValue()
             , md_entry_type_list, md_entry_px_list, md_entry_size_list, md_entry_date_list, md_entry_time_list)
 
-        #Should be done in client gui or client logic can be moved by passing object to another class for now as example
-        print market_data.get_no_md_entry_types()
-        print market_data.get_symbol()
-        for j in range (market_data.get_no_md_entry_types()):
-            print(market_data.get_md_entry_type_list()[j])
-            print(market_data.get_md_entry_px_list()[j])
-            print(market_data.get_md_entry_size_list()[j])
-            print(market_data.get_md_entry_date_list()[j])
-            print(market_data.get_md_entry_time_list()[j])
+        self.client_logic.process_market_data_respond(market_data)
         pass
 
-    def send_order(self, order):
-        """Sends an order to server
+    def send_order(self, fix_order):
+        """Sends an order to server based on fix_order object created in client_logic
 
         TODO @husein description if needed
 
@@ -278,9 +278,6 @@ class ClientFIXHandler():
 
         """
 
-        #First Retrieve Input From GUI using order object
-        #                 Left Blank
-
         #Create Fix Message for Order
         message = fix.Message()
         header = message.getHeader()
@@ -288,52 +285,34 @@ class ClientFIXHandler():
         header.setField(fix.MsgSeqNum(self.fix_application.order_id))
         header.setField(fix.SendingTime())
 
-        #Set Message with ExecInst 2, Side Buy and Ord Type Market
-        message.setField(fix.ClOrdID(str(self.fix_application.gen_order_id())))
-        message.setField(fix.HandlInst('1'))
-        message.setField(fix.ExecInst('2')) #2 allow partial order, G All or None
-        message.setField(fix.Symbol("XEN"))
-        message.setField(fix.Side(Side_BUY)) #1 buy, 2 sell
-        message.setField(fix.MaturityMonthYear("201601"))
-        message.setField(fix.MaturityDay("20"))
-        message.setField(fix.TransactTime())
-        message.setField(fix.OrderQty(10))
-        message.setField(fix.OrdType('1')) #1 = Market, 2 = Limit,3 = Stop // optional,4 = Stop limit // optional,
-        message.setField(fix.Price(1000))
-        message.setField(fix.StopPx(10000))
+        #Set Fix Message fix_order object
+        maturity_month_year_fix = fix.MaturityMonthYear()
+        maturity_month_year_fix.setString(fix_order.get_maturity_month_year().__str__())
+        transact_time_fix= fix.TransactTime()
+        transact_time_fix.setString(fix_order.get_transact_time().__str__())
+
+        message.setField(fix.ClOrdID(str(fix_order.get_cl_ord_id())))
+        message.setField(fix.HandlInst(fix_order.get_handl_inst()))
+        message.setField(fix.ExecInst(fix_order.get_exec_inst())) #2 allow partial order, G All or None
+        message.setField(fix.Symbol(fix_order.get_symbol()))
+        message.setField(maturity_month_year_fix)
+        message.setField(fix.MaturityDay(str(fix_order.get_maturity_day())))
+        message.setField(fix.Side(fix_order.get_side())) #1 buy, 2 sell
+        message.setField(transact_time_fix)
+        message.setField(fix.OrderQty(fix_order.get_order_qty()))
+        message.setField(fix.OrdType(fix_order.get_ord_type())) #1 = Market, 2 = Limit,3 = Stop // optional,4 = Stop limit // optional,
+        message.setField(fix.Price(fix_order.get_price()))
+        message.setField(fix.StopPx(fix_order.get_stop_px()))
 
         #Send Fix Message to Server
         fix.Session.sendToTarget(message,self.fix_application.sessionID)
-
-        #Simulate possible Order Type with Side=Buy and Exec Inst =2
-        for i in range(3):
-            message.setField(fix.OrdType(str(i+2)))
-            fix.Session.sendToTarget(message,self.fix_application.sessionID)
-        #Simulate possible Order Type with Side=Buy and Exec Inst =G
-        message.setField(fix.ExecInst('G'))
-        for j in range(4):
-            message.setField(fix.OrdType(str(j+1)))
-            fix.Session.sendToTarget(message,self.fix_application.sessionID)
-
-        #Set Order with Side Sell
-        message.setField(fix.Side(Side_SELL)) #1 buy, 2 sell
-
-        #Simulate Order Type with Sell and Exec Inst =2
-        message.setField(fix.ExecInst('2'))
-        for k in range(4):
-            message.setField(fix.OrdType(str(k+1)))
-            fix.Session.sendToTarget(message,self.fix_application.sessionID)
-        #Simulate Order Type with Buy and Exec Inst =G
-        message.setField(fix.ExecInst('G'))
-        for l in range(4):
-            message.setField(fix.OrdType(str(l+1)))
-            fix.Session.sendToTarget(message,self.fix_application.sessionID)
 
         return
 
     def handle_execution_report(self,message):
 
-        order_id_fix = fix.ClOrdID()
+        order_id_fix = fix.OrderID()
+        cl_ord_id_fix= fix.ClOrdID()
         exec_id_fix = fix.ExecID()
         exec_trans_type_fix = fix.ExecTransType()
         exec_type_fix = fix.ExecType()
@@ -346,6 +325,7 @@ class ClientFIXHandler():
         price_fix = fix.Price()
         stop_px_fix = fix.StopPx()
 
+        message.getField(cl_ord_id_fix)
         message.getField(order_id_fix)
         message.getField(exec_id_fix)
         message.getField(exec_trans_type_fix)
@@ -359,21 +339,13 @@ class ClientFIXHandler():
         message.getField(price_fix)
         message.getField(stop_px_fix)
 
-        #Suppose this should be done in client logic/ GUI
-        print("exec_id_fix, exec_trans_type_fix,exec_type_fix,ord_status_fix,symbol_fix,side_fix,eaves_qty_fix,"
-              "cum_qty_fix,avg_px_fix,price_fix,stop_px_fix,")
-        print(order_id_fix.getValue())
-        print(exec_id_fix.getValue())
-        print(exec_trans_type_fix.getValue())
-        print(exec_type_fix.getValue())
-        print(ord_status_fix.getValue())
-        print(symbol_fix.getValue())
-        print(side_fix.getValue())
-        print(leaves_qty_fix.getValue())
-        print(cum_qty_fix.getValue())
-        print(avg_px_fix.getValue())
-        print(price_fix.getValue())
-        print(stop_px_fix.getValue())
+        #Encapsulate result of receiving execution report into order execution report
+        order_execution= OrderExecution(order_id_fix.getValue(), cl_ord_id_fix.getValue(), exec_id_fix.getValue()
+            , exec_trans_type_fix.getValue(), exec_type_fix.getValue(), ord_status_fix.getValue(), symbol_fix.getValue()
+            , side_fix.getValue(), leaves_qty_fix.getValue(), cum_qty_fix.getValue(), avg_px_fix.getValue()
+            , price_fix.getValue(), stop_px_fix.getValue())
+
+        self.client_logic.process_order_execution_respond(order_execution)
 
         return
 
@@ -436,19 +408,65 @@ class ClientLogic():
     def process_market_data_request(self, symbol):
         self.client_fix_handler.send_market_data_request(symbol)
 
-    def process_market_data_respond(self, marketData):
+    def process_market_data_respond(self, market_data):
         """Process market data respond
 
         Args:
-            message (list of str): .
+            market_data object of MarketDataResponse .
 
         Returns:
             None
         """
+        #Example of printing market_data response object
+        print market_data.get_no_md_entry_types()
+        print market_data.get_symbol()
+        for j in range (market_data.get_no_md_entry_types()):
+            print(market_data.get_md_entry_type(j))
+            print(market_data.get_md_entry_px(j))
+            print(market_data.get_md_entry_size(j))
+            print(market_data.get_md_entry_date(j))
+            print(market_data.get_md_entry_time(j))
         return
 
     def process_order_request(self,order):
-        self.client_fix_handler.send_order(order)
+        #Get Order instruction from GUI
+        #Left Blank
+
+        #Construct Fix Order Object to be sent to the fix handler
+        cl_ord_id=self.client_fix_handler.fix_application.gen_order_id()
+        handl_inst='1'
+        exec_inst='2'
+        symbol='SYMBOL'
+        maturity_month_year= YearMonthFix(2016,1)
+        maturity_day=1
+        side=Side_BUY
+        transact_time= DateTimeUTCFix(2016,1,1,11,40,10)
+        order_qty=10
+        ord_type='1'
+        price=1000
+        stop_px=10000
+        fix_order= FixOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side
+            ,transact_time, order_qty, ord_type, price, stop_px)
+        self.client_fix_handler.send_order(fix_order)
+        return
+
+    def process_order_execution_respond(self,order_execution):
+        #process execution respond from server
+
+        print("exec_id_fix, exec_trans_type_fix,exec_type_fix,ord_status_fix,symbol_fix,side_fix,eaves_qty_fix,"
+              "cum_qty_fix,avg_px_fix,price_fix,stop_px_fix,")
+        print(order_execution.get_order_id())
+        print(order_execution.get_exec_id())
+        print(order_execution.get_exec_trans_type())
+        print(order_execution.get_exec_type())
+        print(order_execution.get_ord_status())
+        print(order_execution.get_symbol())
+        print(order_execution.get_side())
+        print(order_execution.get_leaves_qty())
+        print(order_execution.get_cum_qty())
+        print(order_execution.get_avg_px())
+        print(order_execution.get_price())
+        print(order_execution.get_stop_px())
         return
 
     def request_trading_transactions(self, user_name):
