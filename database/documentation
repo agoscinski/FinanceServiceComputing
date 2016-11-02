@@ -14,10 +14,12 @@ RecInst
 ClientID
 HandlingIntsruction
 CashOrderQuantitiy
+LastStatus: 0:Done, 1:Pending, 2: PartlyCanceled, 3: CompletelyCanceled
+
 
 
 OrderCancel
-OrderCancelID = OrderID
-Order_ClientOrderID = OrigClientOrderID
-ClientOrderID = ClientOrderID
+OrderCancelID: The same as OrderID in FIX Cancel Order request
+Order_ClientOrderID: The same as OrigClientOrderID in FIX Cancel Order request
+ClientOrderID: The same as ClientOrderID in FIX Cancel Order request
 

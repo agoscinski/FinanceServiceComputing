@@ -556,6 +556,10 @@ class GUIHandler:
         #TODO alex
         pass
 
+    def button_sell_actuated(self, stock_ticker, price, quantity):
+        #TODO alex
+        pass
+
     def search_for_stock_actuated(self, searching_value):
         """This function is called when the user enters a search request
 

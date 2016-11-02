@@ -410,6 +410,9 @@ class ServerLogic:
         print(fix_order.get_price())
         print(fix_order.get_stop_px())
 
+        #TODO Husein insert order into database as Order
+        #TODO Husein retrieve all orders from database Order
+
         #TODO this is only outline, does not work
         """ Doing Matching Algorithm and insert database
         order= None
@@ -490,6 +493,32 @@ class ServerDatabaseHandler:
         except MySQLdb.Error, e:
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 
+    def insert_order(self, order):
+        """Inserts orders of type
+
+        Checks if user with the given id and password exists in database
+
+        Args:
+            order (datatype.Order): The order to be inserted
+
+        Returns:
+            None
+        """
+        # TODO Husein insert order into database as Order
+        return
+
+
+    def fetch_all_orders(self, ticker_symbol):
+        """Fetches all orders from the database regarding the ticker_symbol
+
+        Args:
+            ticker_symbol (string): The ticker symbol for which orders are fetched
+
+        Returns:
+            order (list of datatype.Order): Fetched orders
+        """
+        # TODO Husein retrieve all orders from database Order
+        pass
 
     def delete_all_stock_data(self):
         command = "delete from Stock"
