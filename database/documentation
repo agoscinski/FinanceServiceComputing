@@ -1,0 +1,23 @@
+Account
+A user account is used my clients to connect to the server
+CompanyID: the ID of the company when the company registered
+CompanyName: the name of the company with companyID
+Password: the password of the company
+RoleID: the role of the user, if he is has admin rights (1) or no admin rights (0)
+
+
+Order
+An order is an offered order by client to buy or sell stocks. It can be
+ClientOrderID: The ID offered by the sender side 
+ClientID: It is the ID of the client on which behalve 
+RecInst
+ClientID
+HandlingIntsruction
+CashOrderQuantitiy
+
+
+OrderCancel
+OrderCancelID = OrderID
+Order_ClientOrderID = OrigClientOrderID
+ClientOrderID = ClientOrderID
+
