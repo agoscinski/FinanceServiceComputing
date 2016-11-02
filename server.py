@@ -8,6 +8,11 @@ import MySQLdb
 from enum import Enum
 from TradingClass import MarketDataRequest
 from TradingClass import MarketDataResponse
+from TradingClass import FixOrder
+from TradingClass import OrderExecution
+from TradingClass import DateFix
+from TradingClass import TimeFix
+
 
 
 class ServerRespond(Enum):
@@ -17,6 +22,7 @@ class ServerRespond(Enum):
 
 class ServerFIXApplication(fix.Application):
     exec_id=0
+    order_id=0
 
     def __init__(self, server_fix_handler):
         self.server_fix_handler = server_fix_handler
@@ -80,13 +86,18 @@ class ServerFIXApplication(fix.Application):
         if msg_Type.getString() == fix.MsgType_MarketDataRequest:
             print '''IN MarketDataRequest'''
             self.server_fix_handler.handle_market_data_request(message)
-        if msg_Type.getString() == fix.MsgType_NewOrderSingle:
+        elif msg_Type.getString() == fix.MsgType_NewOrderSingle:
             print '''IN NewSingleOrder'''
             self.server_fix_handler.handle_order_request(message)
 
     def gen_exec_id(self):
         self.exec_id = self.exec_id+1
         return self.exec_id
+
+    def gen_order_id(self):
+        self.order_id = self.order_id+1
+        return self.order_id
+
 
 class ServerFIXHandler:
     def __init__(self, server_logic, server_config_file_name):
@@ -125,11 +136,12 @@ class ServerFIXHandler:
             TODO @husein
 
     		Args:
-    			symbols (list of str): A list of symbol tickers.
+    			message (fix message): market data request message
 
     		Returns:
     			None
     		"""
+
         # Retrieving Fix Data from market data request sent by client
         md_req_id_fix = fix.MDReqID()
         subscription_request_type_fix = fix.SubscriptionRequestType()
@@ -177,11 +189,13 @@ class ServerFIXHandler:
             TODO @husein
 
             Args:
-                market_data (?): ...
+                market_data MarketDataResponse Object
 
             Returns:
                 None
             """
+
+        #Create Market Data Response Fix Message from market_data
         message = fix.Message()
         header = message.getHeader()
         header.setField(fix.MsgType(fix.MsgType_MarketDataSnapshotFullRefresh))
@@ -197,16 +211,19 @@ class ServerFIXHandler:
         md_entry_size = market_data.get_md_entry_size_list()
         md_entry_date = market_data.get_md_entry_date_list()
         md_entry_time = market_data.get_md_entry_time_list()
+        entry_date_fix = fix.MDEntryDate()
+        entry_time_fix = fix.MDEntryTime()
         for md_index in range(market_data.get_no_md_entry_types()):
+            entry_date_fix.setString(md_entry_date[md_index].__str__())
+            entry_time_fix.setString(md_entry_time[md_index].__str__())
             group_md_entry.setField(fix.MDEntryType(md_entry_type[md_index]))
             group_md_entry.setField(fix.MDEntryPx(md_entry_px[md_index]))
             group_md_entry.setField(fix.MDEntrySize(md_entry_size[md_index]))
-            # group.setField(fix.MDEntryTime(md_entry_time_list[md_index])) not sure why cannot instantiate object with int var
-            # group.setField(fix.MDEntryDate(md_entry_date_list[md_index])) not sure why cannot instantiate object with int var
-            group_md_entry.setField(fix.MDEntryDate())
-            group_md_entry.setField(fix.MDEntryTime())
+            group_md_entry.setField(entry_date_fix)
+            group_md_entry.setField(entry_time_fix)
             message.addGroup(group_md_entry)
 
+        #Send the message to client
         fix.Session.sendToTarget(message, self.fix_application.sessionID)
 
         return
@@ -248,43 +265,13 @@ class ServerFIXHandler:
         message.getField(price_fix)
         message.getField(stop_px_fix)
 
-        print("clord,handlinst,execinst,symol,matmonthyear,matday,side,transactime,orderqty,ordertype")
-        print(cl_ord_id_fix.getValue())
-        print(handl_inst_fix.getValue())
-        print(exec_inst_fix.getValue())
-        print(symbol_fix.getValue())
-        print(maturity_month_year_fix.getString())
-        print(maturity_day_fix.getString())
-        print(side_fix.getValue())
-        print(transact_time_fix.getString())
-        print(order_qty_fix.getValue())
-        print(ord_type_fix.getValue())
-        print(price_fix.getValue())
-        print(stop_px_fix.getValue())
+        #Create FixOrder Object to be sent to server logic
+        fix_order= FixOrder(cl_ord_id_fix.getValue(),handl_inst_fix.getValue(),exec_inst_fix.getValue(),
+        symbol_fix.getValue(), maturity_month_year_fix.getValue(), maturity_day_fix.getValue(),
+        side_fix.getValue(), transact_time_fix.getString(), order_qty_fix.getValue(), ord_type_fix.getValue(),
+        price_fix.getValue(), stop_px_fix.getValue())
 
-        #Execution Report Temp
-        message = fix.Message()
-        header = message.getHeader()
-        header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
-        header.setField(fix.MsgSeqNum(1))
-
-        header.setField(fix.SendingTime())
-        message.setField(fix.OrderID(ord_type_fix.getValue()))
-        message.setField(fix.ClOrdID(cl_ord_id_fix.getValue()))
-        message.setField(fix.ExecID(str(self.fix_application.gen_exec_id())))
-        message.setField(fix.ExecTransType('0')) #0 = New,1 = Cancel,2 = Correct,3 = Status
-        message.setField(fix.ExecType('2')) #0 = New,1 = Partially filled,2 = Filled,3 = Done for day,4 = Canceled
-        message.setField(fix.OrdStatus('2'))#0 = New,1 = Partially filled,2 = Filled,3 = Done for day,4 = Canceled
-        message.setField(fix.Symbol(symbol_fix.getValue()))
-        message.setField(fix.Side(side_fix.getValue()))
-        message.setField(fix.LeavesQty(0))
-        message.setField(fix.CumQty(200))
-        message.setField(fix.AvgPx(999))
-        message.setField(fix.Price(900))
-        message.setField(fix.StopPx(1000))
-        #message.setField(fix.PegDifference(20))
-
-        fix.Session.sendToTarget(message, self.fix_application.sessionID)
+        self.server_logic.process_order_request(fix_order)
 
         return
 
@@ -294,12 +281,33 @@ class ServerFIXHandler:
             TODO @husein
 
             Args:
-                order execution object
+                order_execution : OrderExecution object created in server logic
 
             Returns:
                 None
             """
+        #Create Execution Report Fix Message based on order_execution object created in server logic
+        message = fix.Message()
+        header = message.getHeader()
+        header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
+        header.setField(fix.MsgSeqNum(self.fix_application.exec_id))
+        header.setField(fix.SendingTime())
 
+        message.setField(fix.OrderID(order_execution.get_order_id()))
+        message.setField(fix.ClOrdID(order_execution.get_cl_ord_id()))
+        message.setField(fix.ExecID(order_execution.get_exec_id()))
+        message.setField(fix.ExecTransType(order_execution.get_exec_trans_type())) #0 = New,1 = Cancel,2 = Correct,3 = Status
+        message.setField(fix.ExecType(order_execution.get_exec_type())) #0 = New,1 = Partially filled,2 = Filled,3 = Done for day,4 = Canceled
+        message.setField(fix.OrdStatus(order_execution.get_ord_status()))#0 = New,1 = Partially filled,2 = Filled,3 = Done for day,4 = Canceled
+        message.setField(fix.Symbol(order_execution.get_symbol()))
+        message.setField(fix.Side(order_execution.get_side()))
+        message.setField(fix.LeavesQty(order_execution.get_leaves_qty()))
+        message.setField(fix.CumQty(order_execution.get_cum_qty()))
+        message.setField(fix.AvgPx(order_execution.get_avg_px()))
+        message.setField(fix.Price(order_execution.get_price()))
+        message.setField(fix.StopPx(order_execution.get_stop_px()))
+
+        fix.Session.sendToTarget(message, self.fix_application.sessionID)
         return
 
 class ServerLogic:
@@ -328,7 +336,7 @@ class ServerLogic:
         """Process market data request
 
 		Args:
-			symbols (list of str): A list of symbol tickers.
+			md_request : MarketDataRequest Object
 
 		Returns:
 			bool: The return value. True for success, False otherwise.
@@ -358,11 +366,15 @@ class ServerLogic:
         md_entry_time_list = []
 
         # Should be retrieving Market Data using Required Symbol and Parameter
+        a_date= DateFix(2013,2,1)
+        a_date.set_date_string("20140201")
+        a_time= TimeFix(10,1,0)
+        a_time.set_time_string("10:02:00")
         for MDIndex in range(md_request.get_no_md_entry_types()):
             md_entry_px_list.append(100)
             md_entry_size_list.append(5)
-            md_entry_date_list.append(20130201)
-            md_entry_time_list.append(time.time())
+            md_entry_date_list.append(a_date)
+            md_entry_time_list.append(a_time)
 
         # Encapsulate data into market data response object
         market_data = MarketDataResponse(md_req_id, no_md_entries, symbol, md_entry_type_list, md_entry_px_list,
@@ -373,17 +385,34 @@ class ServerLogic:
 
         pass
 
-    def process_order_request(self, order):
+    def process_order_request(self, fix_order):
         """Process an order request from the FIX Handler
 
 
         Args:
-            order (Order): One order object
+            fix_order (FixOrder): FixOrder Object from fix handler
 
         Returns:
             None
         """
+
+        #Handling fix_order object from the fix message
+        print(fix_order.get_cl_ord_id())
+        print(fix_order.get_handl_inst())
+        print(fix_order.get_exec_inst())
+        print(fix_order.get_symbol())
+        print(fix_order.get_maturity_month_year())
+        print(fix_order.get_maturity_day())
+        print(fix_order.get_side())
+        print(fix_order.get_transact_time())
+        print(fix_order.get_order_qty())
+        print(fix_order.get_ord_type())
+        print(fix_order.get_price())
+        print(fix_order.get_stop_px())
+
         #TODO this is only outline, does not work
+        """ Doing Matching Algorithm and insert database
+        order= None
         self.server_database_handler.insert_order(order)
         stock = None
         # stock = Stock(Order.stock_ticker)
@@ -391,6 +420,30 @@ class ServerLogic:
         matching_matrix = self.matching_algorithm.match_orders(buy_orders, sell_orders)
         # inform each client being matched
         self.resolve_matching_matrix(matching_matrix)
+        """
+        #Retrieve the database and process related order
+
+        #Create Order Execution report value based on processed order
+        order_id= str(self.server_fix_handler.fix_application.gen_order_id())
+        cl_ord_id=fix_order.get_cl_ord_id()
+        exec_id=str(self.server_fix_handler.fix_application.gen_exec_id())
+        exec_trans_type='0'
+        exec_type='2'
+        ord_status='2'
+        symbol=fix_order.get_symbol()
+        side=fix_order.get_side()
+        leaves_qty=0
+        cum_qty=200
+        avg_px=999
+        price=900
+        stop_px=1000
+
+        #Encapsulate result of processing into execution report
+        order_execution= OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status
+            , symbol, side, leaves_qty, cum_qty, avg_px, price, stop_px)
+
+        #Send Order Execution object to server fix handler
+        self.server_fix_handler.send_order_execution_respond(order_execution)
 
     def authenticate_user(self, user_id, password):
         """Authenticates user
@@ -412,7 +465,7 @@ class ServerDatabaseHandler:
     # TODO send SQL Queries
     def __init__(self):
         self.user_name = "root"
-        self.user_password = "root" #
+        self.user_password = "123456" #
         self.database_name = "FSCDatabase"
         self.database_port = 3306
         self.database_creation_file_path = "./database/server_database.sql"
