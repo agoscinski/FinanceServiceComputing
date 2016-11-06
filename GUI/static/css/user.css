@@ -1,0 +1,177 @@
+.fsc-width-2{
+  display: inline-block;
+  width:19.5%;
+  height: 600px;
+  float: left;
+  margin-top: 55px;
+  background: rgb(238, 238, 238);
+  border: 1px solid #e3e3e3;
+
+}
+.fsc-width-4{
+  display: inline-block;
+  width:40%;
+  height: 600px;
+  float: left;
+  margin-top: 55px;
+  background: rgb(238, 238, 238);
+  border: 1px solid #e3e3e3;
+}
+
+.fsc-search-form{
+  margin-top: 0px;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  display: inline-block;
+  width:100%;
+  border-bottom: 1px solid #e3e3e3;
+}
+.fsc-search-form input{
+  display: inline-block;
+  width: 60%;
+  margin-left: 20%;
+  margin-right: 20%;
+}
+.fsc-info{
+  padding-top: 30px;
+  padding-bottom: 30px;
+  margin-top: -1px;
+  display: inline-block;
+  width:100%;
+  border-bottom: 1px solid #e3e3e3;
+}
+.fsc-info .span6{
+  padding-left: 10%;
+}
+.fsc-trade{
+  padding-top: 30px;
+  padding-bottom: 30px;
+  margin-top: -1px;
+  display: inline-block;
+  width:100%;
+}
+.fsc-trade .tabbable{
+  display: inline-block;
+  width: 70%;
+  margin-left: 15%;
+  margin-right: 15%;
+  
+}
+
+.fsc-trade .tabbable .active a{
+  background: rgb(238, 238, 238) !important;
+}
+
+.fsc-trade .tabbable input{
+  margin-bottom: 20px;
+  width: 70%;
+  display: inline-block;
+}
+
+.fsc-trade .tabbable span{
+  margin-bottom: 20px;
+  width: 15%;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+.fsc-trade .tabbable button{
+  width: 80px;
+}
+
+.fsc-chart-container{
+  background: rgb(238, 238, 238);
+  width: 100%;
+}
+
+.fsc-chart{
+  display: block;
+  width:450px;
+  height: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  background: rgb(238, 238, 238);
+}
+
+.fsc-transaction{
+  width: 100%;
+  border-bottom: 1px solid #e3e3e3;
+}
+
+.fsc-transaction table{
+  width: 70%;
+  margin-left: auto;
+  margin-right: auto;
+  background: rgb(238, 238, 238);
+}
+
+.fsc-transaction td{
+  text-align: center;
+  height: 5px !important;
+  padding:1px;
+}
+
+.fsc-transaction .done{
+  color:red;
+}
+
+.fsc-history{
+  width: 100%;
+}
+
+.fsc-history table{
+  width: 70%;
+  margin-left: auto;
+  margin-right: auto;
+  background: rgb(238, 238, 238);
+}
+
+.fsc-history th{
+  text-align: center;
+  height: 5px !important;
+  padding:1px;
+}
+
+.fsc-history td{
+  text-align: center;
+  height: 5px !important;
+  padding:1px;
+}
+
+.modal{
+  margin-top: 100px;
+}
+
+
+.modal-header{
+  text-align: center;
+}
+
+.modal-header h3{
+  margin-top:30px;
+  margin-bottom: 30px;
+}
+
+.modal-footer{
+  text-align: center;
+}
+
+.modal-footer .btn{
+  width:50px;
+}
+
+.login-div{
+  width:200px;
+  margin-right: auto;
+  margin-left: auto;
+  margin-top: 30px;
+  margin-bottom:30px;
+}
+.login-div input{
+  width:100%;
+  margin-top: 10px;
+  margin-bottom:10px;
+}
+
+
+
