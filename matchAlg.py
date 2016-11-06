@@ -6,7 +6,7 @@ Created on Sun Oct 23 17:08:29 2016
 """
 
 import orderclass
-import _ctypes
+
 
 """matching algorithm using pro rata algorithm
 @parameter:
