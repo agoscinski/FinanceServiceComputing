@@ -281,6 +281,7 @@ class ClientFIXHandler():
         #Create Fix Message for Order
         message = fix.Message()
         header = message.getHeader()
+        header.setField(fix.SenderCompID(fix_order.get_sender_comp_id()))
         header.setField(fix.MsgType(fix.MsgType_NewOrderSingle))
         header.setField(fix.MsgSeqNum(self.fix_application.order_id))
         header.setField(fix.SendingTime())
@@ -436,17 +437,23 @@ class ClientLogic():
         cl_ord_id=self.client_fix_handler.fix_application.gen_order_id()
         handl_inst='1'
         exec_inst='2'
-        symbol='SYMBOL'
+        symbol='MS'
         maturity_month_year= YearMonthFix(2016,1)
         maturity_day=1
         side=Side_BUY
         transact_time= DateTimeUTCFix(2016,1,1,11,40,10)
         order_qty=10
         ord_type='1'
-        price=1000
+        price=20
         stop_px=10000
+        sender_comp_id = "client"
+        sending_time = None
+        on_behalf_of_comp_id = None
+        sender_sub_id = None
+
         fix_order= FixOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side
-            ,transact_time, order_qty, ord_type, price, stop_px)
+            ,transact_time, order_qty, ord_type, price, stop_px, sender_comp_id, sending_time, on_behalf_of_comp_id
+            , sender_sub_id)
         self.client_fix_handler.send_order(fix_order)
         return
 
