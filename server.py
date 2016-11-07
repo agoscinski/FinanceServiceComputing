@@ -1,3 +1,4 @@
+from tarfile import _section
 import quickfix as fix
 import quickfix42 as fix42
 import sys
@@ -9,7 +10,9 @@ from enum import Enum
 from TradingClass import MarketDataRequest
 from TradingClass import MarketDataResponse
 from TradingClass import FixOrder
+from TradingClass import Order
 from TradingClass import OrderExecution
+from TradingClass import DateTimeUTCFix
 from TradingClass import DateFix
 from TradingClass import TimeFix
 
@@ -239,6 +242,7 @@ class ServerFIXHandler:
             None
         """
         # Retrieving Fix Data from order request sent by client
+        header=message.getHeader()
         cl_ord_id_fix = fix.ClOrdID()
         handl_inst_fix = fix.HandlInst()
         exec_inst_fix = fix.ExecInst()
@@ -251,6 +255,10 @@ class ServerFIXHandler:
         ord_type_fix = fix.OrdType()
         price_fix = fix.Price()
         stop_px_fix = fix.StopPx()
+        sender_comp_id= self.get_header_field_value(fix.SenderCompID(), message)
+        sending_time=self.get_header_field_string(fix.SendingTime(), message)
+        on_behalf_of_comp_id=self.get_header_field_value(fix.OnBehalfOfCompID(), message)
+        sender_sub_id=self.get_header_field_value(fix.SenderSubID(), message)
 
         message.getField(cl_ord_id_fix)
         message.getField(handl_inst_fix)
@@ -269,7 +277,8 @@ class ServerFIXHandler:
         fix_order= FixOrder(cl_ord_id_fix.getValue(),handl_inst_fix.getValue(),exec_inst_fix.getValue(),
         symbol_fix.getValue(), maturity_month_year_fix.getValue(), maturity_day_fix.getValue(),
         side_fix.getValue(), transact_time_fix.getString(), order_qty_fix.getValue(), ord_type_fix.getValue(),
-        price_fix.getValue(), stop_px_fix.getValue())
+        price_fix.getValue(), stop_px_fix.getValue(), sender_comp_id, sending_time,
+        on_behalf_of_comp_id,sender_sub_id)
 
         self.server_logic.process_order_request(fix_order)
 
@@ -309,6 +318,34 @@ class ServerFIXHandler:
 
         fix.Session.sendToTarget(message, self.fix_application.sessionID)
         return
+
+    def get_field_value(self, fix_object, message):
+        if message.isSetField(fix_object.getField()):
+            message.getField(fix_object)
+            return fix_object.getValue()
+        else:
+            return None
+
+    def get_field_string(self, fix_object, message):
+        if message.isSetField(fix_object.getField()):
+            message.getField(fix_object)
+            return fix_object.getString()
+        else:
+            return None
+
+    def get_header_field_value(self, fix_object, message):
+        if message.getHeader().isSetField(fix_object.getField()):
+            message.getHeader().getField(fix_object)
+            return fix_object.getValue()
+        else:
+            return None
+
+    def get_header_field_string(self, fix_object, message):
+        if message.getHeader().isSetField(fix_object.getField()):
+            message.getHeader().getField(fix_object)
+            return fix_object.getString()
+        else:
+            return None
 
 class ServerLogic:
     def __init__(self, server_config_file_name):
@@ -409,9 +446,36 @@ class ServerLogic:
         print(fix_order.get_ord_type())
         print(fix_order.get_price())
         print(fix_order.get_stop_px())
+        print("Fix Order Object Above")
 
         #TODO Husein insert order into database as Order
+        account_company_id=fix_order.get_sender_comp_id()
+        received_time= DateTimeUTCFix(2016,1,1,11,40,10)
+        received_time.set_date_time_now()
+        last_status=0
+        msg_seq_num=0
+        on_behalf_of_comp_id = fix_order.get_on_behalf_of_comp_id()
+        sender_sub_id = fix_order.get_sender_sub_id()
+        cash_order_quantity = None
+
+        order= Order(fix_order.get_cl_ord_id(), account_company_id, received_time, fix_order.get_handl_inst(),
+                     fix_order.get_symbol() , fix_order.get_side(),fix_order.get_ord_type(),fix_order.get_order_qty(),
+                     fix_order.get_price(),last_status, msg_seq_num, on_behalf_of_comp_id, sender_sub_id,
+                     cash_order_quantity)
+
+        self.server_database_handler.insert_order(order)
         #TODO Husein retrieve all orders from database Order
+        order_list=[]
+        order_list=self.server_database_handler.fetch_all_orders()
+
+        for order in order_list:
+            print(("iterate order list '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s'"%(
+                    order.get_client_order_id(), order.get_account_company_id(),
+                    order.get_received_time().get_date_time(), order.get_handling_instruction(),
+                    order.get_stock_ticker(), order.get_side(), order.get_order_type(),
+                    order.get_order_quantity(), order.get_price(), order.get_last_status(),order.get_msg_seq_num(),
+                    order.get_on_behalf_of_company_id(),order.get_sender_sub_id(), order.get_cash_order_quantity())))
+
 
         #TODO this is only outline, does not work
         """ Doing Matching Algorithm and insert database
@@ -505,11 +569,20 @@ class ServerDatabaseHandler:
             None
         """
         # TODO Husein insert order into database as Order
+        command = (
+                "INSERT INTO `Order`(ClientOrderID,Account_CompanyID, ReceivedTime, HandlingInstruction, Stock_Ticker,"
+                "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum) VALUES('%s','%s','%s','%s','%s','%s',"
+                "'%s','%s','%s','%s','%s')"
+                %(order.get_client_order_id(), order.get_account_company_id(),
+                  order.get_received_time().get_date_time().__str__(),
+                  order.get_handling_instruction(), order.get_stock_ticker(), order.get_side(), order.get_order_type(),
+                  order.get_order_quantity(), order.get_price(), order.get_last_status(),order.get_msg_seq_num()))
+        self.execute_sql_command(command)
         return
 
 
-    def fetch_all_orders(self, ticker_symbol):
-        """Fetches all orders from the database regarding the ticker_symbol
+    def fetch_all_orders(self):
+        """Fetches all orders from the database with status not finished
 
         Args:
             ticker_symbol (string): The ticker symbol for which orders are fetched
@@ -518,7 +591,31 @@ class ServerDatabaseHandler:
             order (list of datatype.Order): Fetched orders
         """
         # TODO Husein retrieve all orders from database Order
-        pass
+
+        order_list=[]
+        sql_command = ("select ClientOrderID,Account_CompanyID, ReceivedTime, HandlingInstruction, Stock_Ticker,"
+                "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
+                "CashOrderQuantity from `Order` where LastStatus=0")
+        try:
+            order=None
+            received_time= DateTimeUTCFix(2016,1,1,11,40,10)
+            conn = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+                                   db=self.database_name, port=self.database_port)
+            cur = conn.cursor()
+            execution = (sql_command)
+            cur.execute(execution)
+            rows = cur.fetchall()
+            for row in rows:
+                received_time.set_date_time_value(row[2])
+                order= Order(row[0],row[1],received_time,row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],
+                                    row[11],row[12],row[13])
+                order_list.append(order)
+            cur.close()
+            conn.close()
+        except MySQLdb.Error, e:
+            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+
+        return order_list
 
     def delete_all_stock_data(self):
         command = "delete from Stock"

@@ -94,11 +94,11 @@ class MarketDataResponse(object):
             md_req_id : market data response ID related to market data request ID (string)
             no_md_entry_types = no_md_entry_types (int)
             symbol = symbol (string)
-            md_entry_type_list = md_entry_type_list (list of char)
-            md_entry_px_list = md_entry_px_list (list of float)
-            md_entry_size_list = md_entry_size_list (list of float)
-            md_entry_date_list = md_entry_date_list (list of DateFix Object=> datetime UTC Date YYYYMMDD)
-            md_entry_time_list = md_entry_time_list (list of TimeFix Object=> datetime UTC Time HH:MM:SS)
+            md_entry_type_list = md entry type list (list of char)
+            md_entry_px_list = md entry price list (list of float)
+            md_entry_size_list = md entry size list (list of float)
+            md_entry_date_list = md entry date list (list of DateFix Object=> datetime UTC Date YYYYMMDD)
+            md_entry_time_list = md entry time list (list of TimeFix Object=> datetime UTC Time HH:MM:SS)
     """
     def __init__(self, md_req_id, no_md_entry_types, symbol, md_entry_type_list, md_entry_px_list,
                  md_entry_size_list, md_entry_date_list, md_entry_time_list):
@@ -213,7 +213,8 @@ class FixOrder(object):
         stop_px = stop price (float)
     """
     def __init__(self,cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side, transact_time
-                 , order_qty, ord_type, price, stop_px):
+                 , order_qty, ord_type, price, stop_px, sender_comp_id, sending_time, on_behalf_of_comp_id
+                 , sender_sub_id):
         self.cl_ord_id = cl_ord_id
         self.handl_inst = handl_inst
         self.exec_inst= exec_inst
@@ -226,6 +227,10 @@ class FixOrder(object):
         self.ord_type = ord_type
         self.price = price
         self.stop_px = stop_px
+        self.sender_comp_id = sender_comp_id
+        self.sending_time = sending_time
+        self.on_behalf_of_comp_id = on_behalf_of_comp_id
+        self.sender_sub_id = sender_sub_id
 
     "return client order id"
     def get_cl_ord_id(self):
@@ -275,6 +280,21 @@ class FixOrder(object):
     def get_stop_px(self):
         return self.stop_px
 
+    "return sender company id of order "
+    def get_sender_comp_id(self):
+        return self.sender_comp_id
+
+    "return sending time of order"
+    def get_sending_time(self):
+        return self.sending_time
+
+    "return original sender company of order "
+    def get_on_behalf_of_comp_id(self):
+        return self.on_behalf_of_comp_id
+
+    "return additional sender id"
+    def get_sender_sub_id(self):
+        return self.sender_sub_id
 
     "set client order id"
     def set_cl_ord_id(self,cl_ord_id):
@@ -323,6 +343,22 @@ class FixOrder(object):
     "set order stop price"
     def set_stop_px(self, stop_px):
         self.stop_px=stop_px
+
+    "set sender company id of order "
+    def set_sender_comp_id(self, sender_comp_id):
+        self.sender_comp_id = sender_comp_id
+
+    "set sending time of order"
+    def set_sending_time(self, sending_time):
+        self.sending_time = sending_time
+
+    "set original sender company of order "
+    def set_on_behalf_of_comp_id(self, on_behalf_of_comp_id):
+        self.on_behalf_of_comp_id = on_behalf_of_comp_id
+
+    "set additional sender id"
+    def set_sender_sub_id(self, sender_sub_id):
+        self.sender_sub_id = sender_sub_id
 
 class OrderExecution(object):
     """Constructor of class FixOrder:
@@ -560,8 +596,160 @@ class DateTimeUTCFix(object):
     def set_date_time_string(self,string):
         self.date_time = datetime.datetime.strptime(string,"%Y%m%d-%H:%M:%S").date()
 
+    def set_date_time_default_string(self,string):
+        self.date_time = datetime.datetime.strptime(string,"%Y-%m-%d %H:%M:%S").date()
+
     def set_date_time_value(self, date_time):
         self.date_time = date_time
 
     def set_date_time_now(self):
         self.date_time= datetime.datetime.utcnow()
+
+class Order(object):
+    """Constructor of class Order:
+        @Parameter:
+        client_order_id = client order id (String)
+        account_company_id= account company id related to the order (String)
+        received_time = received time (DateTimeFix Object=> DateTime datetime UTC YYYYMMDD-HH:MM:SS)
+        handling_instruction = handling instruction (char)
+        symbol = symbol (String)
+        side = side (char)
+        order_type = order type (char)
+        order_quantity = order quantity (float)
+        price = price (float)
+        last_status = last status (int)
+        msg_seq_num = message sequence number (int)
+        on_behalf_of_company_id = original sender who sends order (String)
+        sender_sub_id = sub identifier of sender (String)
+        cash_order_quantity = amount of order requested (float)
+    """
+    def __init__(self,client_order_id, account_company_id,received_time, handling_instruction, stock_ticker, side,
+                 order_type, order_quantity, price, last_status, msg_seq_num, on_behalf_of_company_id, sender_sub_id,
+                 cash_order_quantity):
+        self.client_order_id = client_order_id
+        self.account_company_id = account_company_id
+        self.received_time = received_time
+        self.handling_instruction = handling_instruction
+        self.stock_ticker = stock_ticker
+        self.side = side
+        self.order_type = order_type
+        self.order_quantity = order_quantity
+        self.price =  price
+        self.last_status = last_status
+        self.msg_seq_num = msg_seq_num
+        self.on_behalf_of_company_id = on_behalf_of_company_id
+        self.sender_sub_id = sender_sub_id
+        self.cash_order_quantity = cash_order_quantity
+
+    "return client order id"
+    def get_client_order_id(self):
+        return self.client_order_id
+
+    "return account company id"
+    def get_account_company_id(self):
+        return self.account_company_id
+
+    "return received time"
+    def get_received_time(self):
+        return self.received_time
+
+    "return handling instruction"
+    def get_handling_instruction(self):
+        return self.handling_instruction
+
+    "return stock ticker"
+    def get_stock_ticker(self):
+        return self.stock_ticker
+
+    "return side buy/sell"
+    def get_side(self):
+        return self.side
+
+    "return order type"
+    def get_order_type(self):
+        return self.order_type
+
+    "return order quantity"
+    def get_order_quantity(self):
+        return self.order_quantity
+
+    "return order price"
+    def get_price(self):
+        return self.price
+
+    "return last status of order"
+    def get_last_status(self):
+        return self.last_status
+
+    "return message sequence number of order"
+    def get_msg_seq_num(self):
+        return self.msg_seq_num
+
+    "return on behalf of company in order"
+    def get_on_behalf_of_company_id(self):
+        return self.on_behalf_of_company_id
+
+    "return sender sub id in order"
+    def get_sender_sub_id(self):
+        return self.sender_sub_id
+
+    "return cash order quantity"
+    def get_cash_order_quantity(self):
+        return self.cash_order_quantity
+
+    "set client order id"
+    def set_client_order_id(self):
+        self.client_order_id
+
+    "set account company id"
+    def set_account_company_id(self):
+        self.account_company_id
+
+    "set received time"
+    def set_received_time(self):
+        self.received_time
+
+    "set handling instruction"
+    def set_handling_instruction(self):
+        self.handling_instruction
+
+    "set stock_tickers"
+    def set_stock_ticker(self, stock_ticker):
+        self.stock_ticker = stock_ticker
+
+    "set side buy/sell"
+    def set_side(self, side):
+        self.side = side
+
+    "set order type"
+    def set_order_type(self, order_type):
+        self.order_type = order_type
+
+    "set order quantity"
+    def set_order_quantity(self, order_quantity):
+        self.order_quantity = order_quantity
+
+    "set order price"
+    def set_price(self, price):
+        self.price = price
+
+    "set last status of order"
+    def set_last_status(self, last_status):
+        self.last_status = last_status
+
+    "set message sequence number of order"
+    def set_msg_seq_num(self, msg_seq_num):
+        self.msg_seq_num = msg_seq_num
+
+    "set on behalf of company in order"
+    def set_on_behalf_of_company_id(self, on_behalf_of_company_id):
+        self.on_behalf_of_company_id = on_behalf_of_company_id
+
+    "set sender sub id in order"
+    def set_sender_sub_id(self, sender_sub_id):
+        self.sender_sub_id = sender_sub_id
+
+    "set cash order quantity"
+    def set_cash_order_quantity(self, cash_order_quantity):
+        self.cash_order_quantity = cash_order_quantity
+
