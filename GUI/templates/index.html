@@ -271,7 +271,7 @@
       var volumns = [];
       for (var i = 0; i < rawData.length; i++) {
           categoryData.push(rawData[i].splice(0, 1)[0]+'-01-01');
-          values.push(rawData[i]);
+          values.push(rawData[i][1]);
           volumns.push(rawData[i][4]);
       }
       return {
@@ -288,12 +288,12 @@
 
     myChart.setOption(option = {
       backgroundColor: '#eee',
-      animation: false,
+      animation: true,
       legend: {
         //图例
         top: 10,
         left: 'center',
-        data: ['Dow-Jones index']
+        data: ['Price','Volumn']
       },
       tooltip: {
         //提示框
@@ -305,23 +305,7 @@
       },
       toolbox: {
         //工具盒子
-        show:false,
-        feature: {
-          dataZoom: {
-            yAxisIndex: false
-          },
-          brush: {
-            type: ['lineX', 'clear']
-          }
-        }
-      },
-      brush: {
-        //选中一部分数据
-        xAxisIndex: 'all',
-        brushLink: 'all',
-        outOfBrush: {
-          colorAlpha: 0.1
-        }
+        show:false
       },
       grid: [
       //放置位置
@@ -346,7 +330,7 @@
         axisLine: {onZero: false},
         splitLine: {show: false},
         //axisLabel: {show:true,interval: 0}
-        splitNumber: 20,
+        splitNumber: 10,
         min: 'dataMin',
         max: 'dataMax'
       },
@@ -360,7 +344,7 @@
         axisTick: {show: false},
         splitLine: {show: false},
         axisLabel: {show: false},
-        splitNumber: 20,
+        splitNumber: 10,
         min: 'dataMin',
         max: 'dataMax'
       }
@@ -401,25 +385,13 @@
       ],
       series: [
       {
-        name: 'Dow-Jones index',
-        type: 'candlestick',
+        name: 'Price',
+        type: 'line',
         data: data.values,
-        itemStyle: {
+        lineStyle: {
           normal: {
-            borderColor: null,
-            borderColor0: null
-          }
-        },
-        tooltip: {
-          formatter: function (param) {
-            var param = param[0];
-            return [
-            'Date: ' + param.name + '<hr size=1 style="margin: 3px 0">',
-            'Open: ' + param.data[0] + '<br/>',
-            'Close: ' + param.data[1] + '<br/>',
-            'Lowest: ' + param.data[2] + '<br/>',
-            'Highest: ' + param.data[3] + '<br/>'
-            ].join('');
+            color:'#4EA4D9',
+            width:2
           }
         }
       },
@@ -433,7 +405,8 @@
       ]
     }, true);
 
-    //选中区域
+    //select a part of data
+    /*
     myChart.dispatchAction({
       type: 'brush',
       areas: [
@@ -444,7 +417,7 @@
       }
       ]
     });
-
+    */
 
   </script>
 
