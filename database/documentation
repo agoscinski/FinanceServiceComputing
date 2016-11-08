@@ -18,7 +18,7 @@ OrderType (we only support the values 1 = Market, 2 = Limit)
 OrderQuantity: The total quantity of the order (be careful, it could be that the order is partially fulfilled, therefore it has to be checked if there exist
 CashOrderQuantity: Defines (is not supported)
 Price
-LastStatus: 0:Done, 1:Pending, 2: PartlyCanceled, 3: CompletelyCanceled
+LastStatus: 0:Done, 1:Pending, 2: Canceled
 MsqSeqNum:
 OnBehalfOfCompanyID:
 SenderSubID:
