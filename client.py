@@ -27,6 +27,7 @@ class GUISignal(htmlPy.Object):
     def __init__(self, g):
         super(GUISignal, self).__init__()
         self.gui_handler = g
+        self.fresh=1
         # Initialize the class here, if required.
         return
 
@@ -45,6 +46,20 @@ class GUISignal(htmlPy.Object):
     @htmlPy.Slot()
     def logOut(self):
         self.gui_handler.button_logout_actuated()
+
+    @htmlPy.Slot(str,result=str)
+    def freshChart(self,stockCode):
+        trading_transaction=TradingClass.TradingTransaction(["2016-10-01","2016-10-02","2016-10-03"],[12,23,12],[22,22,22],[True,False,True])
+        stock_information=TradingClass.StockInformation(self.fresh,self.fresh+2,self.fresh-2)
+        stock_history=TradingClass.StockHistory(["2016-10-1","2016-10-2","2016-10-3","2016-10-4","2016-10-5","2016-10-6","2016-10-7","2016-10-8","2016-10-9","2016-10-10"],[self.fresh+10,self.fresh+12.5,12.5,12.5,self.fresh+15.5,12.5,12.5,12.5,12.5,12.5],[self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh])
+        order_book_buy=TradingClass.OrderBookBuy([11.5,11.6,11.7,11.8,11.9],[1,2,3,4,5])
+        order_book_sell=TradingClass.OrderBookSell([11.5,11.6,11.7,11.8,11.9],[1,2,3,4,5])
+        market_data=TradingClass.MarketData(stock_information,stock_history,order_book_buy,order_book_sell)
+        quantity_chart_json,stock_course_chart_json,stock_information_json,order_book_json=self.gui_handler.refresh_charts(market_data)
+        trading_transaction_json=self.gui_handler.extract_trading_transaction_json(trading_transaction)
+        result='{'+'"success":true'+',"tradingTransaction":'+trading_transaction_json+',"quantity":'+quantity_chart_json+',"price":'+stock_course_chart_json+',"stockInfo":'+stock_information_json+',"orderBook":'+order_book_json+'}'
+        self.fresh=self.fresh+1
+        return result
 
     @htmlPy.Slot(str, result=str)
     def get_form_data(self, json_data):
@@ -521,7 +536,6 @@ class GUIHandler:
                 file = open("rawData.json", "r")
                 rawData = file.read()
                 json = {
-                    "rawData": rawData
                 }
                 htmlPy_app.template = ("index.html", json)
                 htmlPy_app.bind(GUISignal(self))
@@ -602,12 +616,12 @@ class GUIHandler:
         stock_course_chart_json = self.extract_course_chart_json(market_data)
         stock_information_json = self.extract_stock_information_json(market_data)
         order_book_json = self.extract_order_book_json(market_data)
-        pass
+        return quantity_chart_json,stock_course_chart_json,stock_information_json,order_book_json
 
     def refresh_trading_transaction_list(self, trading_transaction):
         # TODO yenlinsheng finish this function
         trading_transaction_json = self.extract_trading_transaction_json(trading_transaction)
-        pass
+        return trading_transaction_json
 
     def extract_quantity_chart_json(self, market_data):
         data = {"content": []}
@@ -649,11 +663,14 @@ class GUIHandler:
         return demjson.encode(data)
 
     def extract_trading_transaction_json(self, trading_transaction):
-        data = {}
-        data["time"] = trading_transaction.time
-        data["price"] = trading_transaction.price
-        data["quantity"] = trading_transaction.quantity
-        data["side"] = trading_transaction.side
+        data = {"content": []}
+        for i in range(len(trading_transaction.time)):
+            tmp = {}
+            tmp["time"] =trading_transaction.time[i]
+            tmp["price"] = trading_transaction.price[i]
+            tmp["quantity"] = trading_transaction.quantity[i]
+            tmp["side"] = ("buy" if trading_transaction.side[i] else "sell")
+            data["content"].append(tmp)
         return demjson.encode(data)
 
 
