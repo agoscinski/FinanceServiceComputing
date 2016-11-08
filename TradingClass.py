@@ -613,6 +613,8 @@ class DateFix(object):
     def set_date_value(self, date):
         self.date = date
 
+    def set_date_today(self):
+        self.date = datetime.date.today()
 
 class TimeFix(object):
     """Constructor of TimeFix
@@ -639,6 +641,7 @@ class TimeFix(object):
 
     def set_time_value(self, time):
         self.time = time
+
 
 
 class DateTimeUTCFix(object):
@@ -696,12 +699,12 @@ class Order(object):
         cash_order_quantity = amount of order requested (float)
     """
 
-    def __init__(self, client_order_id, account_company_id, received_time, handling_instruction, stock_ticker, side,
+    def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
                  order_type, order_quantity, price, last_status, msg_seq_num, on_behalf_of_company_id, sender_sub_id,
                  cash_order_quantity):
         self.client_order_id = client_order_id
         self.account_company_id = account_company_id
-        self.received_time = received_time
+        self.received_date = received_date
         self.handling_instruction = handling_instruction
         self.stock_ticker = stock_ticker
         self.side = side
@@ -726,8 +729,8 @@ class Order(object):
 
     "return received time"
 
-    def get_received_time(self):
-        return self.received_time
+    def get_received_date(self):
+        return self.received_date
 
     "return handling instruction"
 
@@ -796,8 +799,8 @@ class Order(object):
 
     "set received time"
 
-    def set_received_time(self):
-        self.received_time
+    def set_received_date(self):
+        self.received_date
 
     "set handling instruction"
 
