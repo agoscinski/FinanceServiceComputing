@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct 25 16:29:37 2016
+Created on Tue Nov  1 15:04:18 2016
 
 @author: Emely
 """
 
+"""py.test for matching algorithm"""
+
+import numpy as np
 import orderclass
 import matchAlg2
 
@@ -21,13 +24,10 @@ s9 = orderclass.Order(9, 0, 104, 15)
 s10 = orderclass.Order(10, 0, 45, 12)
 
 
-
-
 b = [b1, b2, b3, b4, b5]
     
 s = [s6, s7, s8, s9, s10]
-    
-    
-matchAlg2.match(b,s)
 
-
+assert len(matchAlg2.match([],[]))==0
+assert len(matchAlg2.match([], s))==len(s)
+assert len(matchAlg2.match(b,[]))==0
