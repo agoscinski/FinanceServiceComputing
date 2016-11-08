@@ -454,15 +454,15 @@ class ServerLogic:
 
         #TODO Husein insert order into database as Order
         account_company_id=fix_order.get_sender_comp_id()
-        received_time= DateTimeUTCFix(2016,1,1,11,40,10)
-        received_time.set_date_time_now()
+        received_date= DateFix(2016,1,1)
+        received_date.set_date_today()
         last_status=0
         msg_seq_num=0
         on_behalf_of_comp_id = fix_order.get_on_behalf_of_comp_id()
         sender_sub_id = fix_order.get_sender_sub_id()
         cash_order_quantity = None
 
-        order= Order(fix_order.get_cl_ord_id(), account_company_id, received_time, fix_order.get_handl_inst(),
+        order= Order(fix_order.get_cl_ord_id(), account_company_id, received_date, fix_order.get_handl_inst(),
                      fix_order.get_symbol() , fix_order.get_side(),fix_order.get_ord_type(),fix_order.get_order_qty(),
                      fix_order.get_price(),last_status, msg_seq_num, on_behalf_of_comp_id, sender_sub_id,
                      cash_order_quantity)
@@ -474,7 +474,7 @@ class ServerLogic:
         for order in order_list:
             print(("iterate order list '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s'"%(
                     order.get_client_order_id(), order.get_account_company_id(),
-                    order.get_received_time().get_date_time(), order.get_handling_instruction(),
+                    order.get_received_date().get_date(), order.get_handling_instruction(),
                     order.get_stock_ticker(), order.get_side(), order.get_order_type(),
                     order.get_order_quantity(), order.get_price(), order.get_last_status(),order.get_msg_seq_num(),
                     order.get_on_behalf_of_company_id(),order.get_sender_sub_id(), order.get_cash_order_quantity())))
@@ -573,11 +573,11 @@ class ServerDatabaseHandler:
         """
         # TODO Husein insert order into database as Order
         command = (
-                "INSERT INTO `Order`(ClientOrderID,Account_CompanyID, ReceivedTime, HandlingInstruction, Stock_Ticker,"
+                "INSERT INTO `Order`(ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
                 "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum) VALUES('%s','%s','%s','%s','%s','%s',"
                 "'%s','%s','%s','%s','%s')"
                 %(order.get_client_order_id(), order.get_account_company_id(),
-                  order.get_received_time().get_date_time().__str__(),
+                  order.get_received_date().get_date().__str__(),
                   order.get_handling_instruction(), order.get_stock_ticker(), order.get_side(), order.get_order_type(),
                   order.get_order_quantity(), order.get_price(), order.get_last_status(),order.get_msg_seq_num()))
         self.execute_sql_command(command)
@@ -596,12 +596,12 @@ class ServerDatabaseHandler:
         # TODO Husein retrieve all orders from database Order
 
         order_list = []
-        sql_command = ("select ClientOrderID,Account_CompanyID, ReceivedTime, HandlingInstruction, Stock_Ticker,"
+        sql_command = ("select ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
                 "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
                 "CashOrderQuantity from `Order` where LastStatus=0")
         try:
             order=None
-            received_time= DateTimeUTCFix(2016,1,1,11,40,10)
+            received_date= DateFix(2016,1,1)
             conn = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
                                    db=self.database_name, port=self.database_port)
             cur = conn.cursor()
@@ -609,8 +609,8 @@ class ServerDatabaseHandler:
             cur.execute(execution)
             rows = cur.fetchall()
             for row in rows:
-                received_time.set_date_time_value(row[2])
-                order= Order(row[0],row[1],received_time,row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],
+                received_date.set_date_value(row[2])
+                order= Order(row[0],row[1],received_date,row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],
                                     row[11],row[12],row[13])
                 order_list.append(order)
             cur.close()
