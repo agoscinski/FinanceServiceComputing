@@ -2,6 +2,7 @@ import sys
 import quickfix as fix
 from quickfix import Side_BUY, Side_SELL
 import quickfix42 as fix42
+import TradingClass
 from TradingClass import MarketDataResponse
 from TradingClass import OrderExecution
 from TradingClass import FixOrder
@@ -12,35 +13,37 @@ from TradingClass import TimeFix
 import pdb
 import htmlPy
 import json
+
 sys.path.append('GUI')
 from frontEnd import htmlPy_app
+import numpy as np
+
 
 class GUISignal(htmlPy.Object):
     # GUI callable functions have to be inside a class.
     # The class should be inherited from htmlPy.Object.
 
-    def __init__(self,g):
-        super(GUISignal,self).__init__()
-        self.gui_handler=g
+    def __init__(self, g):
+        super(GUISignal, self).__init__()
+        self.gui_handler = g
         # Initialize the class here, if required.
         return
 
-    @htmlPy.Slot(str,str,result=str)
-    def logIn(self,usr,psw):
-        #login
-        usr=str(usr)
-        psw=str(psw)
-        print usr,psw
-        if(self.gui_handler.button_login_actuated(usr,psw)):
-            return_message='{"success":true,"userName":"'+usr+'"}'
+    @htmlPy.Slot(str, str, result=str)
+    def logIn(self, usr, psw):
+        # login
+        usr = str(usr)
+        psw = str(psw)
+        print usr, psw
+        if (self.gui_handler.button_login_actuated(usr, psw)):
+            return_message = '{"success":true,"userName":"' + usr + '"}'
         else:
-            return_message='{"success":false,"msg":"username or password is wrong"}'
+            return_message = '{"success":false,"msg":"username or password is wrong"}'
         return return_message
 
     @htmlPy.Slot()
     def logOut(self):
         self.gui_handler.button_logout_actuated()
-
 
     @htmlPy.Slot(str, result=str)
     def get_form_data(self, json_data):
@@ -69,7 +72,7 @@ class ClientFIXApplication(fix.Application):
 
     def onCreate(self, session_id):
         print ("Application created - session: " + session_id.toString())
-        self.sessionID=session_id
+        self.sessionID = session_id
 
     def onLogon(self, session_id):
         print "Logon", session_id
@@ -88,10 +91,10 @@ class ClientFIXApplication(fix.Application):
     def fromApp(self, message, session_id):
         print "IN", message
         msg_Type = message.getHeader().getField(fix.MsgType())
-        if(msg_Type.getString() == fix.MsgType_MarketDataSnapshotFullRefresh):
+        if (msg_Type.getString() == fix.MsgType_MarketDataSnapshotFullRefresh):
             print "MarketDataSnapshotFullRefresh"
             self.client_fix_handler.handle_market_data_respond(message)
-        elif(msg_Type.getString() ==fix.MsgType_ExecutionReport):
+        elif (msg_Type.getString() == fix.MsgType_ExecutionReport):
             print "ExecutionReport"
             self.client_fix_handler.handle_execution_report(message)
 
@@ -102,11 +105,11 @@ class ClientFIXApplication(fix.Application):
         pass
 
     def gen_order_id(self):
-        self.order_id = self.order_id+1
+        self.order_id = self.order_id + 1
         return self.order_id
 
     def gen_market_data_request_id(self):
-        self.market_data_request_id = self.market_data_request_id+1
+        self.market_data_request_id = self.market_data_request_id + 1
         return self.market_data_request_id
 
 
@@ -158,7 +161,7 @@ class ClientFIXHandler():
         # self.fix_application.del_user_id()
         # self.fix_application.del_password()
 
-    def send_market_data_request(self,symbol):
+    def send_market_data_request(self, symbol):
         """Sends a market data request to server
 
         TODO @husein description if needed
@@ -169,7 +172,7 @@ class ClientFIXHandler():
         Returns:
 
         """
-        #Create Fix Message for Market Data Request
+        # Create Fix Message for Market Data Request
         message = fix.Message();
         header = message.getHeader();
         header.setField(fix.MsgType(fix.MsgType_MarketDataRequest))
@@ -179,7 +182,7 @@ class ClientFIXHandler():
         message.setField(fix.SubscriptionRequestType(fix.SubscriptionRequestType_SNAPSHOT))
         message.setField(fix.MarketDepth(1))
         message.setField(fix.NoMDEntryTypes(10))
-        group_md_entry= fix42.MarketDataRequest().NoMDEntryTypes()
+        group_md_entry = fix42.MarketDataRequest().NoMDEntryTypes()
         group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_BID))
         message.addGroup(group_md_entry)
         group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_OFFER))
@@ -205,8 +208,8 @@ class ClientFIXHandler():
         group_symbol.setField(fix.Symbol(symbol))
         message.addGroup(group_symbol)
 
-        #Send Fix Message to Server
-        fix.Session.sendToTarget(message,self.fix_application.sessionID)
+        # Send Fix Message to Server
+        fix.Session.sendToTarget(message, self.fix_application.sessionID)
 
         return
 
@@ -222,30 +225,30 @@ class ClientFIXHandler():
             TODO how does the return value look like
         """
 
-        #Retrieve Market Data Response Type Full Refresh/Snapshot
+        # Retrieve Market Data Response Type Full Refresh/Snapshot
         md_req_id_fix = fix.MDReqID()
-        no_md_entries_fix= fix.NoMDEntries()
-        symbol_fix=fix.Symbol()
-        md_entry_type_fix=fix.MDEntryType()
-        md_entry_px_fix=fix.MDEntryPx()
-        md_entry_size_fix=fix.MDEntrySize()
-        md_entry_date_fix=fix.MDEntryDate()
-        md_entry_time_fix=fix.MDEntryTime()
-        md_entry_type_list=[]
-        md_entry_px_list=[]
-        md_entry_size_list=[]
-        md_entry_date_list=[]
-        md_entry_time_list=[]
+        no_md_entries_fix = fix.NoMDEntries()
+        symbol_fix = fix.Symbol()
+        md_entry_type_fix = fix.MDEntryType()
+        md_entry_px_fix = fix.MDEntryPx()
+        md_entry_size_fix = fix.MDEntrySize()
+        md_entry_date_fix = fix.MDEntryDate()
+        md_entry_time_fix = fix.MDEntryTime()
+        md_entry_type_list = []
+        md_entry_px_list = []
+        md_entry_size_list = []
+        md_entry_date_list = []
+        md_entry_time_list = []
 
         message.getField(md_req_id_fix)
         message.getField(no_md_entries_fix)
         message.getField(symbol_fix)
 
-        a_date= DateFix(2000,1,1)
-        a_time= TimeFix(0,0,0)
-        groupMD= fix42.MarketDataSnapshotFullRefresh.NoMDEntries()
+        a_date = DateFix(2000, 1, 1)
+        a_time = TimeFix(0, 0, 0)
+        groupMD = fix42.MarketDataSnapshotFullRefresh.NoMDEntries()
         for MDIndex in range(no_md_entries_fix.getValue()):
-            message.getGroup(MDIndex+1,groupMD)
+            message.getGroup(MDIndex + 1, groupMD)
             groupMD.getField(md_entry_type_fix)
             groupMD.getField(md_entry_px_fix)
             groupMD.getField(md_entry_size_fix)
@@ -259,9 +262,10 @@ class ClientFIXHandler():
             md_entry_date_list.append(a_date)
             md_entry_time_list.append(a_time)
 
-        #Encapsulate data into market data response object
-        market_data= MarketDataResponse(md_req_id_fix.getValue(), no_md_entries_fix.getValue(), symbol_fix.getValue()
-            , md_entry_type_list, md_entry_px_list, md_entry_size_list, md_entry_date_list, md_entry_time_list)
+        # Encapsulate data into market data response object
+        market_data = MarketDataResponse(md_req_id_fix.getValue(), no_md_entries_fix.getValue(), symbol_fix.getValue()
+                                         , md_entry_type_list, md_entry_px_list, md_entry_size_list, md_entry_date_list,
+                                         md_entry_time_list)
 
         self.client_logic.process_market_data_respond(market_data)
         pass
@@ -278,7 +282,7 @@ class ClientFIXHandler():
 
         """
 
-        #Create Fix Message for Order
+        # Create Fix Message for Order
         message = fix.Message()
         header = message.getHeader()
         header.setField(fix.SenderCompID(fix_order.get_sender_comp_id()))
@@ -286,34 +290,34 @@ class ClientFIXHandler():
         header.setField(fix.MsgSeqNum(self.fix_application.order_id))
         header.setField(fix.SendingTime())
 
-        #Set Fix Message fix_order object
+        # Set Fix Message fix_order object
         maturity_month_year_fix = fix.MaturityMonthYear()
         maturity_month_year_fix.setString(fix_order.get_maturity_month_year().__str__())
-        transact_time_fix= fix.TransactTime()
+        transact_time_fix = fix.TransactTime()
         transact_time_fix.setString(fix_order.get_transact_time().__str__())
 
         message.setField(fix.ClOrdID(str(fix_order.get_cl_ord_id())))
         message.setField(fix.HandlInst(fix_order.get_handl_inst()))
-        message.setField(fix.ExecInst(fix_order.get_exec_inst())) #2 allow partial order, G All or None
+        message.setField(fix.ExecInst(fix_order.get_exec_inst()))  # 2 allow partial order, G All or None
         message.setField(fix.Symbol(fix_order.get_symbol()))
         message.setField(maturity_month_year_fix)
         message.setField(fix.MaturityDay(str(fix_order.get_maturity_day())))
-        message.setField(fix.Side(fix_order.get_side())) #1 buy, 2 sell
+        message.setField(fix.Side(fix_order.get_side()))  # 1 buy, 2 sell
         message.setField(transact_time_fix)
         message.setField(fix.OrderQty(fix_order.get_order_qty()))
-        message.setField(fix.OrdType(fix_order.get_ord_type())) #1 = Market, 2 = Limit,3 = Stop // optional,4 = Stop limit // optional,
+        message.setField(fix.OrdType(
+            fix_order.get_ord_type()))  # 1 = Market, 2 = Limit,3 = Stop // optional,4 = Stop limit // optional,
         message.setField(fix.Price(fix_order.get_price()))
         message.setField(fix.StopPx(fix_order.get_stop_px()))
 
-        #Send Fix Message to Server
-        fix.Session.sendToTarget(message,self.fix_application.sessionID)
+        # Send Fix Message to Server
+        fix.Session.sendToTarget(message, self.fix_application.sessionID)
 
         return
 
-    def handle_execution_report(self,message):
-
+    def handle_execution_report(self, message):
         order_id_fix = fix.OrderID()
-        cl_ord_id_fix= fix.ClOrdID()
+        cl_ord_id_fix = fix.ClOrdID()
         exec_id_fix = fix.ExecID()
         exec_trans_type_fix = fix.ExecTransType()
         exec_type_fix = fix.ExecType()
@@ -340,11 +344,13 @@ class ClientFIXHandler():
         message.getField(price_fix)
         message.getField(stop_px_fix)
 
-        #Encapsulate result of receiving execution report into order execution report
-        order_execution= OrderExecution(order_id_fix.getValue(), cl_ord_id_fix.getValue(), exec_id_fix.getValue()
-            , exec_trans_type_fix.getValue(), exec_type_fix.getValue(), ord_status_fix.getValue(), symbol_fix.getValue()
-            , side_fix.getValue(), leaves_qty_fix.getValue(), cum_qty_fix.getValue(), avg_px_fix.getValue()
-            , price_fix.getValue(), stop_px_fix.getValue())
+        # Encapsulate result of receiving execution report into order execution report
+        order_execution = OrderExecution(order_id_fix.getValue(), cl_ord_id_fix.getValue(), exec_id_fix.getValue()
+                                         , exec_trans_type_fix.getValue(), exec_type_fix.getValue(),
+                                         ord_status_fix.getValue(), symbol_fix.getValue()
+                                         , side_fix.getValue(), leaves_qty_fix.getValue(), cum_qty_fix.getValue(),
+                                         avg_px_fix.getValue()
+                                         , price_fix.getValue(), stop_px_fix.getValue())
 
         self.client_logic.process_order_execution_respond(order_execution)
 
@@ -389,15 +395,14 @@ class ClientLogic():
         self.gui_handler.start_gui()
 
     def logon(self, user_id, password):
-
         self.client_fix_handler.connect_to_server(user_id, password)
 
-        #TODO block mechanism
+        # TODO block mechanism
         self.block_gui()
 
-        #return self.success
+        # return self.success
 
-        #Notice that we should validate here
+        # Notice that we should validate here
         return True
 
     def block_gui(self):
@@ -418,47 +423,62 @@ class ClientLogic():
         Returns:
             None
         """
-        #Example of printing market_data response object
+        # Example of printing market_data response object
         print market_data.get_no_md_entry_types()
         print market_data.get_symbol()
-        for j in range (market_data.get_no_md_entry_types()):
+        for j in range(market_data.get_no_md_entry_types()):
             print(market_data.get_md_entry_type(j))
             print(market_data.get_md_entry_px(j))
             print(market_data.get_md_entry_size(j))
             print(market_data.get_md_entry_date(j))
             print(market_data.get_md_entry_time(j))
+
+        offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, closing_price, session_high, session_low = extract_market_data_information(
+            market_data)
+        five_smallest_offers_price, five_smallest_offers_quantity = extract_five_smallest_offers(offers_price,
+                                                                                                 offers_quantity)
+        five_biggest_bids_price, five_biggest_bids_quantity = extract_five_biggest_bids(bids_price, bid_quantity)
+        order_book_buy = TradingClass.OrderBookBuy(five_biggest_bids_price, five_biggest_bids_quantity)
+        order_book_sell = TradingClass.OrderBookBuy(five_smallest_offers_price, five_smallest_offers_quantity)
+        stock_information = TradingClass.StockInformation(current_price, session_high, session_low)
+        # TODO how todo date
+        stock_history = TradingClass.StockHistory(market_data.get_md_entry_date, current_price, current_quantity)
+        gui_market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
+        GUIHandler().refresh_charts(gui_market_data)
+
         return
 
-    def process_order_request(self,order):
-        #Get Order instruction from GUI
-        #Left Blank
+    def process_order_request(self, order):
+        # Get Order instruction from GUI
+        # Left Blank
 
-        #Construct Fix Order Object to be sent to the fix handler
-        cl_ord_id=self.client_fix_handler.fix_application.gen_order_id()
-        handl_inst='1'
-        exec_inst='2'
-        symbol='MS'
-        maturity_month_year= YearMonthFix(2016,1)
-        maturity_day=1
-        side=Side_BUY
-        transact_time= DateTimeUTCFix(2016,1,1,11,40,10)
-        order_qty=10
-        ord_type='1'
-        price=20
-        stop_px=10000
+        # Construct Fix Order Object to be sent to the fix handler
+        cl_ord_id = self.client_fix_handler.fix_application.gen_order_id()
+        handl_inst = '1'
+        exec_inst = '2'
+        symbol = 'MS'
+        maturity_month_year = YearMonthFix(2016, 1)
+        maturity_day = 1
+        side = Side_BUY
+        transact_time = DateTimeUTCFix(2016, 1, 1, 11, 40, 10)
+        order_qty = 10
+        ord_type = '1'
+        price = 20
+        stop_px = 10000
         sender_comp_id = "client"
         sending_time = None
         on_behalf_of_comp_id = None
         sender_sub_id = None
 
-        fix_order= FixOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side
-            ,transact_time, order_qty, ord_type, price, stop_px, sender_comp_id, sending_time, on_behalf_of_comp_id
-            , sender_sub_id)
+        fix_order = FixOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side
+                             , transact_time, order_qty, ord_type, price, stop_px, sender_comp_id, sending_time,
+                             on_behalf_of_comp_id
+                             , sender_sub_id)
         self.client_fix_handler.send_order(fix_order)
         return
 
-    def process_order_execution_respond(self,order_execution):
-        #process execution respond from server
+    def process_order_execution_respond(self, order_execution):
+        # process execution respond from server
 
         print("exec_id_fix, exec_trans_type_fix,exec_type_fix,ord_status_fix,symbol_fix,side_fix,eaves_qty_fix,"
               "cum_qty_fix,avg_px_fix,price_fix,stop_px_fix,")
@@ -477,8 +497,8 @@ class ClientLogic():
         return
 
     def request_trading_transactions(self, user_name):
-        #TODO alex write database request/fetch
-        #TODO FIRST yelinsheng sample data
+        # TODO alex write database request/fetch
+        # TODO FIRST yelinsheng sample data
         trading_transaction = None
         return trading_transaction
 
@@ -490,40 +510,39 @@ class GUIHandler:
 
     def start_gui(self):
         # here the gui stuff should be started, for now console
-        while(True):
+        while (True):
             print '''input 1 to run in terminal\ninput 2 to start gui\ninput 3 to quit'''
             input = raw_input()
-            #input='2'
-            if(input=='1'):
+            # input='2'
+            if (input == '1'):
                 self.wait_for_input()
-            elif(input=='2'):
-                file=open("rawData.json","r")
-                rawData=file.read()
-                json={
-                    "rawData":rawData
+            elif (input == '2'):
+                file = open("rawData.json", "r")
+                rawData = file.read()
+                json = {
+                    "rawData": rawData
                 }
                 htmlPy_app.template = ("index.html", json)
                 htmlPy_app.bind(GUISignal(self))
                 htmlPy_app.start()
-            elif(input=='3'):
+            elif (input == '3'):
                 break
             else:
                 continue
-
 
     def wait_for_input(self):
         while True:
             print '''input 1 to logon\ninput 2 to logout\ninput 3 to send market request\ninput 4 to order\ninput 5 to quit'''
             input = raw_input()
             if input == '1':
-                self.button_login_actuated("john","papapa")
+                self.button_login_actuated("john", "papapa")
             elif input == '2':
                 self.button_logout_actuated()
             elif input == '3':
                 self.send_market_data_request_option("CNNA")
-            elif input =='4':
+            elif input == '4':
                 self.send_order_request_option("order")
-            elif input =='5':
+            elif input == '5':
                 break
             else:
                 continue
@@ -531,7 +550,6 @@ class GUIHandler:
     def button_login_actuated(self, user_name, user_password):
         """This function is activated when the login button is pushed"""
         return self.client_logic.logon(user_name, user_password)
-
 
     def request_trading_transactions(self, user_name):
         """Request trading transactions
@@ -543,7 +561,7 @@ class GUIHandler:
         trading_transactions (string): json string of trading transaction
         """
         trading_transactions = self.client_logic.request_trading_transactions(user_name)
-        #TODO yenlinsheng finish this function
+        # TODO yenlinsheng finish this function
         trading_transactions_json = self.extract_trading_transactions_json(trading_transactions)
         pass
 
@@ -551,20 +569,18 @@ class GUIHandler:
         """This function is activated when the login button is pushed"""
         respond = self.client_logic.logout()
 
-#<<<<<<< HEAD
     def send_market_data_request_option(self, symbol):
         self.client_logic.process_market_data_request(symbol)
 
     def send_order_request_option(self, order):
         self.client_logic.process_order_request(order)
 
-#=======
     def button_buy_actuated(self, stock_ticker, price, quantity):
-        #TODO alex
+        # TODO alex
         pass
 
     def button_sell_actuated(self, stock_ticker, price, quantity):
-        #TODO alex
+        # TODO alex
         pass
 
     def search_for_stock_actuated(self, searching_value):
@@ -576,112 +592,137 @@ class GUIHandler:
         Returns:
             None
         """
-        #TODO alex
+        # TODO alex
         pass
 
     def refresh_charts(self, market_data):
-        #TODO yenlinsheng finish these functions
+        # TODO yenlinsheng finish these functions
         quantity_chart_json = self.extract_quantity_chart_json(market_data)
         stock_course_chart_json = self.extract_course_chart_json(market_data)
-        stock_information_json =  self.extract_stock_information_json(market_data)
+        stock_information_json = self.extract_stock_information_json(market_data)
         order_book_json = self.extract_order_book_json(market_data)
         pass
 
     def refresh_trading_transaction_list(self, trading_transaction):
-        #TODO yenlinsheng finish this function
+        # TODO yenlinsheng finish this function
         trading_transaction_json = self.extract_trading_transaction_json(trading_transaction)
         pass
-    def extract_quantity_chart_json(self,market_data):
-        data={"content":[]}
+
+    def extract_quantity_chart_json(self, market_data):
+        data = {"content": []}
         for i in range(len(market_data.stock_history.time)):
-            tmp={}
-            tmp["time"]=market_data.stock_history.time[i]
-            tmp["quantity"]=market_data.stock_history.quantity[i]
+            tmp = {}
+            tmp["time"] = market_data.stock_history.time[i]
+            tmp["quantity"] = market_data.stock_history.quantity[i]
             data["content"].append(tmp)
         return demjson.encode(data)
-    def extract_course_chart_json(self,market_data):
-        data={"content":[]}
+
+    def extract_course_chart_json(self, market_data):
+        data = {"content": []}
         for i in range(len(market_data.stock_history.time)):
-            tmp={}
-            tmp["time"]=market_data.stock_history.time[i]
-            tmp["price"]=market_data.stock_history.price[i]
+            tmp = {}
+            tmp["time"] = market_data.stock_history.time[i]
+            tmp["price"] = market_data.stock_history.price[i]
             data["content"].append(tmp)
         return demjson.encode(data)
-    def extract_stock_information_json(self,market_data):
-        data={}
-        data["price"]=market_data.stock_information.price
-        data["high"]=market_data.stock_information.high
-        data["low"]=market_data.stock_information.low
+
+    def extract_stock_information_json(self, market_data):
+        data = {}
+        data["price"] = market_data.stock_information.price
+        data["high"] = market_data.stock_information.high
+        data["low"] = market_data.stock_information.low
         return demjson.encode(data)
-    def extract_order_book_json(self,market_data):
-        data={"buy":[],"sell":[]}
+
+    def extract_order_book_json(self, market_data):
+        data = {"buy": [], "sell": []}
         for i in range(len(market_data.order_book_buy.price)):
-            tmp={}
-            tmp["price"]=market_data.order_book_buy.price[i]
-            tmp["quantity"]=market_data.order_book_buy.quantity[i]
+            tmp = {}
+            tmp["price"] = market_data.order_book_buy.price[i]
+            tmp["quantity"] = market_data.order_book_buy.quantity[i]
             data["buy"].append(tmp)
         for i in range(len(market_data.order_book_sell.price)):
-            tmp={}
-            tmp["price"]=market_data.order_book_sell.price[i]
-            tmp["quantity"]=market_data.order_book_sell.quantity[i]
+            tmp = {}
+            tmp["price"] = market_data.order_book_sell.price[i]
+            tmp["quantity"] = market_data.order_book_sell.quantity[i]
             data["sell"].append(tmp)
         return demjson.encode(data)
-    def extract_trading_transaction_json(self,trading_transaction):
-        data={}
-        data["time"]=trading_transaction.time
-        data["price"]=trading_transaction.price
-        data["quantity"]=trading_transaction.quantity
-        data["side"]=trading_transaction.side
+
+    def extract_trading_transaction_json(self, trading_transaction):
+        data = {}
+        data["time"] = trading_transaction.time
+        data["price"] = trading_transaction.price
+        data["quantity"] = trading_transaction.quantity
+        data["side"] = trading_transaction.side
         return demjson.encode(data)
 
-#TODO FIRST yenlinsheng MarketData class
-#DONE by yelinsheng 2016-10-28
-class StockInformation():
-    def __init__(self,p_price,p_high,p_low):
-        self.price=p_price
-        self.high=p_high
-        self.low=p_low
-class StockHistory():
-    def __init__(self,p_time,p_price,p_quantity):
-        #time,price,quantity are list type
-        self.time=p_time
-        self.price=p_price
-        self.quantity=p_quantity
-class OrderBookBuy():
-    def __init__(self,p_price,p_quantity):
-        #price,quantity are list type, with length of 5
-        self.price=p_price
-        self.quantity=p_quantity
-class OrderBookSell():
-    def __init__(self,p_price,p_quantity):
-        #price,quantity are list type, with length of 5
-        self.price=p_price
-        self.quantity=p_quantity
-class MarketData():
-    def __init__(self,p_stock_information,p_stock_history,p_order_book_buy,p_order_book_sell):
-        #type of parameters:
-        #stock_information -> StockInformation
-        #stock_history -> StockHistory
-        #order_book_buy -> OrderBookBuy
-        #order_book_sell -> OrderBookSell
-        self.stock_information=p_stock_information
-        self.stock_history=p_stock_history
-        self.order_book_buy=p_order_book_buy
-        self.order_book_sell=p_order_book_sell
+
+def extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices, market_data_entry_quantity):
+    prices = market_data_entry_prices[market_data_entry_types == 0]
+    quantity = market_data_entry_quantity[market_data_entry_types == 0]
+    return prices, quantity
 
 
-#TODO FIRST yelinsheng TradingTransaction class
-#DONE by yelinsheng 2016-10-28
-class TradingTransaction():
-    def __init__(self,p_time,p_price,p_quantity,p_side):
-        #side: True means buy, False means sell
-        self.time=p_time
-        self.price=p_price
-        self.quantity=p_quantity
-        self.side=p_side
+def extract_bids_price_quantity(market_data_entry_types, market_data_entry_prices, market_data_entry_quantity):
+    prices = market_data_entry_prices[market_data_entry_types == 1]
+    quantity = market_data_entry_quantity[market_data_entry_types == 1]
+    return prices, quantity
 
 
-#>>>>>>> add_matching_algorithm_outline
+def extract_current_price(market_data_entry_types, market_data_entry_prices):
+    current_price = market_data_entry_prices[market_data_entry_types == 2][0]
+    return current_price
+
+
+def extract_opening_price(market_data_entry_types, market_data_entry_prices):
+    opening_price = market_data_entry_prices[market_data_entry_types == 4][0]
+    return opening_price
+
+
+def extract_closing_price(market_data_entry_types, market_data_entry_prices):
+    closing_price = market_data_entry_prices[market_data_entry_types == 5][0]
+    return closing_price
+
+
+def extract_session_high(market_data_entry_types, market_data_entry_prices):
+    session_high = market_data_entry_prices[market_data_entry_types == 7][0]
+    return session_high
+
+
+def extract_session_low(market_data_entry_types, market_data_entry_prices):
+    session_low = market_data_entry_prices[market_data_entry_types == 8][0]
+    return session_low
+
+
+def extract_market_data_information(self, market_data):
+    market_data_entry_types = np.array(market_data.get_md_entry_type_list())
+    market_data_entry_prices = np.array(market_data.get_md_entry_px_list())
+    market_data_entry_quantity = np.array(market_data.get_md_entry_size_list())
+    offers_price, offers_quantity = extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                                                  market_data_entry_quantity)
+    bids_price, bids_quantity = extract_bids_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                                            market_data_entry_quantity)
+    current_price = extract_current_price(market_data_entry_types, market_data_entry_prices)
+    current_quantity = np.sum(offers_quantity) + np.sum(bids_quantity)
+    opening_price = extract_opening_price(market_data_entry_types)
+    closing_price = extract_closing_price(market_data_entry_types)
+    session_high = extract_session_high(market_data_entry_types)
+    session_low = extract_session_low(market_data_entry_types)
+    return offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, closing_price, session_high, session_low
+
+
+def extract_five_smallest_offers(self, offers_price, offers_quantity):
+    five_smallest_offers_index = np.argsort(offers_price)[::-1][:5]
+    five_smallest_offers_price = offers_price[five_smallest_offers_index]
+    five_smallest_offers_quantity = offers_quantity[five_smallest_offers_index]
+    return five_smallest_offers_price, five_smallest_offers_quantity
+
+
+def extract_five_biggest_bids(self, bids_price, bids_quantity):
+    five_smallest_bids_index = np.argsort(bids_price)[::-1][:5]
+    five_smallest_bids_price = bids_price[five_smallest_bids_index]
+    five_smallest_bids_quantity = bids_quantity[five_smallest_bids_index]
+    return five_smallest_bids_price, five_smallest_bids_quantity
+
 
 client_config_file_name = sys.argv[1] if len(sys.argv) == 2 else "client.cfg"
 client = ClientLogic(client_config_file_name)
