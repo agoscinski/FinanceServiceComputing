@@ -592,15 +592,47 @@ class GUIHandler:
         trading_transaction_json = self.extract_trading_transaction_json(trading_transaction)
         pass
     def extract_quantity_chart_json(self,market_data):
-        pass
-    def extract_course_chart_json(market_data):
-        pass
-    def extract_stock_information_json(market_data):
-        pass
-    def extract_order_book_json(market_data):
-        pass
-    def extract_trading_transaction_json(trading_transaction):
-        pass
+        data={"content":[]}
+        for i in range(len(market_data.stock_history.time)):
+            tmp={}
+            tmp["time"]=market_data.stock_history.time[i]
+            tmp["quantity"]=market_data.stock_history.quantity[i]
+            data["content"].append(tmp)
+        return demjson.encode(data)
+    def extract_course_chart_json(self,market_data):
+        data={"content":[]}
+        for i in range(len(market_data.stock_history.time)):
+            tmp={}
+            tmp["time"]=market_data.stock_history.time[i]
+            tmp["price"]=market_data.stock_history.price[i]
+            data["content"].append(tmp)
+        return demjson.encode(data)
+    def extract_stock_information_json(self,market_data):
+        data={}
+        data["price"]=market_data.stock_information.price
+        data["high"]=market_data.stock_information.high
+        data["low"]=market_data.stock_information.low
+        return demjson.encode(data)
+    def extract_order_book_json(self,market_data):
+        data={"buy":[],"sell":[]}
+        for i in range(len(market_data.order_book_buy.price)):
+            tmp={}
+            tmp["price"]=market_data.order_book_buy.price[i]
+            tmp["quantity"]=market_data.order_book_buy.quantity[i]
+            data["buy"].append(tmp)
+        for i in range(len(market_data.order_book_sell.price)):
+            tmp={}
+            tmp["price"]=market_data.order_book_sell.price[i]
+            tmp["quantity"]=market_data.order_book_sell.quantity[i]
+            data["sell"].append(tmp)
+        return demjson.encode(data)
+    def extract_trading_transaction_json(self,trading_transaction):
+        data={}
+        data["time"]=trading_transaction.time
+        data["price"]=trading_transaction.price
+        data["quantity"]=trading_transaction.quantity
+        data["side"]=trading_transaction.side
+        return demjson.encode(data)
 
 #TODO FIRST yenlinsheng MarketData class
 #DONE by yelinsheng 2016-10-28
@@ -642,7 +674,7 @@ class MarketData():
 #DONE by yelinsheng 2016-10-28
 class TradingTransaction():
     def __init__(self,p_time,p_price,p_quantity,p_side):
-        #side: True means buy, False means sell 
+        #side: True means buy, False means sell
         self.time=p_time
         self.price=p_price
         self.quantity=p_quantity
