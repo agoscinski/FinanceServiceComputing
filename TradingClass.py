@@ -1,6 +1,14 @@
 import datetime
 
 
+class MDEntryType:
+    TRADE = 2
+    OPENING = 4
+    CLOSING = 5
+    SESSION_HIGH = 7
+    SESSION_LOW = 8
+
+
 class MarketDataRequest(object):
     """Constructor of class MarketDataRequest:
         @Parameter:
@@ -235,162 +243,98 @@ class FixOrder(object):
         self.on_behalf_of_comp_id = on_behalf_of_comp_id
         self.sender_sub_id = sender_sub_id
 
-    "return client order id"
-
     def get_cl_ord_id(self):
         return self.cl_ord_id
-
-    "return handling institution"
 
     def get_handl_inst(self):
         return self.handl_inst
 
-    "return execution instruction"
-
     def get_exec_inst(self):
         return self.exec_inst
-
-    "return symbol"
 
     def get_symbol(self):
         return self.symbol
 
-    "return maturity month year"
-
     def get_maturity_month_year(self):
         return self.maturity_month_year
-
-    "return maturity day"
 
     def get_maturity_day(self):
         return self.maturity_day
 
-    "return side buy/sell"
-
     def get_side(self):
         return self.side
-
-    "return transaction time"
 
     def get_transact_time(self):
         return self.transact_time
 
-    "return order quantity"
-
     def get_order_qty(self):
         return self.order_qty
-
-    "return order type"
 
     def get_ord_type(self):
         return self.ord_type
 
-    "return order price"
-
     def get_price(self):
         return self.price
-
-    "return order stop price"
 
     def get_stop_px(self):
         return self.stop_px
 
-    "return sender company id of order "
-
     def get_sender_comp_id(self):
         return self.sender_comp_id
-
-    "return sending time of order"
 
     def get_sending_time(self):
         return self.sending_time
 
-    "return original sender company of order "
-
     def get_on_behalf_of_comp_id(self):
         return self.on_behalf_of_comp_id
-
-    "return additional sender id"
 
     def get_sender_sub_id(self):
         return self.sender_sub_id
 
-    "set client order id"
-
     def set_cl_ord_id(self, cl_ord_id):
         self.cl_ord_id = cl_ord_id
-
-    "set handling institution"
 
     def set_handl_inst(self, handl_inst):
         self.handl_inst = handl_inst
 
-    "set execution instruction"
-
     def set_exec_inst(self, exec_inst):
         self.exec_inst = exec_inst
-
-    "set symbol"
 
     def set_symbol(self, symbol):
         self.symbol = symbol
 
-    "set maturity month year"
-
     def set_maturity_month_year(self, maturity_month_year):
         self.maturity_month_year = maturity_month_year
-
-    "set maturity day"
 
     def set_maturity_day(self, maturity_day):
         self.maturity_day = maturity_day
 
-    "set side buy/sell"
-
     def set_side(self, side):
         self.side = side
-
-    "set transaction time"
 
     def set_transact_time(self, transact_time):
         self.transact_time = transact_time
 
-    "set order quantity"
-
     def set_order_qty(self, order_qty):
         self.order_qty = order_qty
-
-    "set order type"
 
     def set_ord_type(self, ord_type):
         self.ord_type = ord_type
 
-    "set order price"
-
     def set_price(self, price):
         self.price
-
-    "set order stop price"
 
     def set_stop_px(self, stop_px):
         self.stop_px = stop_px
 
-    "set sender company id of order "
-
     def set_sender_comp_id(self, sender_comp_id):
         self.sender_comp_id = sender_comp_id
-
-    "set sending time of order"
 
     def set_sending_time(self, sending_time):
         self.sending_time = sending_time
 
-    "set original sender company of order "
-
     def set_on_behalf_of_comp_id(self, on_behalf_of_comp_id):
         self.on_behalf_of_comp_id = on_behalf_of_comp_id
-
-    "set additional sender id"
 
     def set_sender_sub_id(self, sender_sub_id):
         self.sender_sub_id = sender_sub_id
@@ -430,12 +374,8 @@ class OrderExecution(object):
         self.price = price
         self.stop_px = stop_px
 
-    "return order id "
-
     def get_order_id(self):
         return self.order_id
-
-    "return client order id"
 
     def get_cl_ord_id(self):
         return self.cl_ord_id
@@ -454,8 +394,6 @@ class OrderExecution(object):
 
     def get_exec_type(self):
         return self.exec_type
-
-    "return order status"
 
     def get_ord_status(self):
         return self.ord_status
@@ -495,12 +433,8 @@ class OrderExecution(object):
     def get_stop_px(self):
         return self.stop_px
 
-    "set order id "
-
     def set_order_id(self):
         return self.order_id
-
-    "set client order id"
 
     def set_cl_ord_id(self, cl_ord_id):
         self.cl_ord_id = cl_ord_id
@@ -519,8 +453,6 @@ class OrderExecution(object):
 
     def set_exec_type(self, exec_type):
         self.exec_type = exec_type
-
-    "set order status"
 
     def set_ord_status(self, ord_status):
         self.ord_status = ord_status
@@ -643,7 +575,6 @@ class TimeFix(object):
         self.time = time
 
 
-
 class DateTimeUTCFix(object):
     """Constructor of DateTimeFix
         @Parameter:
@@ -655,7 +586,7 @@ class DateTimeUTCFix(object):
             second : second in int
     """
 
-    def __init__(self, year, month, date, hour, minute, second):
+    def __init__(self, year=None, month=None, date=None, hour=None, minute=None, second=None):
         self.date_time = datetime.datetime(year, month, date, hour, minute, second, 0)
 
     def get_date_time(self):
@@ -685,7 +616,7 @@ class Order(object):
         @Parameter:
         client_order_id = client order id (String)
         account_company_id= account company id related to the order (String)
-        received_time = received time (DateTimeFix Object=> DateTime datetime UTC YYYYMMDD-HH:MM:SS)
+        received_time = received time (DateTimeUTCFix Object=> DateTime datetime UTC YYYYMMDD-HH:MM:SS)
         handling_instruction = handling instruction (char)
         symbol = symbol (String)
         side = side (char)
@@ -873,15 +804,6 @@ class DatabaseStockInformation:
         self.day_low = day_low
 
 
-class DatabaseOpenOrder:
-    def __init__(self, stock_ticker, side, order_type, order_quantity, price):
-        self.stock_ticker = stock_ticker
-        self.side = side
-        self.order_type = order_type
-        self.order_type = order_quantity
-        self.price = price
-
-
 ###########################
 ### GUI related classes ###
 ###########################
@@ -898,7 +820,7 @@ class StockHistory():
         """ A stock history object to be represented
 
         Args:
-            p_time (list of string):  YYYY-MM-DD
+            p_time (list of string):  YYYY-MM-DD-HH-MM
             p_price (list of float):
             p_quantity (list of int): quantities
         """

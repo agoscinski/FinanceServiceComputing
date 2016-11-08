@@ -434,8 +434,8 @@ class ClientLogic():
             print(market_data.get_md_entry_date(j))
             print(market_data.get_md_entry_time(j))
 
-        offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, closing_price, session_high, session_low = extract_market_data_information(
-            market_data)
+        offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, \
+        closing_price, session_high, session_low = extract_market_data_information(market_data)
         five_smallest_offers_price, five_smallest_offers_quantity = extract_five_smallest_offers(offers_price,
                                                                                                  offers_quantity)
         five_biggest_bids_price, five_biggest_bids_quantity = extract_five_biggest_bids(bids_price, bid_quantity)
@@ -593,7 +593,8 @@ class GUIHandler:
         Returns:
             None
         """
-        # TODO alex
+        stock_ticker_symbol = searching_value
+        self.client_logic.process_market_data_request(stock_ticker_symbol)
         pass
 
     def refresh_charts(self, market_data):
@@ -703,12 +704,13 @@ def extract_market_data_information(self, market_data):
     bids_price, bids_quantity = extract_bids_price_quantity(market_data_entry_types, market_data_entry_prices,
                                                             market_data_entry_quantity)
     current_price = extract_current_price(market_data_entry_types, market_data_entry_prices)
-    current_quantity = np.sum(offers_quantity) + np.sum(bids_quantity)
+    current_quantity = market_data.get_md_total_volume_traded()
     opening_price = extract_opening_price(market_data_entry_types)
     closing_price = extract_closing_price(market_data_entry_types)
     session_high = extract_session_high(market_data_entry_types)
     session_low = extract_session_low(market_data_entry_types)
-    return offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, closing_price, session_high, session_low
+    return offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price,\
+           closing_price, session_high, session_low
 
 
 def extract_five_smallest_offers(self, offers_price, offers_quantity):
