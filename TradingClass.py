@@ -652,7 +652,7 @@ class DateTimeUTCFix(object):
             second : second in int
     """
 
-    def __init__(self, year, month, date, hour, minute, second):
+    def __init__(self, year=None, month=None, date=None, hour=None, minute=None, second=None):
         self.date_time = datetime.datetime(year, month, date, hour, minute, second, 0)
 
     def get_date_time(self):
@@ -870,15 +870,6 @@ class DatabaseStockInformation:
         self.day_low = day_low
 
 
-class DatabaseOpenOrder:
-    def __init__(self, stock_ticker, side, order_type, order_quantity, price):
-        self.stock_ticker = stock_ticker
-        self.side = side
-        self.order_type = order_type
-        self.order_type = order_quantity
-        self.price = price
-
-
 ###########################
 ### GUI related classes ###
 ###########################
@@ -895,7 +886,7 @@ class StockHistory():
         """ A stock history object to be represented
 
         Args:
-            p_time (list of string):  YYYY-MM-DD
+            p_time (list of string):  YYYY-MM-DD-HH-MM
             p_price (list of float):
             p_quantity (list of int): quantities
         """

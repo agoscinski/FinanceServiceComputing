@@ -16,7 +16,7 @@ import numpy as np
     marketprice: actual markeprice
 return void
 set buy and sell shares to new amount"""
-def match(buy, sell):
+def pro_rata(buy, sell):
     
     "get total volume of buy"
     volbuy = 0
