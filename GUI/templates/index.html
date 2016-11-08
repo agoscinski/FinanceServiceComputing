@@ -37,7 +37,7 @@
   <div class="container-fluid">
     <div class="fsc-width-2">
       <form class="fsc-search-form navbar-search">
-        <input type="text" class="search-query" placeholder="Search111">
+        <input id="stockCode" onkeypress="inputPressed()" type="text" class="search-query" placeholder="Search111">
       </form>
       <div class="fsc-info">
         <div class="text-center">
@@ -102,66 +102,8 @@
       <div class="fsc-transaction text-center">
         <h4>Order Book</h4>
         <table class="table table-striped">
-          <tbody>
-            <tr>
-              <td>Sell-5</td>
-              <td>100$</td>
-              <td>20</td>
-            </tr>
-            <tr>
-              <td>Sell-4</td>
-              <td>200$</td>
-              <td>300</td>
-            </tr>
-            <tr>
-              <td>Sell-3</td>
-              <td>200$</td>
-              <td>300</td>
-            </tr>
+          <tbody id="orderBook">
 
-            <tr>
-              <td>Sell-2</td>
-              <td>200$</td>
-              <td>300</td>
-            </tr>
-
-            <tr>
-              <td>Sell-1</td>
-              <td>200$</td>
-              <td>300</td>
-            </tr>
-            <tr>
-              <td class="done">done</td>
-              <td class="done">100$</td>
-              <td class="done">20</td>
-            </tr>
-            <tr>
-              <td>Buy-1</td>
-              <td>100$</td>
-              <td>20</td>
-            </tr>
-            <tr>
-              <td>Buy-2</td>
-              <td>200$</td>
-              <td>300</td>
-            </tr>
-            <tr>
-              <td>Buy-3</td>
-              <td>200$</td>
-              <td>300</td>
-            </tr>
-
-            <tr>
-              <td>Buy-4</td>
-              <td>200$</td>
-              <td>300</td>
-            </tr>
-
-            <tr>
-              <td>Buy-5</td>
-              <td>200$</td>
-              <td>300</td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -176,37 +118,8 @@
               <th>side</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td>2016-01-02</td>
-              <td>100$</td>
-              <td>20</td>
-              <td>buy</td>
-            </tr>
-            <tr>
-              <td>2016-01-02</td>
-              <td>100$</td>
-              <td>20</td>
-              <td>buy</td>
-            </tr>
-            <tr>
-              <td>2016-01-02</td>
-              <td>100$</td>
-              <td>20</td>
-              <td>buy</td>
-            </tr>
-            <tr>
-              <td>2016-01-02</td>
-              <td>100$</td>
-              <td>20</td>
-              <td>buy</td>
-            </tr>
-            <tr>
-              <td>2016-01-02</td>
-              <td>100$</td>
-              <td>20</td>
-              <td>buy</td>
-            </tr>
+          <tbody id="tradingTransaction">
+
           </tbody>
         </table>
       </div>
@@ -236,6 +149,10 @@
   <script type="text/javascript">
     //js must be edited here
 
+    var stockCode="";
+
+
+
     function showLoginModal(){
       $('#logInModal').modal('show');
     }
@@ -262,14 +179,14 @@
       $('#logInA').show();
     }
 
-    function splitData(rawData) {
+    function splitData(price,quantity) {
       var categoryData = [];
       var prices = [];
       var volumns = [];
-      for (var i = 0; i < rawData.length; i++) {
-          categoryData.push(rawData[i][0]+'-01-01');
-          prices.push(rawData[i][1]);
-          volumns.push(rawData[i][2]);
+      for (var i = 0; i < price.length; i++) {
+          categoryData.push(price[i].time+'-01-01');
+          prices.push(price[i].price);
+          volumns.push(quantity[i].quantity);
       }
       return {
           categoryData: categoryData,
@@ -278,139 +195,226 @@
       };
     }
 
-    var rawData={{rawData}};
-    var data = splitData(rawData);
+    function freshChart(pStockCode){
+      if(pStockCode.length==0){
+        return
+      }
+      var jsonData=GUISignal.freshChart(pStockCode);
+      jsonData=JSON.parse(jsonData);
+      if(jsonData.success){
+        $('#infoPrice').html(jsonData.stockInfo.price);
+        $('#infoHigh').html(jsonData.stockInfo.high);
+        $('#infoLow').html(jsonData.stockInfo.low);
+        $('#orderBook').html('\
+          <tr>\
+            <td>Sell-5</td>\
+            <td>'+jsonData.orderBook.sell[4].price+'$</td>\
+            <td>'+jsonData.orderBook.sell[4].quantity+'</td</tr>\
+          <tr>\
+            <td>Sell-4</td>\
+            <td>'+jsonData.orderBook.sell[3].price+'$</td>\
+            <td>'+jsonData.orderBook.sell[3].quantity+'</td>\
+          </tr>\
+          <tr>\
+            <td>Sell-3</td>\
+            <td>'+jsonData.orderBook.sell[2].price+'$</td>\
+            <td>'+jsonData.orderBook.sell[2].quantity+'</td>\
+          </tr>\
+          <tr>\
+            <td>Sell-2</td>\
+            <td>'+jsonData.orderBook.sell[1].price+'$</td>\
+            <td>'+jsonData.orderBook.sell[1].quantity+'</td>\
+          </tr>\
+          <tr>\
+            <td>Sell-1</td>\
+            <td>'+jsonData.orderBook.sell[0].price+'$</td>\
+            <td>'+jsonData.orderBook.sell[0].quantity+'</td>\
+          </tr>\
+          <tr>\
+            <td class="done">done</td>\
+            <td class="done">100$</td>\
+            <td class="done">20</td>\
+          </tr>\
+          <tr>\
+            <td>Buy-1</td>\
+            <td>'+jsonData.orderBook.buy[4].price+'$</td>\
+            <td>'+jsonData.orderBook.buy[4].quantity+'</td>\
+          </tr>\
+          <tr>\
+            <td>Buy-2</td>\
+            <td>'+jsonData.orderBook.buy[3].price+'$</td>\
+            <td>'+jsonData.orderBook.buy[3].quantity+'</td>\
+          </tr>\
+          <tr>\
+            <td>Buy-3</td>\
+            <td>'+jsonData.orderBook.buy[2].price+'$</td>\
+            <td>'+jsonData.orderBook.buy[2].quantity+'</td>\
+          </tr>\
+          <tr>\
+            <td>Buy-4</td>\
+            <td>'+jsonData.orderBook.buy[1].price+'$</td>\
+            <td>'+jsonData.orderBook.buy[1].quantity+'</td>\
+          </tr>\
+          <tr>\
+            <td>Buy-5</td>\
+            <td>'+jsonData.orderBook.buy[0].price+'$</td>\
+            <td>'+jsonData.orderBook.buy[0].quantity+'</td>\
+          </tr>');
+        var tmp='';
+        for(var i=0;i<jsonData.tradingTransaction.content.length;i++){
+          tmp=tmp+'\
+            <tr>\
+              <td>'+jsonData.tradingTransaction.content[i].time+'</td>\
+              <td>'+jsonData.tradingTransaction.content[i].price+'$</td>\
+              <td>'+jsonData.tradingTransaction.content[i].quantity+'</td>\
+              <td>'+jsonData.tradingTransaction.content[i].side+'</td>\
+            </tr>';
+        }
+        $('#tradingTransaction').html(tmp);
+
+        var chartData = splitData(jsonData.price.content,jsonData.quantity.content);
+
+        myChart.setOption(option = {
+          backgroundColor: '#eee',
+          animation: false,
+          legend: {
+            //图例
+            top: 10,
+            left: 'center',
+            data: ['Price','Volumn']
+          },
+          tooltip: {
+            //提示框
+            show:true,
+            trigger: 'axis',
+            axisPointer: {
+              type: 'line'
+            }
+          },
+          toolbox: {
+            //工具盒子
+            show:false
+          },
+          grid: [
+          //放置位置
+          {
+            left: '10%',
+            right: '8%',
+            height: '50%'
+          },
+          {
+            left: '10%',
+            right: '8%',
+            top: '63%',
+            height: '16%'
+          }
+          ],
+          xAxis: [
+          {
+            type: 'category',
+            data: chartData.categoryData,
+            scale: true,
+            boundaryGap : false,
+            axisLine: {onZero: false},
+            splitLine: {show: false},
+            //axisLabel: {show:true,interval: 0}
+            splitNumber: 10,
+            min: 'dataMin',
+            max: 'dataMax'
+          },
+          {
+            type: 'category',
+            gridIndex: 1,
+            data: chartData.categoryData,
+            scale: true,
+            boundaryGap : false,
+            axisLine: {onZero: false},
+            axisTick: {show: false},
+            splitLine: {show: false},
+            axisLabel: {show: false},
+            splitNumber: 10,
+            min: 'dataMin',
+            max: 'dataMax'
+          }
+          ],
+          yAxis: [
+          {
+            scale: true,
+            splitArea: {
+              show: true
+            }
+          },
+          {
+            scale: true,
+            gridIndex: 1,
+            splitNumber: 2,
+            axisLabel: {show: false},
+            axisLine: {show: false},
+            axisTick: {show: false},
+            splitLine: {show: false}
+          }
+          ],
+          dataZoom: [
+          //显示区域
+          {
+            type: 'inside',
+            xAxisIndex: [0, 1],
+            startValue: chartData.categoryData[chartData.categoryData.length-(14>chartData.categoryData.length?chartData.categoryData.length:18)],
+            endValue: chartData.categoryData[chartData.categoryData.length-1]
+          },
+          {
+            show: true,
+            xAxisIndex: [0, 1],
+            type: 'slider',
+            top: '85%',
+            startValue: chartData.categoryData[chartData.categoryData.length-(14>chartData.categoryData.length?chartData.categoryData.length:14)],
+            endValue: chartData.categoryData[chartData.categoryData.length-1]
+          }
+          ],
+          series: [
+          {
+            name: 'Price',
+            type: 'line',
+            data: chartData.prices,
+            lineStyle: {
+              normal: {
+                color:'#4EA4D9',
+                width:2
+              }
+            }
+          },
+          {
+            name: 'Volumn',
+            type: 'bar',
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            data: chartData.volumns
+          }
+          ]
+        }, true);
+      }
+    }
+
+
+
 
     var myChart = echarts.init(document.getElementById('main'));
 
-    myChart.setOption(option = {
-      backgroundColor: '#eee',
-      animation: true,
-      legend: {
-        //图例
-        top: 10,
-        left: 'center',
-        data: ['Price','Volumn']
-      },
-      tooltip: {
-        //提示框
-        show:true,
-        trigger: 'axis',
-        axisPointer: {
-          type: 'line'
-        }
-      },
-      toolbox: {
-        //工具盒子
-        show:false
-      },
-      grid: [
-      //放置位置
-      {
-        left: '10%',
-        right: '8%',
-        height: '50%'
-      },
-      {
-        left: '10%',
-        right: '8%',
-        top: '63%',
-        height: '16%'
-      }
-      ],
-      xAxis: [
-      {
-        type: 'category',
-        data: data.categoryData,
-        scale: true,
-        boundaryGap : false,
-        axisLine: {onZero: false},
-        splitLine: {show: false},
-        //axisLabel: {show:true,interval: 0}
-        splitNumber: 10,
-        min: 'dataMin',
-        max: 'dataMax'
-      },
-      {
-        type: 'category',
-        gridIndex: 1,
-        data: data.categoryData,
-        scale: true,
-        boundaryGap : false,
-        axisLine: {onZero: false},
-        axisTick: {show: false},
-        splitLine: {show: false},
-        axisLabel: {show: false},
-        splitNumber: 10,
-        min: 'dataMin',
-        max: 'dataMax'
-      }
-      ],
-      yAxis: [
-      {
-        scale: true,
-        splitArea: {
-          show: true
-        }
-      },
-      {
-        scale: true,
-        gridIndex: 1,
-        splitNumber: 2,
-        axisLabel: {show: false},
-        axisLine: {show: false},
-        axisTick: {show: false},
-        splitLine: {show: false}
-      }
-      ],
-      dataZoom: [
-      //显示区域
-      {
-        type: 'inside',
-        xAxisIndex: [0, 1],
-        startValue: "2016-10-08-01-01",
-        endValue: "2016-10-13-01-01"
-      },
-      {
-        show: true,
-        xAxisIndex: [0, 1],
-        type: 'slider',
-        top: '85%',
-        startValue: "2016-10-08-01-01",
-        endValue: "2016-10-13-01-01"
-      }
-      ],
-      series: [
-      {
-        name: 'Price',
-        type: 'line',
-        data: data.prices,
-        lineStyle: {
-          normal: {
-            color:'#4EA4D9',
-            width:2
-          }
-        }
-      },
-      {
-        name: 'Volumn',
-        type: 'bar',
-        xAxisIndex: 1,
-        yAxisIndex: 1,
-        data: data.volumns
-      }
-      ]
-    }, true);
+    var timer=-100;
 
-    setInterval("freshChart()",5000);
-
-    function freshChart(){
-      var data=GUISignal.freshChart();
-      data=JSON.parse(data);
-      $('#infoPrice').html(data.stockInfo.price);
-      $('#infoHigh').html(data.stockInfo.high);
-      $('#infoLow').html(data.stockInfo.low);
+    function inputPressed(){
+      if(event.keyCode==13){
+        stockCode=$("#stockCode").val();
+        if(timer!=-100){
+          clearInterval(timer);
+        }
+        if(stockCode.length!=0){
+          timer=setInterval("freshChart(stockCode)",1000);
+          freshChart(stockCode);
+        }
+      }
     }
+
 
     //select a part of data
     /*
