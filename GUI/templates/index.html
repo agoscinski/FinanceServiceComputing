@@ -215,28 +215,28 @@
     <div id="logInModal" class="modal hide fade in" style="display: none; ">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header"> 
-            <a class="close" data-dismiss="modal">×</a> 
-            <h3>Log in to system</h3> 
-          </div> 
+          <div class="modal-header">
+            <a class="close" data-dismiss="modal">×</a>
+            <h3>Log in to system</h3>
+          </div>
           <div class="modal-body">
             <div class="login-div">
-              <input type="text" id="userName" placeholder="Name"> 
-              <input type="password" id="password" placeholder="password"> 
+              <input type="text" id="userName" placeholder="Name">
+              <input type="password" id="password" placeholder="password">
             </div>
-            
-          </div> 
-          <div class="modal-footer"> 
-            <a href="logIn()" class="btn btn-success"  data-bind="true">login</a> 
+
+          </div>
+          <div class="modal-footer">
+            <a href="logIn()" class="btn btn-success"  data-bind="true">login</a>
           </div>
         </div>
       </div>
-    </div> 
-    
+    </div>
+
   </div>
   <script type="text/javascript">
     //js must be edited here
-    
+
 
 
     function showLoginModal(){
@@ -270,7 +270,7 @@
       var values = [];
       var volumns = [];
       for (var i = 0; i < rawData.length; i++) {
-          categoryData.push(rawData[i].splice(0, 1)[0]);
+          categoryData.push(rawData[i].splice(0, 1)[0]+'-01-01');
           values.push(rawData[i]);
           volumns.push(rawData[i][4]);
       }
@@ -279,22 +279,6 @@
           values: values,
           volumns: volumns
       };
-    }
-
-    function calculateMA(dayCount, data) {
-        var result = [];
-        for (var i = 0, len = data.values.length; i < len; i++) {
-            if (i < dayCount) {
-                result.push('-');
-                continue;
-            }
-            var sum = 0;
-            for (var j = 0; j < dayCount; j++) {
-                sum += data.values[i - j][1];
-            }
-            result.push(+(sum / dayCount).toFixed(3));
-        }
-        return result;
     }
 
     var rawData={{rawData}};
@@ -309,11 +293,11 @@
         //图例
         top: 10,
         left: 'center',
-        data: ['Dow-Jones index', 'MA5', 'MA10', 'MA20', 'MA30']
+        data: ['Dow-Jones index']
       },
       tooltip: {
         //提示框
-        show:false,
+        show:true,
         trigger: 'axis',
         axisPointer: {
           type: 'line'
@@ -361,6 +345,7 @@
         boundaryGap : false,
         axisLine: {onZero: false},
         splitLine: {show: false},
+        //axisLabel: {show:true,interval: 0}
         splitNumber: 20,
         min: 'dataMin',
         max: 'dataMax'
@@ -402,16 +387,16 @@
       {
         type: 'inside',
         xAxisIndex: [0, 1],
-        startValue: "2016-04-12",
-        endValue: "2016-06-22"
+        startValue: "2016-04-12-01-01",
+        endValue: "2016-06-22-01-01"
       },
       {
         show: true,
         xAxisIndex: [0, 1],
         type: 'slider',
         top: '85%',
-        startValue: "2016-04-12",
-        endValue: "2016-06-22"
+        startValue: "2016-04-12-01-01",
+        endValue: "2016-06-22-01-01"
       }
       ],
       series: [
@@ -439,42 +424,6 @@
         }
       },
       {
-        name: 'MA5',
-        type: 'line',
-        data: calculateMA(5, data),
-        smooth: true,
-        lineStyle: {
-          normal: {opacity: 0.5}
-        }
-      },
-      {
-        name: 'MA10',
-        type: 'line',
-        data: calculateMA(10, data),
-        smooth: true,
-        lineStyle: {
-          normal: {opacity: 0.5}
-        }
-      },
-      {
-        name: 'MA20',
-        type: 'line',
-        data: calculateMA(20, data),
-        smooth: true,
-        lineStyle: {
-          normal: {opacity: 0.5}
-        }
-      },
-      {
-        name: 'MA30',
-        type: 'line',
-        data: calculateMA(30, data),
-        smooth: true,
-        lineStyle: {
-          normal: {opacity: 0.5}
-        }
-      },
-      {
         name: 'Volumn',
         type: 'bar',
         xAxisIndex: 1,
@@ -490,20 +439,20 @@
       areas: [
       {
         brushType: 'lineX',
-        coordRange: ['2016-06-02', '2016-06-20'],
+        coordRange: ['2016-06-02-01-01', '2016-06-20-01-01'],
         xAxisIndex: 0
       }
       ]
     });
-    
-    
+
+
   </script>
 
     <!-- Le javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
 
-    
+
     <script src="{{ 'js/jquery.js'|staticfile }}"></script>
     <script src="{{ 'js/bootstrap-transition.js'|staticfile }}"></script>
     <script src="{{ 'js/bootstrap-alert.js'|staticfile }}"></script>
