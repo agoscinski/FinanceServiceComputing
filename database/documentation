@@ -8,13 +8,21 @@ RoleID: the role of the user, if he is has admin rights (1) or no admin rights (
 
 Order
 An order is an offered order by client to buy or sell stocks. It can be
-ClientOrderID: The ID offered by the sender side 
-ClientID: It is the ID of the client on which behalve 
-RecInst
-ClientID
-HandlingIntsruction
-CashOrderQuantitiy
+ClientOrderID: The ID how the client identifies this order
+Account_CompanyID: The ID of the company making the order
+ReceivedTime: The date when the order was first accepted
+HandlingInstruction: The way the order should be handled (we only support the values 1 = Automated execution order, private, no Broker intervention)
+Stock_Ticker: The ticker symbol the order is related to
+Side: Describes the type of Order (we only support the values 1 = Buy, 2 = Sell)
+OrderType (we only support the values 1 = Market, 2 = Limit)
+OrderQuantity: The total quantity of the order (be careful, it could be that the order is partially fulfilled, therefore it has to be checked if there exist
+CashOrderQuantity: Defines (is not supported)
+Price
 LastStatus: 0:Done, 1:Pending, 2: PartlyCanceled, 3: CompletelyCanceled
+MsqSeqNum:
+OnBehalfOfCompanyID:
+SenderSubID:
+
 
 
 

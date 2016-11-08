@@ -7,6 +7,7 @@ import pdb
 import yahoo_finance
 import MySQLdb
 from enum import Enum
+import TradingClass
 from TradingClass import MarketDataRequest
 from TradingClass import MarketDataResponse
 from TradingClass import FixOrder
@@ -403,7 +404,10 @@ class ServerLogic:
         md_entry_time_list = []
 
         # Should be retrieving Market Data using Required Symbol and Parameter
-        a_date= DateFix(2013,2,1)
+        self.server_database_handler.fetch_stock_information(symbol)
+        DateFix
+
+        a_date = DateFix(2013,2,1)
         a_date.set_date_string("20140201")
         a_time= TimeFix(10,1,0)
         a_time.set_time_string("10:02:00")
@@ -465,7 +469,6 @@ class ServerLogic:
 
         self.server_database_handler.insert_order(order)
         #TODO Husein retrieve all orders from database Order
-        order_list=[]
         order_list=self.server_database_handler.fetch_all_orders()
 
         for order in order_list:
@@ -592,7 +595,7 @@ class ServerDatabaseHandler:
         """
         # TODO Husein retrieve all orders from database Order
 
-        order_list=[]
+        order_list = []
         sql_command = ("select ClientOrderID,Account_CompanyID, ReceivedTime, HandlingInstruction, Stock_Ticker,"
                 "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
                 "CashOrderQuantity from `Order` where LastStatus=0")
@@ -632,11 +635,17 @@ class ServerDatabaseHandler:
                 stock.get_total_volume()))
         self.execute_sql_command(command)
 
-    def fetch_stock(self, stock):
-        pass
+    def fetch_stock_information(self, stock_ticker_symbol):
+        """Retrieves stock information from database
 
-    def fetch_stock_information(self, stock):
-        pass
+        Args:
+            stock_ticker_symbol (string): The stock's ticker symbol
+
+        Returns:
+             TradingClass.DatabaseStockInformation object"""
+        #TODO emely valentin
+        database_stock_information = TradingClass.DatabaseStockInformation()
+        return database_stock_information
 
     def request_orders_of_type(self, order):
         """Returns all orders for the same stock as the given order
@@ -649,18 +658,22 @@ class ServerDatabaseHandler:
         Returns:
             success (ServerRespond): success of authentication
         """
+        pass
 
-    def request_orders_for_stock(self, stock):
+    def request_open_orders_for_stock_ticker(self, stock_ticker):
         """Returns all orders for the same stock as the given order
 
 
         Args:
-            stock (Stock): The stock for which the orders are searched for
+            stock_ticker (Stock): The stock ticker for which the orders are searched for
 
         Returns:
-            buy_orders (list<Order>): list of buying orders for the stock
-            sell_orders (list<Order>): list of selling orders for the stock
+            orders (list<Order>): list of all open orders for the stock with the stock ticker stock_ticker
         """
+        #TODO emely valentin
+        open_orders = [TradingClass.DatabaseOpenOrder()]
+        return open_orders
+
 
     def send_client_match_query(self):
         pass

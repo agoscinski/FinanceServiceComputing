@@ -116,9 +116,8 @@ class MarketDataResponse(object):
     """
 
     def __init__(self, md_req_id, no_md_entry_types, symbol, md_entry_type_list, md_entry_px_list,
-                 md_entry_size_list, md_entry_date_list, md_entry_time_list):
+                 md_entry_size_list, md_entry_date_list, md_entry_time_list, md_total_volume_traded=None):
         self.md_req_id = md_req_id
-
         self.no_md_entry_types = no_md_entry_types
         self.symbol = symbol
         self.md_entry_type_list = md_entry_type_list
@@ -126,111 +125,77 @@ class MarketDataResponse(object):
         self.md_entry_size_list = md_entry_size_list
         self.md_entry_date_list = md_entry_date_list
         self.md_entry_time_list = md_entry_time_list
+        self.md_total_volume_traded = md_total_volume_traded
 
-    "return market data request ID"
 
     def get_md_req_id(self):
         return self.md_req_id
 
-    "return number of market data entries response"
-
     def get_no_md_entry_types(self):
         return self.no_md_entry_types
-
-    "return symbol requested"
 
     def get_symbol(self):
         return self.symbol
 
-    "return list of market data entries"
-
     def get_md_entry_type_list(self):
         return self.md_entry_type_list
-
-    "return list of market data price"
 
     def get_md_entry_px_list(self):
         return self.md_entry_px_list
 
-    "return list of market data entry size"
-
     def get_md_entry_size_list(self):
         return self.md_entry_size_list
-
-    "return list of market data entry date"
 
     def get_md_entry_date_list(self):
         return self.md_entry_date_list
 
-    "return list of market data entry time"
-
     def get_md_entry_time_list(self):
         return self.md_entry_time_list
 
-    "return a market data entry at index i"
+    def get_md_entry_type(self, index):
+        return self.md_entry_type_list[index]
 
-    def get_md_entry_type(self, i):
-        return self.md_entry_type_list[i]
+    def get_md_entry_px(self, index):
+        return self.md_entry_px_list[index]
 
-    "return a market data price at index i"
+    def get_md_entry_size(self, index):
+        return self.md_entry_size_list[index]
 
-    def get_md_entry_px(self, i):
-        return self.md_entry_px_list[i]
+    def get_md_entry_date(self, index):
+        return self.md_entry_date_list[index]
 
-    "return a market data entry size at index i"
+    def get_md_entry_time(self, index):
+        return self.md_entry_time_list[index]
 
-    def get_md_entry_size(self, i):
-        return self.md_entry_size_list[i]
-
-    "return a market data entry date at index i"
-
-    def get_md_entry_date(self, i):
-        return self.md_entry_date_list[i]
-
-    "return a market data entry time at index i"
-
-    def get_md_entry_time(self, i):
-        return self.md_entry_time_list[i]
-
-    "set market data request ID"
+    def get_md_total_volume_traded(self):
+        return self.md_total_volume_traded
 
     def set_md_req_id(self, md_req_id):
         self.md_req_id = md_req_id
 
-    "set number of market data entries response"
-
     def set_no_md_entry_types(self, no_md_entry_types):
         self.no_md_entry_types = no_md_entry_types
-
-    "set a symbol"
 
     def set_symbol(self, symbol):
         self.symbol = symbol
 
-    "set list of market data entries"
-
     def set_md_entry_type_list(self, md_entry_type_list):
         self.md_entry_type_list = md_entry_type_list
-
-    "set list of market data price"
 
     def set_md_entry_px_list(self, md_entry_px_list):
         self.md_entry_px_list = md_entry_px_list
 
-    "set list of market data entry size"
-
     def set_md_entry_size_list(self, md_entry_size_list):
         self.md_entry_size_list = md_entry_size_list
-
-    "set list of market data entry date"
 
     def set_md_entry_date_list(self, md_entry_date_list):
         self.md_entry_date_list = md_entry_date_list
 
-    "set list of market data entry time"
-
     def set_md_entry_time_list(self, md_entry_time_list):
         self.md_entry_time_list = md_entry_time_list
+
+    def get_md_total_volume_traded(self):
+        return self.md_total_volume_traded
 
 
 class FixOrder(object):
@@ -889,6 +854,31 @@ class Order(object):
     def set_cash_order_quantity(self, cash_order_quantity):
         self.cash_order_quantity = cash_order_quantity
 
+
+################################
+### Database related classes ###
+################################
+
+
+class DatabaseStockInformation:
+    def __init__(self, current_price = None, current_volume = None, opening_price = None, closing_price = None, day_high = None, day_low = None):
+        self.current_price = current_price
+        self.current_volume = current_volume
+        self.opening_price = opening_price
+        self.closing_price = closing_price
+        self.day_high = day_high
+        self.day_low = day_low
+
+
+class DatabaseOpenOrder:
+    def __init__(self, stock_ticker, side, order_type, order_quantity, price):
+        self.stock_ticker = stock_ticker
+        self.side = side
+        self.order_type = order_type
+        self.order_type = order_quantity
+        self.price = price
+
+
 ###########################
 ### GUI related classes ###
 ###########################
@@ -902,7 +892,13 @@ class StockInformation():
 
 class StockHistory():
     def __init__(self, p_time, p_price, p_quantity):
-        # time,price,quantity are list type
+        """ A stock history object to be represented
+
+        Args:
+            p_time (list of string):  YYYY-MM-DD
+            p_price (list of float):
+            p_quantity (list of int): quantities
+        """
         self.time = p_time
         self.price = p_price
         self.quantity = p_quantity
