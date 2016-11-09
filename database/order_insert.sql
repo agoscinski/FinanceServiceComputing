@@ -1,0 +1,4 @@
+INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES('0','GS','2016-11-09','1','TSLA','1','2','1000','10000', '1');
+INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES('0','MS','2016-11-08','1','TSLA','2','2','100','500', '0');
+INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES('0','MS','2016-11-09','1','TSLA','2','2','100','100', '0');
+INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES('1','MS','2016-11-08','1','TSLA','2','2','2000','500', '1');
