@@ -48,7 +48,7 @@ class GUISignal(htmlPy.Object):
         self.gui_handler.button_logout_actuated()
 
     @htmlPy.Slot(str,result=str)
-    def freshChart(self,stockCode):
+    def freshChart(self, stockCode):
         trading_transaction=TradingClass.TradingTransaction(["2016-10-01","2016-10-02","2016-10-03"],[12,23,12],[22,22,22],[True,False,True])
         stock_information=TradingClass.StockInformation(self.fresh,self.fresh+2,self.fresh-2)
         stock_history=TradingClass.StockHistory(["2016-10-1","2016-10-2","2016-10-3","2016-10-4","2016-10-5","2016-10-6","2016-10-7","2016-10-8","2016-10-9","2016-10-10"],[self.fresh+10,self.fresh+12.5,12.5,12.5,self.fresh+15.5,12.5,12.5,12.5,12.5,12.5],[self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh])
@@ -132,6 +132,7 @@ class ClientFIXApplication(fix.Application):
 class ClientFIXHandler():
     def __init__(self, client_logic, client_config_file_name):
         self.client_logic = client_logic
+        self.client_database_handler = ClientDatabaseHandler()
         self.client_config_file_name = client_config_file_name
         self.fix_application = None
         self.socket_initiator = None
@@ -192,9 +193,9 @@ class ClientFIXHandler():
         message = fix.Message();
         header = message.getHeader();
         header.setField(fix.MsgType(fix.MsgType_MarketDataRequest))
-        header.setField(fix.MsgSeqNum(self.fix_application.order_id))
+        header.setField(fix.MsgSeqNum(self.client_database_handler.generate_new_order_id()))
         header.setField(fix.SendingTime())
-        message.setField(fix.MDReqID(str(self.fix_application.gen_market_data_request_id())))
+        message.setField(fix.MDReqID(str(self.client_database_handler.generate_market_data_request_id())))
         message.setField(fix.SubscriptionRequestType(fix.SubscriptionRequestType_SNAPSHOT))
         message.setField(fix.MarketDepth(1))
         message.setField(fix.NoMDEntryTypes(10))
@@ -460,7 +461,7 @@ class ClientLogic():
         # TODO how todo date
         stock_history = TradingClass.StockHistory(market_data.get_md_entry_date, current_price, current_quantity)
         gui_market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
-        GUIHandler().refresh_charts(gui_market_data)
+        self.gui_handler.refresh_charts(gui_market_data)
 
         return
 
@@ -519,6 +520,18 @@ class ClientLogic():
         return trading_transaction
 
 
+class ClientDatabaseHandler:
+    last_order_id = 0
+    last_market_data_request_id = 0
+    # TODO not threadsafe, but anyway it should be mysql request
+    def generate_new_order_id(self):
+        self.last_order_id = self.last_order_id+1
+        return self.last_order_id
+
+    def generate_market_data_request_id(self):
+        self.last_market_data_request_id = self.last_market_data_request_id +1
+        return self.last_market_data_request_id
+
 class GUIHandler:
     def __init__(self, client_logic):
         self.client_logic = client_logic
@@ -554,7 +567,7 @@ class GUIHandler:
             elif input == '2':
                 self.button_logout_actuated()
             elif input == '3':
-                self.send_market_data_request_option("CNNA")
+                self.send_market_data_request_option("TSLA")
             elif input == '4':
                 self.send_order_request_option("order")
             elif input == '5':
@@ -609,9 +622,14 @@ class GUIHandler:
         """
         stock_ticker_symbol = searching_value
         self.client_logic.process_market_data_request(stock_ticker_symbol)
-        pass
 
     def refresh_charts(self, market_data):
+        """This function
+
+        Args
+            market_data TradingClass.MarketData
+        :return:
+        """
         # TODO yenlinsheng finish these functions
         quantity_chart_json = self.extract_quantity_chart_json(market_data)
         stock_course_chart_json = self.extract_course_chart_json(market_data)
@@ -711,8 +729,7 @@ def extract_session_low(market_data_entry_types, market_data_entry_prices):
     session_low = market_data_entry_prices[market_data_entry_types == 8][0]
     return session_low
 
-
-def extract_market_data_information(self, market_data):
+def extract_market_data_information(market_data):
     market_data_entry_types = np.array(market_data.get_md_entry_type_list())
     market_data_entry_prices = np.array(market_data.get_md_entry_px_list())
     market_data_entry_quantity = np.array(market_data.get_md_entry_size_list())
@@ -730,14 +747,14 @@ def extract_market_data_information(self, market_data):
            closing_price, session_high, session_low
 
 
-def extract_five_smallest_offers(self, offers_price, offers_quantity):
+def extract_five_smallest_offers(offers_price, offers_quantity):
     five_smallest_offers_index = np.argsort(offers_price)[::-1][:5]
     five_smallest_offers_price = offers_price[five_smallest_offers_index]
     five_smallest_offers_quantity = offers_quantity[five_smallest_offers_index]
     return five_smallest_offers_price, five_smallest_offers_quantity
 
 
-def extract_five_biggest_bids(self, bids_price, bids_quantity):
+def extract_five_biggest_bids(bids_price, bids_quantity):
     five_smallest_bids_index = np.argsort(bids_price)[::-1][:5]
     five_smallest_bids_price = bids_price[five_smallest_bids_index]
     five_smallest_bids_quantity = bids_quantity[five_smallest_bids_index]

@@ -116,7 +116,7 @@ class MarketDataResponse(object):
             md_req_id : market data response ID related to market data request ID (string)
             no_md_entry_types = no_md_entry_types (int)
             symbol = symbol (string)
-            md_entry_type_list = md entry type list (list of char)
+            md_entry_type_list = md entry type list (list of int)
             md_entry_px_list = md entry price list (list of float)
             md_entry_size_list = md entry size list (list of float)
             md_entry_date_list = md entry date list (list of DateFix Object=> datetime UTC Date YYYYMMDD)
@@ -524,17 +524,33 @@ class DateFix(object):
         @Parameter:
             year : year in int
             month: month in int
-            date: date in int
+            day: day in int
+            date_stamp: string in format YYYY-MM-DD
     """
 
-    def __init__(self, year, month, date):
-        self.date = datetime.date(year, month, date)
+    def __init__(self, year=None, month=None, day=None, date_time_object = None, date_stamp = None):
+        if year is not None and month is not None and day is not None:
+            self.date = datetime.date(year, month, day)
+        elif date_time_object is not None:
+            self.date = date_time_object
+        elif date_stamp is not None :
+            date_stamp_components = date_stamp.split("-")
+            self.date = datetime.date(int(date_stamp_components[0]), int(date_stamp_components[1]), int(date_stamp_components[2]))
 
     def get_date(self):
         return self.date
 
     def __str__(self):
         return self.date.strftime("%Y%m%d")
+
+    @property
+    def year(self):
+        return self.date.year
+
+    @year.setter
+    def year(self, year):
+        self.date.year = year
+
 
     def set_date(self, year, month, date):
         self.date = datetime.date(year, month, date)
@@ -615,14 +631,14 @@ class Order(object):
     """Constructor of class Order:
         @Parameter:
         client_order_id = client order id (String)
-        account_company_id= account company id related to the order (String)
-        received_time = received time (DateTimeUTCFix Object=> DateTime datetime UTC YYYYMMDD-HH:MM:SS)
+        account_company_id = account company id related to the order (String)
+        received_date = received_date (DateFix object)
         handling_instruction = handling instruction (char)
-        symbol = symbol (String)
+        symbol = symbol (string)
         side = side (char)
         order_type = order type (char)
-        order_quantity = order quantity (float)
-        price = price (float)
+        order_quantity = order quantity (int)
+        price = price (int)
         last_status = last status (int)
         msg_seq_num = message sequence number (int)
         on_behalf_of_company_id = original sender who sends order (String)
@@ -631,8 +647,8 @@ class Order(object):
     """
 
     def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
-                 order_type, order_quantity, price, last_status, msg_seq_num, on_behalf_of_company_id, sender_sub_id,
-                 cash_order_quantity):
+                 order_type, order_quantity, price, last_status, msg_seq_num=None, on_behalf_of_company_id=None, sender_sub_id=None,
+                 cash_order_quantity=None):
         self.client_order_id = client_order_id
         self.account_company_id = account_company_id
         self.received_date = received_date

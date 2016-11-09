@@ -120,8 +120,8 @@ class ServerFIXHandler:
         settings = fix.SessionSettings(self.server_config_file_name)
         self.fix_application = ServerFIXApplication(self)
         self.storeFactory = fix.FileStoreFactory(settings)
-        # logFactory = fix.FileLogFactory(settings)
-        self.logFactory = fix.ScreenLogFactory(settings)
+        self.logFactory = fix.FileLogFactory(settings)
+        # self.logFactory = fix.ScreenLogFactory(settings)
         self.socket_acceptor = fix.SocketAcceptor(self.fix_application, self.storeFactory, settings, self.logFactory)
 
     def handle_logon_request(self, message):
@@ -164,7 +164,7 @@ class ServerFIXHandler:
         for md_idx in range(no_md_entry_types_fix.getValue()):
             message.getGroup(md_idx + 1, group_md)
             group_md.getField(md_entry_type_fix)
-            md_entries.append(md_entry_type_fix.getValue())
+            md_entries.append(int(md_entry_type_fix.getValue()))
 
         group_symbol = fix42.MarketDataRequest().NoRelatedSym()
         symbols = []
@@ -219,7 +219,8 @@ class ServerFIXHandler:
         entry_time_fix = fix.MDEntryTime()
         for md_index in range(market_data.get_no_md_entry_types()):
             entry_date_fix.setString(md_entry_date[md_index].__str__())
-            entry_time_fix.setString(md_entry_time[md_index].__str__())
+            # TODO time should not be here i think
+            # entry_time_fix.setString(md_entry_time[md_index].__str__())
             group_md_entry.setField(fix.MDEntryType(md_entry_type[md_index]))
             group_md_entry.setField(fix.MDEntryPx(md_entry_px[md_index]))
             group_md_entry.setField(fix.MDEntrySize(md_entry_size[md_index]))
@@ -402,32 +403,14 @@ class ServerLogic:
         md_req_id = md_request.get_md_req_id()
         no_md_entries = md_request.get_no_md_entry_types()
         symbol = md_request.get_symbol(0)
-        md_entry_type_list = md_request.get_md_entry_type_list()
-        md_entry_px_list = []
-        md_entry_size_list = []
-        md_entry_date_list = []
-        md_entry_time_list = []
+        md_entry_type_list = md_request.md_entry_type_list
 
-        open_stock_orders = self.server_database_handler.fetch_open_orders_for_stock_ticker(symbol)
+        pending_stock_orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(symbol)
         stock_information = self.server_database_handler.fetch_stock_information(symbol)
-        market_data = self.pack_into_fix_market_data_response(md_req_id, md_entry_type_list, symbol, open_stock_orders, stock_information)
+        market_data_response = self.pack_into_fix_market_data_response(md_req_id, md_entry_type_list, symbol,
+                                                                       pending_stock_orders, stock_information)
 
-        a_date = DateFix(2013, 2, 1)
-        a_date.set_date_string("20140201")
-        a_time = TimeFix(10, 1, 0)
-        a_time.set_time_string("10:02:00")
-        for MDIndex in range(md_request.get_no_md_entry_types()):
-            md_entry_px_list.append(100)
-            md_entry_size_list.append(5)
-            md_entry_date_list.append(a_date)
-            md_entry_time_list.append(a_time)
-
-        # Encapsulate data into market data response object
-        market_data = MarketDataResponse(md_req_id, no_md_entries, symbol, md_entry_type_list, md_entry_px_list,
-                                         md_entry_size_list, md_entry_date_list, md_entry_time_list)
-
-        # Send Market Data to Fix Handler
-        self.server_fix_handler.send_market_data_respond(market_data)
+        self.server_fix_handler.send_market_data_respond(market_data_response)
 
         pass
 
@@ -457,7 +440,6 @@ class ServerLogic:
         print(fix_order.get_stop_px())
         print("Fix Order Object Above")
 
-
         # TODO Husein insert order into database as Order
         account_company_id = fix_order.get_sender_comp_id()
         received_time = DateTimeUTCFix(2016, 1, 1, 11, 40, 10)
@@ -474,18 +456,18 @@ class ServerLogic:
                       cash_order_quantity)
 
         self.server_database_handler.insert_order(order)
-        order_list = self.server_database_handler.fetch_open_orders_for_stock_ticker()
+        # TODO ASK Hussein shouldn't be this requested binded with symbol?
+        order_list = self.server_database_handler.fetch_pending_orders_for_stock_ticker()
 
         for order in order_list:
-            print(("iterate order list '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s'"%(
-                    order.get_client_order_id(), order.get_account_company_id(),
-                    order.get_received_date().get_date(), order.get_handling_instruction(),
-                    order.get_stock_ticker(), order.get_side(), order.get_order_type(),
-                    order.get_order_quantity(), order.get_price(), order.get_last_status(),order.get_msg_seq_num(),
-                    order.get_on_behalf_of_company_id(),order.get_sender_sub_id(), order.get_cash_order_quantity())))
+            print(("iterate order list '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s'" % (
+                order.get_client_order_id(), order.get_account_company_id(),
+                order.get_received_date().get_date(), order.get_handling_instruction(),
+                order.get_stock_ticker(), order.get_side(), order.get_order_type(),
+                order.get_order_quantity(), order.get_price(), order.get_last_status(), order.get_msg_seq_num(),
+                order.get_on_behalf_of_company_id(), order.get_sender_sub_id(), order.get_cash_order_quantity())))
 
-
-        #TODO this is only outline, does not work
+        # TODO this is only outline, does not work
         """ Doing Matching Algorithm and insert database
         order= None
         self.server_database_handler.insert_order(order)
@@ -535,12 +517,13 @@ class ServerLogic:
         # TODO #29 add authentication
         return ServerRespond.AUTHENTICATION_SUCCESS
 
-    def pack_into_fix_market_data_response(self, market_data_required_id, market_data_entry_types, symbol, open_stock_orders, stock_information):
+    def pack_into_fix_market_data_response(self, market_data_required_id, market_data_entry_types, symbol,
+                                           pending_stock_orders, stock_information):
         """
         Args
-            open_stock_orders (list of TradingClass.Order)
+            pending_stock_orders (list of TradingClass.Order)
             stock_information (TradingClass.DatabaseStockInformation)
-            market_data_entry_types (list of int): the types of orders which should be included
+            market_data_entry_types (list of strings): the types of orders which should be included
         Returns:
 
         """
@@ -550,21 +533,33 @@ class ServerLogic:
         market_data_entry_date_list = []
         market_date_entry_time_list = []
 
-        for open_order in open_stock_orders:
-            if open_order.side in market_data_entry_types:
-                open_order_date_time = open_order.received_date()
-                open_order_fix_date = TradingClass.DateFix(open_order_date_time.year, open_order_date_time.month, open_order_date_time.day)
-                open_order_fix_time = TradingClass.TimeFix(open_order_date_time.hour, open_order_date_time.minute, open_order_date_time.second)
+        for pending_order in pending_stock_orders:
+            #TODO make this more beautiful
+            order_entry_type = 0
+            if pending_order.side == 1:
+                order_entry_type = 0
+            elif pending_order.side == 2:
+                order_entry_type = 1
 
-                market_data_entry_type_list.append(open_order.side)
-                market_data_entry_price_list.append(open_order.price)
-                market_data_entry_size_list.append(open_order.side)
-                market_data_entry_date_list.append(open_order_fix_date)
-                market_date_entry_time_list.append(open_order_fix_time)
+            if order_entry_type in market_data_entry_types:
+                #TODO show how with property this can be done better
+                pending_order_date_time = pending_order.received_date.date
+                pending_order_fix_date = TradingClass.DateFix(pending_order_date_time.year,
+                                                              pending_order_date_time.month,
+                                                              pending_order_date_time.day)
+                # TODO there should be not time anymore isn it?
+                # pending_order_fix_time = TradingClass.TimeFix(pending_order_date_time.hour, pending_order_date_time.minute,
+                #                                           pending_order_date_time.second)
+
+                market_data_entry_type_list.append(order_entry_type)
+                market_data_entry_price_list.append(pending_order.price)
+                market_data_entry_size_list.append(pending_order.order_quantity)
+                market_data_entry_date_list.append(pending_order_fix_date)
+                # market_date_entry_time_list.append(pending_order_fix_time)
 
         current_date_time = datetime.datetime.now()
-        current_fix_date = TradingClass.TimeDate(current_date_time.year, current_date_time.month,
-                                                 current_date_time.day)
+        current_fix_date = TradingClass.DateFix(current_date_time.year, current_date_time.month,
+                                                current_date_time.day)
         current_fix_time = TradingClass.TimeFix(current_date_time.hour, current_date_time.minute,
                                                 current_date_time.second)
         if TradingClass.MDEntryType.TRADE in market_data_entry_types:
@@ -574,37 +569,48 @@ class ServerLogic:
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
-        #TODO
-        #if TradingClass.MDEntryType.OPENING in market_data_entry_types:
+        # TODO
+        # if TradingClass.MDEntryType.OPENING in market_data_entry_types_integer:
 
-        #if 5 in market_data_entry_types:
-        #if 7 in market_data_entry_types:
-        #if 8 in market_data_entry_types:
+        # if 5 in market_data_entry_types_integer:
+        # if 7 in market_data_entry_types_integer:
+        # if 8 in market_data_entry_types_integer:
 
-        MarketDataResponse(market_data_required_id, len(market_data_entry_type_list), symbol, market_data_entry_type_list, market_data_entry_price_list,
-                           market_data_entry_size_list, market_data_entry_date_list, market_date_entry_time_list, stock_information.current_volume)
+        market_data = MarketDataResponse(market_data_required_id, len(market_data_entry_type_list), symbol,
+                                         market_data_entry_type_list, market_data_entry_price_list,
+                                         market_data_entry_size_list, market_data_entry_date_list,
+                                         market_date_entry_time_list,
+                                         stock_information.current_volume)
+        return market_data
+
 
 class ServerDatabaseHandler:
     # TODO send SQL Queries
     def __init__(self):
         self.user_name = "root"
-        self.user_password = "123456"  #
+        self.user_password = "root"  #
         self.database_name = "FSCDatabase"
         self.database_port = 3306
-        self.database_creation_file_path = "./database/server_database.sql"
+        self.create_table_path = "./database/create_table.sql"
 
     def create_database(self):
-        self.load_sql_file(self.database_creation_file_path)
+        # load the init_script.sql file with mysql
+        pass
+        # self.execute_nonresponsive_sql_command("DROP SCHEMA IF EXISTS `"+self.database_name+"`", database_name="")
+        # self.execute_nonresponsive_sql_command("CREATE SCHEMA IF NOT EXISTS `"+self.database_name+"` DEFAULT CHARACTER SET utf8", database_name="")
+        # self.load_sql_file(self.create_table_path, database_name = "")
+        # self.load_sql_file("./database/view.sql")
 
-    def load_sql_file(self, file_path):
+    def load_sql_file(self, file_path, database_name=None):
         sql_commands = read_file(file_path).split(";")
         for sql_command in sql_commands:
-            self.execute_insert_sql_command(sql_command)
+            self.execute_nonresponsive_sql_command(sql_command, database_name=database_name)
 
-    def execute_insert_sql_command(self, sql_command):
+    def execute_nonresponsive_sql_command(self, sql_command, database_name=None):
+        database_name = self.database_name if database_name is None else database_name
         try:
             conn = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
-                                   db=self.database_name, port=self.database_port)
+                                   db=database_name, port=self.database_port)
             cur = conn.cursor()
             execution = (sql_command)
             cur.execute(execution)
@@ -619,24 +625,25 @@ class ServerDatabaseHandler:
         Checks if user with the given id and password exists in database
 
         Args:
-            order (datatype.Order): The order to be inserted
+            order (TradingClass.Order): The order to be inserted
 
         Returns:
             None
         """
         # TODO Husein insert order into database as Order
         command = (
-            "INSERT INTO `Order`(ClientOrderID,Account_CompanyID, ReceivedTime, HandlingInstruction, Stock_Ticker,"
+            "INSERT INTO `Order`(ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
             "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum) VALUES('%s','%s','%s','%s','%s','%s',"
             "'%s','%s','%s','%s','%s')"
             % (order.get_client_order_id(), order.get_account_company_id(),
                order.get_received_time().get_date_time().__str__(),
                order.get_handling_instruction(), order.get_stock_ticker(), order.get_side(), order.get_order_type(),
                order.get_order_quantity(), order.get_price(), order.get_last_status(), order.get_msg_seq_num()))
-        self.execute_insert_sql_command(command)
+        self.execute_nonresponsive_sql_command(command)
         return
 
-    def execute_select_sql_command(self, sql_command):
+    def execute_responsive_sql_command(self, sql_command):
+        fetched_database_rows = []
         try:
             conn = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
                                    db=self.database_name, port=self.database_port)
@@ -650,45 +657,47 @@ class ServerDatabaseHandler:
 
         return fetched_database_rows
 
-    def fetch_open_orders_for_stock_ticker(self):
+    def fetch_pending_orders_for_stock_ticker(self, symbol):
         """Fetches all orders from the database with status not finished
 
         Args:
             ticker_symbol (string): The ticker symbol for which orders are fetched
 
         Returns:
-            order (list of TradingClass.Order): Fetched orders
+            order (list of TradingClass.Order): pending orders
         """
-        # TODO Husein retrieve all orders from database Order
 
-        order_list = []
         sql_command = ("select ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
-                "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
-                "CashOrderQuantity from `Order` where LastStatus=0")
+                       "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
+                       "CashOrderQuantity from `Order` where LastStatus=1 and Stock_Ticker='%s'") % (symbol)
 
-        order_arguments_rows = self.execute_select_sql_command(sql_command)
-        order_list = []
-        for order_arguments_row in order_arguments_rows:
-            received_time = DateTimeUTCFix(date_time=order_arguments_row[2])
-            order_arguments_row[2] = received_time
-            order = Order(*order_arguments_row)
-            order_list.append(order)
-        return order_list
+        pending_order_arguments_rows = self.execute_responsive_sql_command(sql_command)
+        pending_order_list = []
+        for pending_order_arguments_row in pending_order_arguments_rows:
+            received_time = TradingClass.DateFix(date_time_object=pending_order_arguments_row[2])
+            pending_order_arguments_row_list = list(pending_order_arguments_row)
+            pending_order_arguments_row_list[2] = received_time
+            pending_order_arguments_row_list[7] = int(pending_order_arguments_row_list[7])
+            pending_order_arguments_row_list[8] = int(pending_order_arguments_row_list[8])
+            pending_order_arguments_row_list[9] = int(pending_order_arguments_row_list[9])
+            order = Order(*pending_order_arguments_row_list)
+            pending_order_list.append(order)
+        return pending_order_list
 
     def delete_all_stock_data(self):
         command = "delete from Stock"
-        self.execute_insert_sql_command(command)
+        self.execute_nonresponsive_sql_command(command)
 
     def delete_stock_data(self, stock):
         command = ("delete from Stock where Ticker = '%s' limit 1" % stock.ticker)
-        self.execute_insert_sql_command(command)
+        self.execute_nonresponsive_sql_command(command)
 
     def insert_stock_data(self, stock):
         command = (
             "insert into Stock(Ticker, CompanyName, LotSize, TickSize, TotalVolume) values( '%s', '%s', '%s', '%s')" % (
                 stock.get_ticker, stock.get_company_name, stock.get_lot_size(), stock.get_tick_size(),
                 stock.get_total_volume()))
-        self.execute_insert_sql_command(command)
+        self.execute_nonresponsive_sql_command(command)
 
     def fetch_stock_information(self, stock_ticker_symbol):
         """Retrieves stock information from database
@@ -698,10 +707,15 @@ class ServerDatabaseHandler:
 
         Returns:
              TradingClass.DatabaseStockInformation object"""
-        sql_command = ("SELECT CurrentPrice.CurrentPrice, PendingOrderCurrentQuantity.CurrentQuantity FROM PendingOrderCurrentQuantity INNER JOIN CurrentPrice ON PendingOrderCurrentQuantity.Ticker = CurrentPrice.Stock_Ticker")
-        order_arguments_rows = self.execute_select_sql_command(sql_command)
-        order_arguments_row = order_arguments_rows[0]
-        database_stock_information = TradingClass.DatabaseStockInformation(*order_arguments_row)
+        sql_command = (
+            "SELECT CurrentPrice.CurrentPrice, PendingOrderCurrentQuantity.CurrentQuantity "
+            "FROM PendingOrderCurrentQuantity INNER JOIN CurrentPrice "
+            "ON PendingOrderCurrentQuantity.Ticker = CurrentPrice.Stock_Ticker")
+        order_arguments_rows = self.execute_responsive_sql_command(sql_command)
+        order_arguments_row_list = list(order_arguments_rows[0])
+        order_arguments_row_list[0] = int(order_arguments_row_list[0])
+        order_arguments_row_list[1] = int(order_arguments_row_list[1])
+        database_stock_information = TradingClass.DatabaseStockInformation(*order_arguments_row_list)
         return database_stock_information
 
     def fetch_orders_of_type(self, order):
@@ -740,8 +754,12 @@ class MarketSimulationHandler:
         self.stock_list = read_file_values(self.stock_list_file_name)
 
     def init_market(self):
-        ServerDatabaseHandler().load_sql_file("./database/insert.sql")
-        ServerDatabaseHandler().load_sql_file("./database/view.sql")
+        pass
+        # ServerDatabaseHandler().load_sql_file("./database/account_insert.sql")
+        # ServerDatabaseHandler().load_sql_file("./database/stock_insert.sql")
+        # ServerDatabaseHandler().load_sql_file("./database/order_insert.sql")
+        # ServerDatabaseHandler().load_sql_file("./database/order_execution_insert.sql")
+
         # self.load_market_data_into_database()
 
     def load_market_data_into_database(self):
