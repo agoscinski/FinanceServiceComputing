@@ -27,7 +27,7 @@ class GUISignal(htmlPy.Object):
     def __init__(self, g):
         super(GUISignal, self).__init__()
         self.gui_handler = g
-        self.fresh=1
+        self.fresh = 1
         # Initialize the class here, if required.
         return
 
@@ -47,18 +47,25 @@ class GUISignal(htmlPy.Object):
     def logOut(self):
         self.gui_handler.button_logout_actuated()
 
-    @htmlPy.Slot(str,result=str)
+    @htmlPy.Slot(str, result=str)
     def freshChart(self, stockCode):
-        trading_transaction=TradingClass.TradingTransaction(["2016-10-01","2016-10-02","2016-10-03"],[12,23,12],[22,22,22],[True,False,True])
-        stock_information=TradingClass.StockInformation(self.fresh,self.fresh+2,self.fresh-2)
-        stock_history=TradingClass.StockHistory(["2016-10-1","2016-10-2","2016-10-3","2016-10-4","2016-10-5","2016-10-6","2016-10-7","2016-10-8","2016-10-9","2016-10-10"],[self.fresh+10,self.fresh+12.5,12.5,12.5,self.fresh+15.5,12.5,12.5,12.5,12.5,12.5],[self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh,self.fresh])
-        order_book_buy=TradingClass.OrderBookBuy([11.5,11.6,11.7,11.8,11.9],[1,2,3,4,5])
-        order_book_sell=TradingClass.OrderBookSell([11.5,11.6,11.7,11.8,11.9],[1,2,3,4,5])
-        market_data=TradingClass.MarketData(stock_information,stock_history,order_book_buy,order_book_sell)
-        quantity_chart_json,stock_course_chart_json,stock_information_json,order_book_json=self.gui_handler.refresh_charts(market_data)
-        trading_transaction_json=self.gui_handler.extract_trading_transaction_json(trading_transaction)
-        result='{'+'"success":true'+',"tradingTransaction":'+trading_transaction_json+',"quantity":'+quantity_chart_json+',"price":'+stock_course_chart_json+',"stockInfo":'+stock_information_json+',"orderBook":'+order_book_json+'}'
-        self.fresh=self.fresh+1
+        trading_transaction = TradingClass.TradingTransaction(["2016-10-01", "2016-10-02", "2016-10-03"], [12, 23, 12],
+                                                              [22, 22, 22], [True, False, True])
+        stock_information = TradingClass.StockInformation(self.fresh, self.fresh + 2, self.fresh - 2)
+        stock_history = TradingClass.StockHistory(
+            ["2016-10-1", "2016-10-2", "2016-10-3", "2016-10-4", "2016-10-5", "2016-10-6", "2016-10-7", "2016-10-8",
+             "2016-10-9", "2016-10-10"],
+            [self.fresh + 10, self.fresh + 12.5, 12.5, 12.5, self.fresh + 15.5, 12.5, 12.5, 12.5, 12.5, 12.5],
+            [self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh,
+             self.fresh])
+        order_book_buy = TradingClass.OrderBookBuy([11.5, 11.6, 11.7, 11.8, 11.9], [1, 2, 3, 4, 5])
+        order_book_sell = TradingClass.OrderBookSell([11.5, 11.6, 11.7, 11.8, 11.9], [1, 2, 3, 4, 5])
+        market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
+        quantity_chart_json, stock_course_chart_json, stock_information_json, order_book_json = self.gui_handler.refresh_charts(
+            market_data)
+        trading_transaction_json = self.gui_handler.extract_trading_transaction_json(trading_transaction)
+        result = '{' + '"success":true' + ',"tradingTransaction":' + trading_transaction_json + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
+        self.fresh = self.fresh + 1
         return result
 
     @htmlPy.Slot(str, result=str)
@@ -129,7 +136,7 @@ class ClientFIXApplication(fix.Application):
         return self.market_data_request_id
 
 
-class ClientFIXHandler():
+class ClientFIXHandler(TradingClass.FIXHandler):
     def __init__(self, client_logic, client_config_file_name):
         self.client_logic = client_logic
         self.client_database_handler = ClientDatabaseHandler()
@@ -451,13 +458,14 @@ class ClientLogic():
             print(market_data.get_md_entry_time(j))
 
         offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, \
-        closing_price, session_high, session_low = extract_market_data_information(market_data)
-        five_smallest_offers_price, five_smallest_offers_quantity = extract_five_smallest_offers(offers_price,
-                                                                                                 offers_quantity)
-        five_biggest_bids_price, five_biggest_bids_quantity = extract_five_biggest_bids(bids_price, bid_quantity)
+        closing_price, day_high, day_low = self.extract_market_data_information(market_data)
+        five_smallest_offers_price, five_smallest_offers_quantity = self.extract_five_smallest_offers(offers_price,
+                                                                                                      offers_quantity)
+        five_biggest_bids_price, five_biggest_bids_quantity = self.extract_five_biggest_bids(bids_price, bid_quantity)
+
         order_book_buy = TradingClass.OrderBookBuy(five_biggest_bids_price, five_biggest_bids_quantity)
         order_book_sell = TradingClass.OrderBookBuy(five_smallest_offers_price, five_smallest_offers_quantity)
-        stock_information = TradingClass.StockInformation(current_price, session_high, session_low)
+        stock_information = TradingClass.StockInformation(current_price, day_high, day_low)
         # TODO how todo date
         stock_history = TradingClass.StockHistory(market_data.get_md_entry_date, current_price, current_quantity)
         gui_market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
@@ -519,18 +527,125 @@ class ClientLogic():
         trading_transaction = None
         return trading_transaction
 
+    def extract_offers_price_quantity(self, market_data_entry_types, market_data_entry_prices,
+                                      market_data_entry_quantity):
+        prices = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_OFFER]
+        quantity = market_data_entry_quantity[market_data_entry_types == 0]
+        return prices, quantity
+
+    def extract_bids_price_quantity(self, market_data_entry_types, market_data_entry_prices,
+                                    market_data_entry_quantity):
+        prices = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_BIDS]
+        quantity = market_data_entry_quantity[market_data_entry_types == 1]
+        return prices, quantity
+
+    def extract_current_price(self, market_data_entry_types, market_data_entry_prices):
+        current_price = \
+            market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_CURRENT_PRICE][0]
+        return current_price
+
+    def extract_opening_price(self, market_data_entry_types, market_data_entry_prices):
+        opening_price = \
+            market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_OPENING_PRICE][0]
+        return opening_price
+
+    def extract_closing_price(self, market_data_entry_types, market_data_entry_prices):
+        closing_price = \
+            market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_CLOSING_PRICE][0]
+        return closing_price
+
+    def extract_day_high(self, market_data_entry_types, market_data_entry_prices):
+        session_high = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_DAY_HIGH][
+            0]
+        return session_high
+
+    def extract_day_low(self, market_data_entry_types, market_data_entry_prices):
+        session_low = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_DAY_LOW][0]
+        return session_low
+
+    def extract_market_data_information(self, market_data):
+        market_data_entry_types = np.array(market_data.get_md_entry_type_list())
+        market_data_entry_prices = np.array(market_data.get_md_entry_px_list())
+        market_data_entry_quantity = np.array(market_data.get_md_entry_size_list())
+
+        offers_price, offers_quantity = self.extract_offers_price_quantity(market_data_entry_types,
+                                                                           market_data_entry_prices,
+                                                                           market_data_entry_quantity)
+        bids_price, bids_quantity = self.extract_bids_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                                                     market_data_entry_quantity)
+        current_price = self.extract_current_price(market_data_entry_types, market_data_entry_prices)
+        current_quantity = market_data.get_md_total_volume_traded()
+        opening_price = self.extract_opening_price(market_data_entry_types)
+        closing_price = self.extract_closing_price(market_data_entry_types)
+        day_high = self.extract_day_high(market_data_entry_types)
+        day_low = self.extract_low_low(market_data_entry_types)
+
+        offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
+        closing_price, day_high, day_low = \
+            transform_numpy_array_to_list(offers_price, offers_quantity, bids_price, bids_quantity, current_price,
+                                          current_quantity, opening_price, closing_price, day_high, day_low)
+        return offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
+               closing_price, day_high, day_low
+
+
+    def extract_five_smallest_offers(self, offers_price, offers_quantity):
+        five_smallest_offers_indices = extract_n_smallest_indices(offers_price, 5)
+        five_smallest_offers_price, five_smallest_offers_quantity = \
+            get_values_from_lists_for_certain_indices(five_smallest_offers_indices, offers_price, offers_quantity)
+        return five_smallest_offers_price, five_smallest_offers_quantity
+
+
+    def extract_five_biggest_bids(self, bids_price, bids_quantity):
+        five_biggest_bids_indices = extract_n_biggest_indices(bids_price)
+        five_biggest_bids_price, five_biggest_bids_quantity = get_values_from_lists_for_certain_indices(
+            five_biggest_bids_indices, bids_price, bids_quantity)
+        return five_biggest_bids_price, five_biggest_bids_quantity
+
+
+def extract_n_smallest_indices(integer_list, n, order="ascending"):
+    n_smallest_indices = np.argsort(integer_list)[:n]
+    if order == "descending":
+        n_smallest_indices = n_smallest_indices[::-1]
+
+    return n_smallest_indices
+
+
+def extract_n_biggest_indices(integer_list, n, order="ascending"):
+    n_biggest_indices = np.argsort(integer_list)[-n:]
+    if order == "descending":
+        n_biggest_indices = n_biggest_indices[::-1]
+    return n_biggest_indices
+
+
+def get_values_from_lists_for_certain_indices(certain_indices, *lists):
+    values_of_lists = []
+    for list_ in lists:
+        values_of_lists.append(list(np.array(list_)[certain_indices]))
+    return values_of_lists
+
+
+def transform_numpy_array_to_list(*numpy_arrays):
+    lists = []
+    for numpy_array in numpy_arrays:
+        lists.append(list(numpy_array))
+    return lists
+
+
+
 
 class ClientDatabaseHandler:
     last_order_id = 0
     last_market_data_request_id = 0
+
     # TODO not threadsafe, but anyway it should be mysql request
     def generate_new_order_id(self):
-        self.last_order_id = self.last_order_id+1
+        self.last_order_id = self.last_order_id + 1
         return self.last_order_id
 
     def generate_market_data_request_id(self):
-        self.last_market_data_request_id = self.last_market_data_request_id +1
+        self.last_market_data_request_id = self.last_market_data_request_id + 1
         return self.last_market_data_request_id
+
 
 class GUIHandler:
     def __init__(self, client_logic):
@@ -635,7 +750,7 @@ class GUIHandler:
         stock_course_chart_json = self.extract_course_chart_json(market_data)
         stock_information_json = self.extract_stock_information_json(market_data)
         order_book_json = self.extract_order_book_json(market_data)
-        return quantity_chart_json,stock_course_chart_json,stock_information_json,order_book_json
+        return quantity_chart_json, stock_course_chart_json, stock_information_json, order_book_json
 
     def refresh_trading_transaction_list(self, trading_transaction):
         # TODO yenlinsheng finish this function
@@ -685,82 +800,9 @@ class GUIHandler:
         data = {"content": []}
         for i in range(len(trading_transaction.time)):
             tmp = {}
-            tmp["time"] =trading_transaction.time[i]
+            tmp["time"] = trading_transaction.time[i]
             tmp["price"] = trading_transaction.price[i]
             tmp["quantity"] = trading_transaction.quantity[i]
             tmp["side"] = ("buy" if trading_transaction.side[i] else "sell")
             data["content"].append(tmp)
         return demjson.encode(data)
-
-
-def extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices, market_data_entry_quantity):
-    prices = market_data_entry_prices[market_data_entry_types == 0]
-    quantity = market_data_entry_quantity[market_data_entry_types == 0]
-    return prices, quantity
-
-
-def extract_bids_price_quantity(market_data_entry_types, market_data_entry_prices, market_data_entry_quantity):
-    prices = market_data_entry_prices[market_data_entry_types == 1]
-    quantity = market_data_entry_quantity[market_data_entry_types == 1]
-    return prices, quantity
-
-
-def extract_current_price(market_data_entry_types, market_data_entry_prices):
-    current_price = market_data_entry_prices[market_data_entry_types == 2][0]
-    return current_price
-
-
-def extract_opening_price(market_data_entry_types, market_data_entry_prices):
-    opening_price = market_data_entry_prices[market_data_entry_types == 4][0]
-    return opening_price
-
-
-def extract_closing_price(market_data_entry_types, market_data_entry_prices):
-    closing_price = market_data_entry_prices[market_data_entry_types == 5][0]
-    return closing_price
-
-
-def extract_session_high(market_data_entry_types, market_data_entry_prices):
-    session_high = market_data_entry_prices[market_data_entry_types == 7][0]
-    return session_high
-
-
-def extract_session_low(market_data_entry_types, market_data_entry_prices):
-    session_low = market_data_entry_prices[market_data_entry_types == 8][0]
-    return session_low
-
-def extract_market_data_information(market_data):
-    market_data_entry_types = np.array(market_data.get_md_entry_type_list())
-    market_data_entry_prices = np.array(market_data.get_md_entry_px_list())
-    market_data_entry_quantity = np.array(market_data.get_md_entry_size_list())
-    offers_price, offers_quantity = extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
-                                                                  market_data_entry_quantity)
-    bids_price, bids_quantity = extract_bids_price_quantity(market_data_entry_types, market_data_entry_prices,
-                                                            market_data_entry_quantity)
-    current_price = extract_current_price(market_data_entry_types, market_data_entry_prices)
-    current_quantity = market_data.get_md_total_volume_traded()
-    opening_price = extract_opening_price(market_data_entry_types)
-    closing_price = extract_closing_price(market_data_entry_types)
-    session_high = extract_session_high(market_data_entry_types)
-    session_low = extract_session_low(market_data_entry_types)
-    return offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price,\
-           closing_price, session_high, session_low
-
-
-def extract_five_smallest_offers(offers_price, offers_quantity):
-    five_smallest_offers_index = np.argsort(offers_price)[::-1][:5]
-    five_smallest_offers_price = offers_price[five_smallest_offers_index]
-    five_smallest_offers_quantity = offers_quantity[five_smallest_offers_index]
-    return five_smallest_offers_price, five_smallest_offers_quantity
-
-
-def extract_five_biggest_bids(bids_price, bids_quantity):
-    five_smallest_bids_index = np.argsort(bids_price)[::-1][:5]
-    five_smallest_bids_price = bids_price[five_smallest_bids_index]
-    five_smallest_bids_quantity = bids_quantity[five_smallest_bids_index]
-    return five_smallest_bids_price, five_smallest_bids_quantity
-
-
-client_config_file_name = sys.argv[1] if len(sys.argv) == 2 else "client.cfg"
-client = ClientLogic(client_config_file_name)
-client.start_client()
