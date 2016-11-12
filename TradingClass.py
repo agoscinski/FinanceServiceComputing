@@ -8,6 +8,14 @@ class MDEntryType:
     SESSION_HIGH = 7
     SESSION_LOW = 8
 
+class FIXHandler:
+    ENTRY_TYPE_OFFER = 0
+    ENTRY_TYPE_BIDS = 1
+    ENTRY_TYPE_CURRENT_PRICE = 2
+    ENTRY_TYPE_OPENING_PRICE = 4
+    ENTRY_TYPE_CLOSING_PRICE = 5
+    ENTRY_TYPE_DAY_HIGH = 7
+    ENTRY_TYPE_DAY_LOW = 8
 
 class MarketDataRequest(object):
     """Constructor of class MarketDataRequest:
