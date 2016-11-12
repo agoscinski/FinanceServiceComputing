@@ -412,6 +412,7 @@ class ClientFIXHandler(TradingClass.FIXHandler):
 class ClientLogic():
     def __init__(self, client_config_file_name):
         self.client_fix_handler = ClientFIXHandler(self, client_config_file_name)
+        self.client_database_handler = ClientDatabaseHandler()
         self.gui_handler = GUIHandler(self)
 
     def start_client(self):
@@ -463,12 +464,16 @@ class ClientLogic():
                                                                                                       offers_quantity)
         five_biggest_bids_price, five_biggest_bids_quantity = self.extract_five_biggest_bids(bids_price, bid_quantity)
 
+        #TODO here should be some database interaction
+
         order_book_buy = TradingClass.OrderBookBuy(five_biggest_bids_price, five_biggest_bids_quantity)
         order_book_sell = TradingClass.OrderBookBuy(five_smallest_offers_price, five_smallest_offers_quantity)
         stock_information = TradingClass.StockInformation(current_price, day_high, day_low)
+
         # TODO how todo date
         stock_history = TradingClass.StockHistory(market_data.get_md_entry_date, current_price, current_quantity)
         gui_market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
+
         self.gui_handler.refresh_charts(gui_market_data)
 
         return
@@ -530,13 +535,13 @@ class ClientLogic():
     def extract_offers_price_quantity(self, market_data_entry_types, market_data_entry_prices,
                                       market_data_entry_quantity):
         prices = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_OFFER]
-        quantity = market_data_entry_quantity[market_data_entry_types == 0]
+        quantity = market_data_entry_quantity[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_OFFER]
         return prices, quantity
 
     def extract_bids_price_quantity(self, market_data_entry_types, market_data_entry_prices,
                                     market_data_entry_quantity):
         prices = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_BIDS]
-        quantity = market_data_entry_quantity[market_data_entry_types == 1]
+        quantity = market_data_entry_quantity[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_BIDS]
         return prices, quantity
 
     def extract_current_price(self, market_data_entry_types, market_data_entry_prices):
