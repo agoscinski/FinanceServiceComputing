@@ -8,12 +8,13 @@ Created on Wed Oct 26 13:13:40 2016
 import numpy as np
 
 """matching algorithm using pro rata algorithm
-@parameter:
+    @parameter:
     buy: list with buy orders
     sell: list with sell orders
     marketprice: actual markeprice
-return void
-set buy and sell shares to new amount"""
+    return void
+    set buy and sell shares to new amount
+"""
 
 
 def pro_rata(buy, sell):
@@ -59,3 +60,34 @@ def pro_rata(buy, sell):
                         trade[[i], [j]] += 1
 
     return trade
+
+
+def match(orders):
+    """This function takes a list of orders and returns the execution
+
+    Args:
+        orders (list of TradingClass.Order): These are the are orders the algorithm received
+
+    Returns:
+        order_executions (list of TradingClass.OrderExecution)
+    """
+    trading_matrix = pro_rata(orders)
+    order_executions = extract_order_executions_of_trading_matrix(trading_matrix)
+    return order_executions
+
+
+def extract_order_executions_of_trading_matrix(trading_matrix):
+    """Transforms a trading matrix to a list of buy and sell orders
+
+    Args:
+        trading_matrix (numpy.array): An array where in the row and sell are the #TODO description, I dont know structure, is a row one sell or one buy?
+
+    Returns:
+        orders (list of TradingClass.orders)
+    """
+    #it should care about virtual orders
+    pass
+
+
+
+# Encapsulate result of processing into execution report

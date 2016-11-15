@@ -8,6 +8,7 @@ class MDEntryType:
     SESSION_HIGH = 7
     SESSION_LOW = 8
 
+
 class FIXHandler:
     ENTRY_TYPE_OFFER = 0
     ENTRY_TYPE_BIDS = 1
@@ -16,6 +17,7 @@ class FIXHandler:
     ENTRY_TYPE_CLOSING_PRICE = 5
     ENTRY_TYPE_DAY_HIGH = 7
     ENTRY_TYPE_DAY_LOW = 8
+
 
 class MarketDataRequest(object):
     """Constructor of class MarketDataRequest:
@@ -142,7 +144,6 @@ class MarketDataResponse(object):
         self.md_entry_date_list = md_entry_date_list
         self.md_entry_time_list = md_entry_time_list
         self.md_total_volume_traded = md_total_volume_traded
-
 
     def get_md_req_id(self):
         return self.md_req_id
@@ -527,29 +528,44 @@ class YearMonthFix(object):
         self.month_year = date
 
 
-class DateFix(object):
-    """Constructor of YearMonthFix
-        @Parameter:
-            year : year in int
-            month: month in int
-            day: day in int
-            date_stamp: string in format YYYY-MM-DD
+class FIXDate(object):
+    """The FixDate object encapsulates a date object
+
+    Attributes:
+        date (datetime.date): the date
     """
 
-    def __init__(self, year=None, month=None, day=None, date_time_object = None, date_stamp = None):
-        if year is not None and month is not None and day is not None:
-            self.date = datetime.date(year, month, day)
-        elif date_time_object is not None:
-            self.date = date_time_object
-        elif date_stamp is not None :
-            date_stamp_components = date_stamp.split("-")
-            self.date = datetime.date(int(date_stamp_components[0]), int(date_stamp_components[1]), int(date_stamp_components[2]))
+    def __init__(self, date_object):
+        self.date = date_object
 
-    def get_date(self):
-        return self.date
+    @classmethod
+    def from_date_stamp_string(cls, date_stamp_string):
+        """Constructor from date stamp strings
+
+        Args:
+            date_stamp_string (string): string in format YYYY-MM-DD
+        Returns:
+            (FIXDate object)
+        """
+        date_object = datetime.datetime.strptime(date_stamp_string, "%Y-%m-%d").date()
+        return cls(date_object)
+
+    @classmethod
+    def from_year_month_day(cls, year, month, day):
+        """Constructor from date stamp strings
+
+        Args:
+            year (int): an integer representing the year
+            month (int): an integer representing the month
+            day (int): an integer representing the day
+        Returns:
+            (FIXDate object)
+        """
+        date_object = datetime.date(year, month, day)
+        return cls(date_object)
 
     def __str__(self):
-        return self.date.strftime("%Y%m%d")
+        return self.date.strftime("%Y-%m-%d")
 
     @property
     def year(self):
@@ -559,21 +575,34 @@ class DateFix(object):
     def year(self, year):
         self.date.year = year
 
+    @property
+    def month(self):
+        return self.date.month
 
-    def set_date(self, year, month, date):
+    @month.setter
+    def month(self, month):
+        self.date.month = month
+
+    @property
+    def day(self):
+        return self.date.day
+
+    @day.setter
+    def day(self, day):
+        self.date.day = day
+
+    def set_date_from_year_month_day(self, year, month, date):
         self.date = datetime.date(year, month, date)
 
-    def set_date_string(self, string):
-        self.date = datetime.datetime.strptime(string, "%Y%m%d").date()
-
-    def set_date_value(self, date):
-        self.date = date
+    def set_date_from_date_stamp_string(self, string):
+        self.date = datetime.datetime.strptime(string, "%Y-%m-%d").date()
 
     def set_date_today(self):
         self.date = datetime.date.today()
 
-class TimeFix(object):
-    """Constructor of TimeFix
+
+class FIXTime(object):
+    """Constructor of FIXTime
         @Parameter:
             hour : hour in int
             minute : minutes in int
@@ -599,8 +628,8 @@ class TimeFix(object):
         self.time = time
 
 
-class DateTimeUTCFix(object):
-    """Constructor of DateTimeFix
+class FIXDateTimeUTC(object):
+    """Constructor of FIXDateTimeUTC
         @Parameter:
             year : year in int
             month : month in int
@@ -655,7 +684,8 @@ class Order(object):
     """
 
     def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
-                 order_type, order_quantity, price, last_status, msg_seq_num=None, on_behalf_of_company_id=None, sender_sub_id=None,
+                 order_type, order_quantity, price, last_status, msg_seq_num=None, on_behalf_of_company_id=None,
+                 sender_sub_id=None,
                  cash_order_quantity=None):
         self.client_order_id = client_order_id
         self.account_company_id = account_company_id
@@ -819,7 +849,8 @@ class Order(object):
 
 
 class DatabaseStockInformation:
-    def __init__(self, current_price = None, current_volume = None, opening_price = None, closing_price = None, day_high = None, day_low = None):
+    def __init__(self, current_price=None, current_volume=None, opening_price=None, closing_price=None, day_high=None,
+                 day_low=None):
         self.current_price = current_price
         self.current_volume = current_volume
         self.opening_price = opening_price

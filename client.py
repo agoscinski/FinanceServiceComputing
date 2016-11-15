@@ -6,10 +6,10 @@ import TradingClass
 from TradingClass import MarketDataResponse
 from TradingClass import OrderExecution
 from TradingClass import FixOrder
-from TradingClass import DateFix
+from TradingClass import FIXDate
 from TradingClass import YearMonthFix
-from TradingClass import DateTimeUTCFix
-from TradingClass import TimeFix
+from TradingClass import FIXDateTimeUTC
+from TradingClass import FIXTime
 import pdb
 import htmlPy
 import json
@@ -268,8 +268,8 @@ class ClientFIXHandler(TradingClass.FIXHandler):
         message.getField(no_md_entries_fix)
         message.getField(symbol_fix)
 
-        a_date = DateFix(2000, 1, 1)
-        a_time = TimeFix(0, 0, 0)
+        a_date = TradingClass.FIXDate.from_year_month_day(2000, 1, 1)
+        a_time = FIXTime(0, 0, 0)
         groupMD = fix42.MarketDataSnapshotFullRefresh.NoMDEntries()
         for MDIndex in range(no_md_entries_fix.getValue()):
             message.getGroup(MDIndex + 1, groupMD)
@@ -278,7 +278,7 @@ class ClientFIXHandler(TradingClass.FIXHandler):
             groupMD.getField(md_entry_size_fix)
             groupMD.getField(md_entry_date_fix)
             groupMD.getField(md_entry_time_fix)
-            a_date.set_date_string(md_entry_date_fix.getString())
+            a_date.set_date_from_date_stamp_string(md_entry_date_fix.getString())
             a_time.set_time_string(md_entry_time_fix.getString())
             md_entry_type_list.append(md_entry_type_fix.getValue())
             md_entry_px_list.append(md_entry_px_fix.getValue())
@@ -490,7 +490,7 @@ class ClientLogic():
         maturity_month_year = YearMonthFix(2016, 1)
         maturity_day = 1
         side = Side_BUY
-        transact_time = DateTimeUTCFix(2016, 1, 1, 11, 40, 10)
+        transact_time = FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
         order_qty = 10
         ord_type = '1'
         price = 20

@@ -7,15 +7,16 @@ import datetime
 import yahoo_finance
 import MySQLdb
 from enum import Enum
+import matching_algorithm
 import TradingClass
 from TradingClass import MarketDataRequest
 from TradingClass import MarketDataResponse
 from TradingClass import FixOrder
 from TradingClass import Order
 from TradingClass import OrderExecution
-from TradingClass import DateTimeUTCFix
-from TradingClass import DateFix
-from TradingClass import TimeFix
+from TradingClass import FIXDateTimeUTC
+from TradingClass import FIXDate
+from TradingClass import FIXTime
 
 
 class ServerRespond(Enum):
@@ -354,6 +355,37 @@ class ServerFIXHandler:
             return None
 
 
+def transform_fix_order_to_order(fix_order):
+    """Process an order request from the FIX Handler
+
+    Args:
+        fix_order (TradingClass.FixOrder): FixOrder Object from fix handler
+
+    Returns:
+        order (TradingClass.Order): The order object
+    """
+
+    # Subscribe means will be sent periodically, so for now we use snapshot
+
+    account_company_id = fix_order.get_sender_comp_id()
+    received_time = FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
+    received_time.set_date_time_now()
+    last_status = 0
+    msg_seq_num = 0
+    on_behalf_of_comp_id = fix_order.get_on_behalf_of_comp_id()
+    sender_sub_id = fix_order.get_sender_sub_id()
+    cash_order_quantity = None
+
+    order = TradingClass.Order(fix_order.get_cl_ord_id(), account_company_id, received_time,
+                               fix_order.get_handl_inst(),
+                               fix_order.get_symbol(), fix_order.get_side(),
+                               fix_order.get_ord_type(), fix_order.get_order_qty(),
+                               fix_order.get_price(), last_status, msg_seq_num, on_behalf_of_comp_id,
+                                sender_sub_id,
+                                cash_order_quantity)
+    return order
+
+
 class ServerLogic:
     def __init__(self, server_config_file_name):
         self.server_fix_handler = ServerFIXHandler(self, server_config_file_name)
@@ -414,93 +446,25 @@ class ServerLogic:
 
         pass
 
-    def process_order_request(self, fix_order):
+    def process_order_request(self, requested_fix_order):
         """Process an order request from the FIX Handler
 
-
         Args:
-            fix_order (FixOrder): FixOrder Object from fix handler
+            requested_fix_order (FixOrder): FixOrder Object from fix handler
 
         Returns:
             None
         """
 
-        # Handling fix_order object from the fix message
-        print(fix_order.get_cl_ord_id())
-        print(fix_order.get_handl_inst())
-        print(fix_order.get_exec_inst())
-        print(fix_order.get_symbol())
-        print(fix_order.get_maturity_month_year())
-        print(fix_order.get_maturity_day())
-        print(fix_order.get_side())
-        print(fix_order.get_transact_time())
-        print(fix_order.get_order_qty())
-        print(fix_order.get_ord_type())
-        print(fix_order.get_price())
-        print(fix_order.get_stop_px())
-        print("Fix Order Object Above")
+        requested_order = transform_fix_order_to_order(requested_fix_order)
+        self.server_database_handler.insert_order(requested_order)
+        orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(requested_fix_order.symbol)
+        order_executions = matching_algorithm.match(orders)
+        for order_execution in order_executions:
+            inserted_processed_order = self.server_database_handler.insert_order_execution(order_execution)
+            self.server_fix_handler.send_order_execution_respond(inserted_processed_order)
 
-        # TODO Husein insert order into database as Order
-        account_company_id = fix_order.get_sender_comp_id()
-        received_time = DateTimeUTCFix(2016, 1, 1, 11, 40, 10)
-        received_time.set_date_time_now()
-        last_status = 0
-        msg_seq_num = 0
-        on_behalf_of_comp_id = fix_order.get_on_behalf_of_comp_id()
-        sender_sub_id = fix_order.get_sender_sub_id()
-        cash_order_quantity = None
-
-        order = Order(fix_order.get_cl_ord_id(), account_company_id, received_time, fix_order.get_handl_inst(),
-                      fix_order.get_symbol(), fix_order.get_side(), fix_order.get_ord_type(), fix_order.get_order_qty(),
-                      fix_order.get_price(), last_status, msg_seq_num, on_behalf_of_comp_id, sender_sub_id,
-                      cash_order_quantity)
-
-        self.server_database_handler.insert_order(order)
-        # TODO ASK Hussein shouldn't be this requested binded with symbol?
-        order_list = self.server_database_handler.fetch_pending_orders_for_stock_ticker()
-
-        for order in order_list:
-            print(("iterate order list '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s'" % (
-                order.get_client_order_id(), order.get_account_company_id(),
-                order.get_received_date().get_date(), order.get_handling_instruction(),
-                order.get_stock_ticker(), order.get_side(), order.get_order_type(),
-                order.get_order_quantity(), order.get_price(), order.get_last_status(), order.get_msg_seq_num(),
-                order.get_on_behalf_of_company_id(), order.get_sender_sub_id(), order.get_cash_order_quantity())))
-
-        # TODO this is only outline, does not work
-        """ Doing Matching Algorithm and insert database
-        order= None
-        self.server_database_handler.insert_order(order)
-        stock = None
-        # stock = Stock(Order.stock_ticker)
-        buy_orders, sell_orders = self.server_database_handler.request_orders_for_stock(stock)
-        matching_matrix = self.matching_algorithm.match_orders(buy_orders, sell_orders)
-        # inform each client being matched
-        self.resolve_matching_matrix(matching_matrix)
-        """
-        # Retrieve the database and process related order
-
-        # Create Order Execution report value based on processed order
-        order_id = str(self.server_fix_handler.fix_application.gen_order_id())
-        cl_ord_id = fix_order.get_cl_ord_id()
-        exec_id = str(self.server_fix_handler.fix_application.gen_exec_id())
-        exec_trans_type = '0'
-        exec_type = '2'
-        ord_status = '2'
-        symbol = fix_order.get_symbol()
-        side = fix_order.get_side()
-        leaves_qty = 0
-        cum_qty = 200
-        avg_px = 999
-        price = 900
-        stop_px = 1000
-
-        # Encapsulate result of processing into execution report
-        order_execution = OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status
-                                         , symbol, side, leaves_qty, cum_qty, avg_px, price, stop_px)
-
-        # Send Order Execution object to server fix handler
-        self.server_fix_handler.send_order_execution_respond(order_execution)
+        return None
 
     def authenticate_user(self, user_id, password):
         """Authenticates user
@@ -544,7 +508,7 @@ class ServerLogic:
             if order_entry_type in market_data_entry_types:
                 #TODO show how with property this can be done better
                 pending_order_date_time = pending_order.received_date.date
-                pending_order_fix_date = TradingClass.DateFix(pending_order_date_time.year,
+                pending_order_fix_date = TradingClass.FIXDate.from_year_month_day(pending_order_date_time.year,
                                                               pending_order_date_time.month,
                                                               pending_order_date_time.day)
                 # TODO there should be not time anymore isn it?
@@ -558,9 +522,9 @@ class ServerLogic:
                 # market_date_entry_time_list.append(pending_order_fix_time)
 
         current_date_time = datetime.datetime.now()
-        current_fix_date = TradingClass.DateFix(current_date_time.year, current_date_time.month,
+        current_fix_date = TradingClass.FIXDate.from_year_month_day(current_date_time.year, current_date_time.month,
                                                 current_date_time.day)
-        current_fix_time = TradingClass.TimeFix(current_date_time.hour, current_date_time.minute,
+        current_fix_time = TradingClass.FIXTime(current_date_time.hour, current_date_time.minute,
                                                 current_date_time.second)
         if TradingClass.MDEntryType.TRADE in market_data_entry_types:
             market_data_entry_type_list.append(TradingClass.MDEntryType.TRADE)
@@ -619,6 +583,19 @@ class ServerDatabaseHandler:
         except MySQLdb.Error, e:
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 
+    def insert_order_execution(self, order_execution):
+        """Inserts an order execution and returns this order execution with an added execution ID
+
+        Args:
+            order_execution (TradingClass.OrderExecution): The order execution to be inserted
+
+        Returns:
+            inserted_order_execution (TradingClass.OrderExecution): The order execution which have been inserted
+                and have now and execution ID
+        """
+        #TODO T1
+        return None
+
     def insert_order(self, order):
         """Inserts orders of type
 
@@ -674,7 +651,7 @@ class ServerDatabaseHandler:
         pending_order_arguments_rows = self.execute_responsive_sql_command(sql_command)
         pending_order_list = []
         for pending_order_arguments_row in pending_order_arguments_rows:
-            received_time = TradingClass.DateFix(date_time_object=pending_order_arguments_row[2])
+            received_time = TradingClass.FIXDate(pending_order_arguments_row[2])
             pending_order_arguments_row_list = list(pending_order_arguments_row)
             pending_order_arguments_row_list[2] = received_time
             pending_order_arguments_row_list[7] = int(pending_order_arguments_row_list[7])
