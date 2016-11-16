@@ -215,8 +215,8 @@ class MarketDataResponse(object):
         return self.md_total_volume_traded
 
 
-class FixOrder(object):
-    """Constructor of class FixOrder:
+class FIXOrder(object):
+    """Constructor of class FIXOrder:
         @Parameter:
         cl_ord_id = client order id (String)
         handl_inst = handling instruction (char)
@@ -526,7 +526,6 @@ class YearMonthFix(object):
 
     def set_year_month_value(self, date):
         self.month_year = date
-
 
 class FIXDate(object):
     """The FixDate object encapsulates a date object

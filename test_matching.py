@@ -33,3 +33,5 @@ class TestMatchingAlgorithm:
         assert len(matching_algorithm.pro_rata([], [])) == 0
         assert len(matching_algorithm.pro_rata([], s)) == len(s)
         assert len(matching_algorithm.pro_rata(b, [])) == 0
+        #TODO scenarios: 4,2 match perfectly, matched partially, only one 1 quantity
+

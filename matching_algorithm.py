@@ -19,14 +19,14 @@ import numpy as np
 
 def pro_rata(buy, sell):
     "get total volume of buy"
-    volbuy = 0
+    volume_of_buy = 0
     for i in range(len(buy)):
-        volbuy += buy[i].getBuy()
+        volume_of_buy += buy[i].getBuy()
 
     "get total volume of sell"
-    volsell = 0
+    volume_of_sell = 0
     for i in range(len(sell)):
-        volsell += sell[i].getSell()
+        volume_of_sell += sell[i].getSell()
 
     sum = 0
 
@@ -71,6 +71,7 @@ def match(orders):
     Returns:
         order_executions (list of TradingClass.OrderExecution)
     """
+    buy, sell = extract_orders
     trading_matrix = pro_rata(orders)
     order_executions = extract_order_executions_of_trading_matrix(trading_matrix)
     return order_executions
@@ -80,7 +81,8 @@ def extract_order_executions_of_trading_matrix(trading_matrix):
     """Transforms a trading matrix to a list of buy and sell orders
 
     Args:
-        trading_matrix (numpy.array): An array where in the row and sell are the #TODO description, I dont know structure, is a row one sell or one buy?
+        trading_matrix (numpy.array): An array where in each row represents a sell order
+            and each column represents one buy order
 
     Returns:
         orders (list of TradingClass.orders)
