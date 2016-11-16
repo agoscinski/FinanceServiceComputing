@@ -195,11 +195,14 @@
       };
     }
 
-    function freshChart(pStockCode){
+    function freshChart(jsonData){
+
       if(pStockCode.length==0){
         return
       }
-      var jsonData=GUISignal.freshChart(pStockCode);
+
+      //var jsonData=GUISignal.freshChart(pStockCode);
+
       jsonData=JSON.parse(jsonData);
       if(jsonData.success){
         $('#infoPrice').html(jsonData.stockInfo.price);
@@ -260,17 +263,18 @@
             <td>'+jsonData.orderBook.buy[0].price+'$</td>\
             <td>'+jsonData.orderBook.buy[0].quantity+'</td>\
           </tr>');
-        var tmp='';
-        for(var i=0;i<jsonData.tradingTransaction.content.length;i++){
-          tmp=tmp+'\
-            <tr>\
-              <td>'+jsonData.tradingTransaction.content[i].time+'</td>\
-              <td>'+jsonData.tradingTransaction.content[i].price+'$</td>\
-              <td>'+jsonData.tradingTransaction.content[i].quantity+'</td>\
-              <td>'+jsonData.tradingTransaction.content[i].side+'</td>\
-            </tr>';
-        }
-        $('#tradingTransaction').html(tmp);
+
+        ///var tmp='';
+        //for(var i=0;i<jsonData.tradingTransaction.content.length;i++){
+          //tmp=tmp+'\
+        //    <tr>\
+      //        <td>'+jsonData.tradingTransaction.content[i].time+'</td>\
+        //      <td>'+jsonData.tradingTransaction.content[i].price+'$</td>\
+        //      <td>'+jsonData.tradingTransaction.content[i].quantity+'</td>\
+        //      <td>'+jsonData.tradingTransaction.content[i].side+'</td>\
+        //    </tr>';
+        //}
+        //$('#tradingTransaction').html(tmp);
 
         var chartData = splitData(jsonData.price.content,jsonData.quantity.content);
 
@@ -405,13 +409,14 @@
     function inputPressed(){
       if(event.keyCode==13){
         stockCode=$("#stockCode").val();
-        if(timer!=-100){
-          clearInterval(timer);
-        }
-        if(stockCode.length!=0){
-          timer=setInterval("freshChart(stockCode)",1000);
-          freshChart(stockCode);
-        }
+        GUISignal.searchStock(stockCode);
+        //if(timer!=-100){
+          //clearInterval(timer);
+        //}
+        //if(stockCode.length!=0){
+          //timer=setInterval("freshChart(stockCode)",1000);
+          //freshChart(stockCode);
+        //}
       }
     }
 
