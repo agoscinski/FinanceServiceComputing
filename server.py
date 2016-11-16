@@ -11,7 +11,7 @@ import matching_algorithm
 import TradingClass
 from TradingClass import MarketDataRequest
 from TradingClass import MarketDataResponse
-from TradingClass import FixOrder
+from TradingClass import FIXOrder
 from TradingClass import Order
 from TradingClass import OrderExecution
 from TradingClass import FIXDateTimeUTC
@@ -137,7 +137,6 @@ class ServerFIXHandler:
 
     def handle_market_data_request(self, message):
         """Process market data request
-            TODO @husein
 
     		Args:
     			message (fix message): market data request message
@@ -191,8 +190,6 @@ class ServerFIXHandler:
     def send_market_data_respond(self, market_data):
         """Send market data respond
 
-            TODO @husein
-
             Args:
                 market_data MarketDataResponse Object
 
@@ -236,7 +233,6 @@ class ServerFIXHandler:
 
     def handle_order_request(self, message):
         """Process market data request
-            TODO @husein
 
             Args:
             message :  order fix message received from client
@@ -277,7 +273,7 @@ class ServerFIXHandler:
         message.getField(stop_px_fix)
 
         # Create FixOrder Object to be sent to server logic
-        fix_order = FixOrder(cl_ord_id_fix.getValue(), handl_inst_fix.getValue(), exec_inst_fix.getValue(),
+        fix_order = FIXOrder(cl_ord_id_fix.getValue(), handl_inst_fix.getValue(), exec_inst_fix.getValue(),
                              symbol_fix.getValue(), maturity_month_year_fix.getValue(), maturity_day_fix.getValue(),
                              side_fix.getValue(), transact_time_fix.getString(), order_qty_fix.getValue(),
                              ord_type_fix.getValue(),
@@ -290,8 +286,6 @@ class ServerFIXHandler:
 
     def send_order_execution_respond(self, order_execution):
         """Send order execution respond
-
-            TODO @husein
 
             Args:
                 order_execution : OrderExecution object created in server logic
@@ -359,7 +353,7 @@ def transform_fix_order_to_order(fix_order):
     """Process an order request from the FIX Handler
 
     Args:
-        fix_order (TradingClass.FixOrder): FixOrder Object from fix handler
+        fix_order (TradingClass.FIXOrder): FixOrder Object from fix handler
 
     Returns:
         order (TradingClass.Order): The order object
@@ -450,21 +444,38 @@ class ServerLogic:
         """Process an order request from the FIX Handler
 
         Args:
-            requested_fix_order (FixOrder): FixOrder Object from fix handler
+            requested_fix_order (FIXOrder): FixOrder Object from fix handler
 
         Returns:
             None
         """
 
         requested_order = transform_fix_order_to_order(requested_fix_order)
+        order_is_valid = self.check_if_order_is_valid(requested_order)
+        if order_is_valid:
+            self.process_valid_order_request(requested_order)
+        else:
+            self.process_invalid_order_request(requested_order)
+
+
+    def process_valid_order_request(self, requested_order):
         self.server_database_handler.insert_order(requested_order)
-        orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(requested_fix_order.symbol)
+        #TODO send ACK MsgType 8
+        orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(requested_order.symbol)
         order_executions = matching_algorithm.match(orders)
         for order_execution in order_executions:
             inserted_processed_order = self.server_database_handler.insert_order_execution(order_execution)
             self.server_fix_handler.send_order_execution_respond(inserted_processed_order)
 
         return None
+
+    def process_invalid_order_request(self, requested_order):
+        #TODO Husein
+        pass
+
+    def check_if_order_is_valid(self, requested_order):
+        #TODO Husein
+        pass
 
     def authenticate_user(self, user_id, password):
         """Authenticates user
@@ -607,7 +618,6 @@ class ServerDatabaseHandler:
         Returns:
             None
         """
-        # TODO Husein insert order into database as Order
         command = (
             "INSERT INTO `Order`(ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
             "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum) VALUES('%s','%s','%s','%s','%s','%s',"
