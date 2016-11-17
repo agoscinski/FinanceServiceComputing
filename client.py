@@ -1,5 +1,4 @@
 import sys
-import enum
 import quickfix as fix
 from quickfix import Side_BUY, Side_SELL
 import quickfix42 as fix42
@@ -7,9 +6,10 @@ import TradingClass
 from TradingClass import MarketDataResponse
 from TradingClass import OrderExecution
 from TradingClass import FIXOrder
-from TradingClass import FIXDate
 from TradingClass import YearMonthFix
+from TradingClass import FIXDateTimeUTC
 from TradingClass import FIXTime
+import datetime
 import pdb
 import htmlPy
 import json
@@ -75,20 +75,6 @@ class GUISignal(htmlPy.Object):
         #trading_transaction_json = self.client_logic.gui_handler.extract_trading_transaction_json(trading_transaction)
         result = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
         htmlPy_app.evaluate_javascript("freshChart('"+result+"')")
-
-    @htmlPy.Slot(str,str,str)
-    def orderSell(self,price,quantity,type):
-        print price
-        print quantity
-        print type
-        pass
-
-    @htmlPy.Slot(str,str,str)
-    def orderBuy(self,price,quantity,type):
-        print price
-        print quantity
-        print type
-        pass
 
     @htmlPy.Slot(str, result=str)
     def get_form_data(self, json_data):
@@ -159,7 +145,6 @@ class ClientFIXApplication(fix.Application):
 
 
 class ClientFIXHandler(TradingClass.FIXHandler):
-
     def __init__(self, client_logic, client_config_file_name):
         self.client_logic = client_logic
         self.client_database_handler = ClientDatabaseHandler()
@@ -276,6 +261,7 @@ class ClientFIXHandler(TradingClass.FIXHandler):
         md_req_id_fix = fix.MDReqID()
         no_md_entries_fix = fix.NoMDEntries()
         symbol_fix = fix.Symbol()
+        total_volume_traded_fix= fix.TotalVolumeTraded()
         md_entry_type_fix = fix.MDEntryType()
         md_entry_px_fix = fix.MDEntryPx()
         md_entry_size_fix = fix.MDEntrySize()
@@ -290,6 +276,7 @@ class ClientFIXHandler(TradingClass.FIXHandler):
         message.getField(md_req_id_fix)
         message.getField(no_md_entries_fix)
         message.getField(symbol_fix)
+        message.getField(total_volume_traded_fix)
 
         a_date = TradingClass.FIXDate.from_year_month_day(2000, 1, 1)
         a_time = FIXTime(0, 0, 0)
@@ -312,7 +299,7 @@ class ClientFIXHandler(TradingClass.FIXHandler):
         # Encapsulate data into market data response object
         market_data = MarketDataResponse(md_req_id_fix.getValue(), no_md_entries_fix.getValue(), symbol_fix.getValue()
                                          , md_entry_type_list, md_entry_px_list, md_entry_size_list, md_entry_date_list,
-                                         md_entry_time_list)
+                                         md_entry_time_list,total_volume_traded_fix.getValue())
 
         self.client_logic.process_market_data_respond(market_data)
         pass
@@ -345,15 +332,14 @@ class ClientFIXHandler(TradingClass.FIXHandler):
 
         message.setField(fix.ClOrdID(str(fix_order.get_cl_ord_id())))
         message.setField(fix.HandlInst(fix_order.get_handl_inst()))
-        message.setField(fix.ExecInst(fix_order.get_exec_inst()))  # 2 allow partial order, G All or None
+        message.setField(fix.ExecInst(fix_order.get_exec_inst()))
         message.setField(fix.Symbol(fix_order.get_symbol()))
         message.setField(maturity_month_year_fix)
         message.setField(fix.MaturityDay(str(fix_order.get_maturity_day())))
-        message.setField(fix.Side(fix_order.get_side()))  # 1 buy, 2 sell
+        message.setField(fix.Side(fix_order.get_side()))
         message.setField(transact_time_fix)
         message.setField(fix.OrderQty(fix_order.get_order_qty()))
-        message.setField(fix.OrdType(
-            fix_order.get_ord_type()))  # 1 = Market, 2 = Limit,3 = Stop // optional,4 = Stop limit // optional,
+        message.setField(fix.OrdType(fix_order.get_ord_type()))
         message.setField(fix.Price(fix_order.get_price()))
         message.setField(fix.StopPx(fix_order.get_stop_px()))
 
@@ -363,41 +349,23 @@ class ClientFIXHandler(TradingClass.FIXHandler):
         return
 
     def handle_execution_report(self, message):
-        order_id_fix = fix.OrderID()
-        cl_ord_id_fix = fix.ClOrdID()
-        exec_id_fix = fix.ExecID()
-        exec_trans_type_fix = fix.ExecTransType()
-        exec_type_fix = fix.ExecType()
-        ord_status_fix = fix.OrdStatus()
-        symbol_fix = fix.Symbol()
-        side_fix = fix.Side()
-        leaves_qty_fix = fix.LeavesQty()
-        cum_qty_fix = fix.CumQty()
-        avg_px_fix = fix.AvgPx()
-        price_fix = fix.Price()
-        stop_px_fix = fix.StopPx()
-
-        message.getField(cl_ord_id_fix)
-        message.getField(order_id_fix)
-        message.getField(exec_id_fix)
-        message.getField(exec_trans_type_fix)
-        message.getField(exec_type_fix)
-        message.getField(ord_status_fix)
-        message.getField(symbol_fix)
-        message.getField(side_fix)
-        message.getField(leaves_qty_fix)
-        message.getField(cum_qty_fix)
-        message.getField(avg_px_fix)
-        message.getField(price_fix)
-        message.getField(stop_px_fix)
+        order_id = self.get_field_value(fix.OrderID(),message)
+        cl_ord_id = self.get_field_value(fix.ClOrdID(),message)
+        exec_id = self.get_field_value(fix.ExecID(),message)
+        exec_trans_type = self.get_field_value(fix.ExecTransType(),message)
+        exec_type = self.get_field_value(fix.ExecType(),message)
+        ord_status = self.get_field_value(fix.OrdStatus(),message)
+        symbol = self.get_field_value(fix.Symbol(),message)
+        side = self.get_field_value(fix.Side(),message)
+        leaves_qty = self.get_field_value(fix.LeavesQty(),message)
+        cum_qty = self.get_field_value(fix.CumQty(),message)
+        avg_px = self.get_field_value(fix.AvgPx(),message)
+        price = self.get_field_value(fix.Price(),message)
+        stop_px = self.get_field_value(fix.StopPx(),message)
 
         # Encapsulate result of receiving execution report into order execution report
-        order_execution = OrderExecution(order_id_fix.getValue(), cl_ord_id_fix.getValue(), exec_id_fix.getValue()
-                                         , exec_trans_type_fix.getValue(), exec_type_fix.getValue(),
-                                         ord_status_fix.getValue(), symbol_fix.getValue()
-                                         , side_fix.getValue(), leaves_qty_fix.getValue(), cum_qty_fix.getValue(),
-                                         avg_px_fix.getValue()
-                                         , price_fix.getValue(), stop_px_fix.getValue())
+        order_execution = OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol
+                                         , side, leaves_qty, cum_qty,avg_px, price, stop_px)
 
         self.client_logic.process_order_execution_respond(order_execution)
 
@@ -430,6 +398,34 @@ class ClientFIXHandler(TradingClass.FIXHandler):
 
     def del_password(self):
         del self.password
+
+    def get_field_value(self, fix_object, message):
+        if message.isSetField(fix_object.getField()):
+            message.getField(fix_object)
+            return fix_object.getValue()
+        else:
+            return None
+
+    def get_field_string(self, fix_object, message):
+        if message.isSetField(fix_object.getField()):
+            message.getField(fix_object)
+            return fix_object.getString()
+        else:
+            return None
+
+    def get_header_field_value(self, fix_object, message):
+        if message.getHeader().isSetField(fix_object.getField()):
+            message.getHeader().getField(fix_object)
+            return fix_object.getValue()
+        else:
+            return None
+
+    def get_header_field_string(self, fix_object, message):
+        if message.getHeader().isSetField(fix_object.getField()):
+            message.getHeader().getField(fix_object)
+            return fix_object.getString()
+        else:
+            return None
 
 
 class ClientLogic():
@@ -474,29 +470,38 @@ class ClientLogic():
         """
         # Example of printing market_data response object
         print "fresh chart"
-        print market_data.get_no_md_entry_types()
-        print market_data.get_symbol()
-        for j in range(market_data.get_no_md_entry_types()):
-            print(market_data.get_md_entry_type(j))
-            print(market_data.get_md_entry_px(j))
-            print(market_data.get_md_entry_size(j))
-            print(market_data.get_md_entry_date(j))
-            print(market_data.get_md_entry_time(j))
+        print market_data.no_md_entry_types
+        print market_data.symbol
+        for j in range(market_data.no_md_entry_types):
+            print(market_data.md_entry_type_list[j])
+            print(market_data.md_entry_px_list[j])
+            print(market_data.md_entry_size_list[j])
+            print(market_data.md_entry_date_list[j])
+            print(market_data.md_entry_time_list[j])
 
         offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, \
-        closing_price, day_high, day_low = ClientLogic.extract_market_data_information(market_data)
-        five_smallest_offers_price, five_smallest_offers_quantity = ClientLogic.extract_five_smallest_offers(offers_price,
+        closing_price, day_high, day_low = self.extract_market_data_information(market_data)
+        #TODO tobefixed not working comment it out to avoid error
+        """
+        five_smallest_offers_price, five_smallest_offers_quantity = self.extract_five_smallest_offers(offers_price,
                                                                                                       offers_quantity)
-        five_biggest_bids_price, five_biggest_bids_quantity = ClientLogic.extract_five_biggest_bids(bids_price, bid_quantity)
+        five_biggest_bids_price, five_biggest_bids_quantity = self.extract_five_biggest_bids(bids_price, bid_quantity)
+        """
+        print offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, closing_price, day_high, day_low
+        #TODO here should be some database interaction
 
-        # TODO here should be some database interaction
-
+        #TODO tobefixed not working comment it out to avoid error
+        """
         order_book_buy = TradingClass.OrderBookBuy(five_biggest_bids_price, five_biggest_bids_quantity)
         order_book_sell = TradingClass.OrderBookBuy(five_smallest_offers_price, five_smallest_offers_quantity)
+        """
+        order_book_buy = TradingClass.OrderBookBuy([100,200,300,400,500], [10,20,30,40,50])
+        order_book_sell = TradingClass.OrderBookBuy([100,90,80,70,60], [10,11,12,13,15,16])
         stock_information = TradingClass.StockInformation(current_price, day_high, day_low)
 
         # TODO how todo date
-        stock_history = TradingClass.StockHistory(market_data.get_md_entry_date, current_price, current_quantity)
+        current_date = datetime.date.today()
+        stock_history = TradingClass.StockHistory(current_date, current_price, current_quantity)
         gui_market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
 
         self.gui_handler.refresh_charts(gui_market_data)
@@ -508,17 +513,17 @@ class ClientLogic():
         # Left Blank
 
         # Construct Fix Order Object to be sent to the fix handler
-        cl_ord_id = self.client_fix_handler.fix_application.gen_order_id()
+        cl_ord_id = '1'#self.client_fix_handler.fix_application.gen_order_id()
         handl_inst = '1'
         exec_inst = '2'
-        symbol = 'MS'
+        symbol = 'TSLA'
         maturity_month_year = YearMonthFix(2016, 1)
         maturity_day = 1
         side = Side_BUY
-        transact_time = TradingClass.FIXDateTimeUTC.from_year_month_date_hour_minute_second(2016, 1, 1, 11, 40, 10)
+        transact_time = FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
         order_qty = 10
         ord_type = '1'
-        price = 20
+        price = 20000
         stop_px = 10000
         sender_comp_id = "client"
         sending_time = None
@@ -535,20 +540,33 @@ class ClientLogic():
     def process_order_execution_respond(self, order_execution):
         # process execution respond from server
 
+        if order_execution.ord_status=='0':
+            print("Receive ACK")
+        elif order_execution.ord_status=='1':
+            print("Order Status Partially Filled")
+        elif order_execution.ord_status=='2':
+            print("Order Status Filled")
+        elif order_execution.ord_status=='4':
+            print("Cancel Order Success")
+        elif order_execution.ord_status=='5':
+            print("Replace Order Success")
+        elif order_execution.ord_status=='8':
+            print("Do Rejected Order")
+
         print("exec_id_fix, exec_trans_type_fix,exec_type_fix,ord_status_fix,symbol_fix,side_fix,eaves_qty_fix,"
               "cum_qty_fix,avg_px_fix,price_fix,stop_px_fix,")
-        print(order_execution.get_order_id())
-        print(order_execution.get_exec_id())
-        print(order_execution.get_exec_trans_type())
-        print(order_execution.get_exec_type())
-        print(order_execution.get_ord_status())
-        print(order_execution.get_symbol())
-        print(order_execution.get_side())
-        print(order_execution.get_leaves_qty())
-        print(order_execution.get_cum_qty())
-        print(order_execution.get_avg_px())
-        print(order_execution.get_price())
-        print(order_execution.get_stop_px())
+        print(order_execution.order_id)
+        print(order_execution.exec_id)
+        print(order_execution.exec_trans_type)
+        print(order_execution.exec_type)
+        print(order_execution.ord_status)
+        print(order_execution.symbol)
+        print(order_execution.side)
+        print(order_execution.leaves_qty)
+        print(order_execution.cum_qty)
+        print(order_execution.avg_px)
+        print(order_execution.price)
+        print(order_execution.stop_px)
         return
 
     def request_trading_transactions(self, user_name):
@@ -557,143 +575,112 @@ class ClientLogic():
         trading_transaction = None
         return trading_transaction
 
-    @staticmethod
-    def extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
+    def extract_offers_price_quantity(self, market_data_entry_types, market_data_entry_prices,
                                       market_data_entry_quantity):
-        prices = market_data_entry_prices[market_data_entry_types == TradingClass.OrderEntryType.OFFER]
-        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.OrderEntryType.OFFER]
+        prices = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_OFFER]
+        quantity = market_data_entry_quantity[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_OFFER]
         return prices, quantity
 
-    @staticmethod
-    def extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
-                                   market_data_entry_quantity):
-        prices = market_data_entry_prices[market_data_entry_types == TradingClass.MarketDataEntryType.BID]
-        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.MarketDataEntryType.BID]
+    def extract_bids_price_quantity(self, market_data_entry_types, market_data_entry_prices,
+                                    market_data_entry_quantity):
+        prices = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_BIDS]
+        quantity = market_data_entry_quantity[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_BIDS]
         return prices, quantity
 
-    @staticmethod
-    def extract_current_price(market_data_entry_types, market_data_entry_prices):
-        current_price = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.CURRENT_PRICE)
+    def extract_current_price(self, market_data_entry_types, market_data_entry_prices):
+        current_price = \
+            market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_CURRENT_PRICE]
         return current_price
 
-    @staticmethod
-    def extract_opening_price(market_data_entry_types, market_data_entry_prices):
-        opening_price = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.OPENING_PRICE)
+    def extract_opening_price(self, market_data_entry_types, market_data_entry_prices):
+        opening_price = \
+            market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_OPENING_PRICE]
         return opening_price
 
-    @staticmethod
-    def extract_closing_price(market_data_entry_types, market_data_entry_prices):
-        closing_price = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.CLOSING_PRICE)
+    def extract_closing_price(self, market_data_entry_types, market_data_entry_prices):
+        closing_price = \
+            market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_CLOSING_PRICE]
         return closing_price
 
-    @staticmethod
-    def extract_day_high(market_data_entry_types, market_data_entry_prices):
-        session_high = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.DAY_HIGH)
+    def extract_day_high(self, market_data_entry_types, market_data_entry_prices):
+        session_high = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_DAY_HIGH]
         return session_high
 
-    @staticmethod
-    def extract_day_low(market_data_entry_types, market_data_entry_prices):
-        session_low = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.DAY_LOW)
+    def extract_day_low(self, market_data_entry_types, market_data_entry_prices):
+        session_low = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_DAY_LOW]
         return session_low
 
-    @staticmethod
-    def extract_market_data_information(market_data):
-        market_data_entry_types = np.array(market_data.get_md_entry_type_list())
-        market_data_entry_prices = np.array(market_data.get_md_entry_px_list())
-        market_data_entry_quantity = np.array(market_data.get_md_entry_size_list())
+    def extract_market_data_information(self, market_data):
+        market_data_entry_types = np.array(market_data.md_entry_type_list)
+        market_data_entry_prices = np.array(market_data.md_entry_px_list)
+        market_data_entry_quantity = np.array(market_data.md_entry_size_list)
 
-        offers_price, offers_quantity = ClientLogic.extract_offers_price_quantity(market_data_entry_types,
+        offers_price, offers_quantity = self.extract_offers_price_quantity(market_data_entry_types,
                                                                            market_data_entry_prices,
                                                                            market_data_entry_quantity)
-        bids_price, bids_quantity = ClientLogic.extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
-                                                                           market_data_entry_quantity)
-        current_price = ClientLogic.extract_current_price(market_data_entry_types, market_data_entry_prices)
-        current_quantity = market_data.get_md_total_volume_traded()
-        opening_price = ClientLogic.extract_opening_price(market_data_entry_types)
-        closing_price = ClientLogic.extract_closing_price(market_data_entry_types)
-        day_high = ClientLogic.extract_day_high(market_data_entry_types)
-        day_low = ClientLogic.extract_low_low(market_data_entry_types)
+        bids_price, bids_quantity = self.extract_bids_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                                                     market_data_entry_quantity)
+        current_price = self.extract_current_price(market_data_entry_types, market_data_entry_prices)
+        current_quantity = market_data.md_total_volume_traded
+        opening_price = self.extract_opening_price(market_data_entry_types,market_data_entry_prices)
+        closing_price = self.extract_closing_price(market_data_entry_types,market_data_entry_prices)
+        day_high = self.extract_day_high(market_data_entry_types,market_data_entry_prices)
+        day_low = self.extract_day_low(market_data_entry_types,market_data_entry_prices)
 
         offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
         closing_price, day_high, day_low = \
-            ClientLogic.transform_numpy_array_to_list(offers_price, offers_quantity, bids_price, bids_quantity, current_price,
+            transform_numpy_array_to_list(offers_price, offers_quantity, bids_price, bids_quantity, current_price,
                                           current_quantity, opening_price, closing_price, day_high, day_low)
         return offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
                closing_price, day_high, day_low
 
 
-    @staticmethod
-    def extract_five_smallest_offers(offers_price, offers_quantity):
-        five_smallest_offers_indices = ClientLogic.extract_n_smallest_indices(offers_price, 5)
+    def extract_five_smallest_offers(self, offers_price, offers_quantity):
+        five_smallest_offers_indices = extract_n_smallest_indices(offers_price, 5)
+        print five_smallest_offers_indices
         five_smallest_offers_price, five_smallest_offers_quantity = \
-            ClientLogic.get_values_from_lists_for_certain_indices(five_smallest_offers_indices, offers_price, offers_quantity)
+            get_values_from_lists_for_certain_indices(five_smallest_offers_indices, offers_price, offers_quantity)
         return five_smallest_offers_price, five_smallest_offers_quantity
 
 
-    @staticmethod
-    def extract_five_biggest_bids(bids_price, bids_quantity):
-        five_biggest_bids_indices = ClientLogic.extract_n_biggest_indices(bids_price)
-        five_biggest_bids_price, five_biggest_bids_quantity = ClientLogic.get_values_from_lists_for_certain_indices(
+    def extract_five_biggest_bids(self, bids_price, bids_quantity):
+        five_biggest_bids_indices = extract_n_biggest_indices(bids_price, 5)
+        print five_biggest_bids_indices
+        five_biggest_bids_price, five_biggest_bids_quantity = get_values_from_lists_for_certain_indices(
             five_biggest_bids_indices, bids_price, bids_quantity)
         return five_biggest_bids_price, five_biggest_bids_quantity
 
-    @staticmethod
-    def get_index_of_first_occurring_value(numpy_array, value):
-        indices_of_occurrences = numpy_array[numpy_array == value]
-        index = indices_of_occurrences[0] if len(indices_of_occurrences) > 0 else None
-        return index
+
+def extract_n_smallest_indices(integer_list, n, order="ascending"):
+    n_smallest_indices = np.argsort(integer_list)[:n]
+    if order == "descending":
+        n_smallest_indices = n_smallest_indices[::-1]
+
+    return n_smallest_indices
 
 
-    @staticmethod
-    def get_value_for_id(values, ids, id):
-        """Gets the value of the entry in the numpy array values with the index of the id in the numpy array ids
-
-        Args:
-            values (numpy.array of float64): collection of values
-            ids (numpy.array of int64): collection of different ids
-            id (int): the id for which the index is determined in ids
-        """
-        index_of_first_occurring_value = ClientLogic.get_index_of_first_occurring_value(ids, id)
-        value = None if index_of_first_occurring_value is None else values[index_of_first_occurring_value]
-        return value
+def extract_n_biggest_indices(integer_list, n, order="ascending"):
+    n_biggest_indices = np.argsort(integer_list)[-n:]
+    if order == "descending":
+        n_biggest_indices = n_biggest_indices[::-1]
+    return n_biggest_indices
 
 
-    @staticmethod
-    def extract_n_smallest_indices(integer_list, n, order="ascending"):
-        n_smallest_indices = np.argsort(integer_list)[:n]
-        if order == "descending":
-            n_smallest_indices = n_smallest_indices[::-1]
-
-        return n_smallest_indices
+def get_values_from_lists_for_certain_indices(certain_indices, *lists):
+    values_of_lists = []
+    for list_ in lists:
+        values_of_lists.append(list(np.array(list_)[certain_indices]))
+    return values_of_lists
 
 
-    @staticmethod
-    def extract_n_biggest_indices(integer_list, n, order="ascending"):
-        n_biggest_indices = np.argsort(integer_list)[-n:]
-        if order == "descending":
-            n_biggest_indices = n_biggest_indices[::-1]
-        return n_biggest_indices
+def transform_numpy_array_to_list(*numpy_arrays):
+    lists = []
+    #for numpy_array in numpy_arrays:
+        #lists.append(list(numpy_array))
+    lists=np.array(numpy_arrays, dtype='f')
+    return lists
 
 
-    @staticmethod
-    def get_values_from_lists_for_certain_indices(certain_indices, *lists):
-        values_of_lists = []
-        for list_ in lists:
-            values_of_lists.append(list(np.array(list_)[certain_indices]))
-        return values_of_lists
-
-
-    @staticmethod
-    def transform_numpy_array_to_list(*numpy_arrays):
-        lists = []
-        for numpy_array in numpy_arrays:
-            lists.append(list(numpy_array))
-        return lists
 
 
 class ClientDatabaseHandler:
