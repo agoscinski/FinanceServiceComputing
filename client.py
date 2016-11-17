@@ -24,10 +24,10 @@ class GUISignal(htmlPy.Object):
     # GUI callable functions have to be inside a class.
     # The class should be inherited from htmlPy.Object.
 
-    def __init__(self, g):
+    def __init__(self,c_l):
         super(GUISignal, self).__init__()
-        self.gui_handler = g
-        self.fresh = 1
+        self.client_logic = c_l
+        self.fresh=1;
         # Initialize the class here, if required.
         return
 
@@ -37,7 +37,7 @@ class GUISignal(htmlPy.Object):
         usr = str(usr)
         psw = str(psw)
         print usr, psw
-        if (self.gui_handler.button_login_actuated(usr, psw)):
+        if (self.client_logic.gui_handler.button_login_actuated(usr, psw)):
             return_message = '{"success":true,"userName":"' + usr + '"}'
         else:
             return_message = '{"success":false,"msg":"username or password is wrong"}'
@@ -45,28 +45,50 @@ class GUISignal(htmlPy.Object):
 
     @htmlPy.Slot()
     def logOut(self):
-        self.gui_handler.button_logout_actuated()
+        self.client_logic.gui_handler.button_logout_actuated()
 
-    @htmlPy.Slot(str, result=str)
-    def freshChart(self, stockCode):
-        trading_transaction = TradingClass.TradingTransaction(["2016-10-01", "2016-10-02", "2016-10-03"], [12, 23, 12],
-                                                              [22, 22, 22], [True, False, True])
-        stock_information = TradingClass.StockInformation(self.fresh, self.fresh + 2, self.fresh - 2)
-        stock_history = TradingClass.StockHistory(
-            ["2016-10-1", "2016-10-2", "2016-10-3", "2016-10-4", "2016-10-5", "2016-10-6", "2016-10-7", "2016-10-8",
-             "2016-10-9", "2016-10-10"],
-            [self.fresh + 10, self.fresh + 12.5, 12.5, 12.5, self.fresh + 15.5, 12.5, 12.5, 12.5, 12.5, 12.5],
-            [self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh,
-             self.fresh])
-        order_book_buy = TradingClass.OrderBookBuy([11.5, 11.6, 11.7, 11.8, 11.9], [1, 2, 3, 4, 5])
-        order_book_sell = TradingClass.OrderBookSell([11.5, 11.6, 11.7, 11.8, 11.9], [1, 2, 3, 4, 5])
-        market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
-        quantity_chart_json, stock_course_chart_json, stock_information_json, order_book_json = self.gui_handler.refresh_charts(
-            market_data)
-        trading_transaction_json = self.gui_handler.extract_trading_transaction_json(trading_transaction)
-        result = '{' + '"success":true' + ',"tradingTransaction":' + trading_transaction_json + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
-        self.fresh = self.fresh + 1
-        return result
+    @htmlPy.Slot(str)
+    def searchStock(self, stockCode):
+        self.client_logic.gui_handler.search_for_stock_actuated(stockCode)
+
+    @htmlPy.Slot(str)
+    def refreshChart(self, market_data):
+        # trading_transaction = TradingClass.TradingTransaction(["2016-10-01", "2016-10-02", "2016-10-03"], [12, 23, 12],
+        #                                                       [22, 22, 22], [True, False, True])
+        # stock_information = TradingClass.StockInformation(self.fresh, self.fresh + 2, self.fresh - 2)
+        # stock_history = TradingClass.StockHistory(
+        #     ["2016-10-1", "2016-10-2", "2016-10-3", "2016-10-4", "2016-10-5", "2016-10-6", "2016-10-7", "2016-10-8",
+        #      "2016-10-9", "2016-10-10"],
+        #     [self.fresh + 10, self.fresh + 12.5, 12.5, 12.5, self.fresh + 15.5, 12.5, 12.5, 12.5, 12.5, 12.5],
+        #     [self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh,
+        #      self.fresh])
+        # order_book_buy = TradingClass.OrderBookBuy([11.5, 11.6, 11.7, 11.8, 11.9], [1, 2, 3, 4, 5])
+        # order_book_sell = TradingClass.OrderBookSell([11.5, 11.6, 11.7, 11.8, 11.9], [1, 2, 3, 4, 5])
+        # market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
+
+
+        quantity_chart_json = self.client_logic.gui_handler.extract_quantity_chart_json(market_data)
+        stock_course_chart_json = self.client_logic.gui_handler.extract_course_chart_json(market_data)
+        stock_information_json = self.client_logic.gui_handler.extract_stock_information_json(market_data)
+        order_book_json = self.client_logic.gui_handler.extract_order_book_json(market_data)
+
+        #trading_transaction_json = self.client_logic.gui_handler.extract_trading_transaction_json(trading_transaction)
+        result = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
+        htmlPy_app.evaluate_javascript("freshChart('"+result+"')")
+
+    @htmlPy.Slot(str,str,str)
+    def orderSell(self,price,quantity,type):
+        print price
+        print quantity
+        print type
+        pass
+
+    @htmlPy.Slot(str,str,str)
+    def orderBuy(self,price,quantity,type):
+        print price
+        print quantity
+        print type
+        pass
 
     @htmlPy.Slot(str, result=str)
     def get_form_data(self, json_data):
@@ -414,6 +436,7 @@ class ClientLogic():
     def __init__(self, client_config_file_name):
         self.client_fix_handler = ClientFIXHandler(self, client_config_file_name)
         self.client_database_handler = ClientDatabaseHandler()
+        self.gui_signal = GUISignal(self)
         self.gui_handler = GUIHandler(self)
 
     def start_client(self):
@@ -450,6 +473,7 @@ class ClientLogic():
             None
         """
         # Example of printing market_data response object
+        print "fresh chart"
         print market_data.get_no_md_entry_types()
         print market_data.get_symbol()
         for j in range(market_data.get_no_md_entry_types()):
@@ -705,7 +729,7 @@ class GUIHandler:
                 json = {
                 }
                 htmlPy_app.template = ("index.html", json)
-                htmlPy_app.bind(GUISignal(self))
+                htmlPy_app.bind(self.client_logic.gui_signal)
                 htmlPy_app.start()
             elif (input == '3'):
                 break
@@ -774,7 +798,8 @@ class GUIHandler:
         Returns:
             None
         """
-        stock_ticker_symbol = searching_value
+        stock_ticker_symbol = str(searching_value)
+        print "Request market data for "+stock_ticker_symbol
         self.client_logic.process_market_data_request(stock_ticker_symbol)
 
     def refresh_charts(self, market_data):
@@ -784,12 +809,17 @@ class GUIHandler:
             market_data TradingClass.MarketData
         :return:
         """
+        print "fresh chart"
+
+        '''
         # TODO yenlinsheng finish these functions
         quantity_chart_json = self.extract_quantity_chart_json(market_data)
         stock_course_chart_json = self.extract_course_chart_json(market_data)
         stock_information_json = self.extract_stock_information_json(market_data)
         order_book_json = self.extract_order_book_json(market_data)
         return quantity_chart_json, stock_course_chart_json, stock_information_json, order_book_json
+        '''
+        self.client_logic.gui_signal.refreshChart(market_data)
 
     def refresh_trading_transaction_list(self, trading_transaction):
         # TODO yenlinsheng finish this function

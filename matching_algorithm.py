@@ -5,61 +5,79 @@ Created on Wed Oct 26 13:13:40 2016
 @author: Emely
 """
 
+
 import numpy as np
 import TradingClass
-import quickfix as fix
-
-"""matching algorithm using pro rata algorithm
-    @parameter:
-    buy: list with buy orders
-    sell: list with sell orders
-    marketprice: actual markeprice
-    return void
-    set buy and sell shares to new amount
-"""
 
 
 def pro_rata(buy, sell):
+    """Matching algorithm using pro rata algorithm
+
+    Args
+        buy (list of TradingClass.Order):
+        sell (list of TradingClass.Order):
+    Returns:
+    return trade matrix with traded shares
+    set buy and sell shares to new amount"""
+    print(buy)
+    lb = len(buy)
+    ls = len(sell)
+    print(lb,len(buy),ls)
+    
     "get total volume of buy"
-    volume_of_buy = 0
-    for i in range(len(buy)):
-        volume_of_buy += buy[i].getBuy()
-
+    volbuy = 0
+    for i in range(lb):
+        volbuy += buy[i].get_order_qty()
+        
+    print(volbuy)
     "get total volume of sell"
-    volume_of_sell = 0
-    for i in range(len(sell)):
-        volume_of_sell += sell[i].getSell()
+    volsell = 0
+    for i in range(ls):
+        volsell += sell[i].get_order_qty()
+        
+    "compare volumes"
+    while(volsell>volbuy):
+        ls = ls-1
+        for i in range(ls):
+            volsell += sell[i].get_order_qty()
+            
+    print(volsell, volbuy)
+        
+        
 
-    sum = 0
+    summ = 0
 
-    for i in range(len(sell)):
-        if (len(buy) > i):
-            sum += buy[i].getBuy() * i
+    
+    for i in range(ls):
+        if(lb>i):
+            summ += buy[i].get_order_qty()*i
+
 
     "list of transactions, line is seller(i), row is buyer(j)"
-    trade = np.zeros(shape=(len(sell), len(sell)))
+    trade = np.zeros(shape=(len(sell), len(buy)))
 
     "time pro rata algorithm"
     p = []
-    for i in range(len(sell)):
-        if (len(buy) > i):
-            p.append((buy[i].getBuy() * buy[i].getPrice() * i) / sum)
+    for i in range(ls):
+        if(lb>i):
+            p.append((buy[i].get_order_qty()*buy[i].get_price()*i)/summ)
 
     P = []
-    for i in range(len(sell)):
-        if (len(buy) > i):
-            comp = [buy[i].getBuy() * buy[i].getPrice(), np.floor(p[i] * len(sell))]
+    for i in range(ls):
+        if(lb>i):
+            comp = [buy[i].get_order_qty()*buy[i].get_price(), np.ﬂoor(p[i]*len(sell))]
             P.append(np.min(comp))
 
-    for i in range(len(sell)):
-        if (len(buy) > i):
-            while (sell[i].getSell() > 0):
-                for j in range(len(sell)):
+    for i in range(ls):
+        if(lb>i):
+            while(sell[i].get_order_qty()>0):
+                for j in range(ls):
                     if P[j] > 0:
                         P[j] -= 1
-                        buy[j].setBuy(buy[j].getBuy() - 1)
-                        sell[i].setSell(sell[i].getSell() - 1)
-                        trade[[i], [j]] += 1
+                        buy[j].set_order_qty(buy[j].get_order_qty()-1)
+                        sell[i].set_order_qty(sell[i].get_order_qty()-1)
+                        trade[[i],[j]] += 1
+
 
     return trade
 

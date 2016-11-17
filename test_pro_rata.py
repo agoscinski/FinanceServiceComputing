@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Nov  1 15:04:18 2016
+Created on Thu Nov 17 14:32:20 2016
 
 @author: Emely
 """
@@ -8,9 +8,7 @@ Created on Tue Nov  1 15:04:18 2016
 import TradingClass
 import matching_algorithm
 
-
-class TestMatchingAlgorithm:
-    def test_pro_rata(self):
+def test_pro_rata():
         b1 = TradingClass.FIXOrder(1, 0, 0, 0, 0, 0, 0, 0, 120, 0, 200, 0, 0 ,0, 0, 0)
         b2 = TradingClass.FIXOrder(2, 0, 0, 0, 0, 0, 0, 0, 180, 0, 220, 0, 0 ,0, 0, 0)
         b3 = TradingClass.FIXOrder(3, 0, 0, 0, 0, 0, 0, 0, 100, 0, 190, 0, 0 ,0, 0, 0)
@@ -30,22 +28,5 @@ class TestMatchingAlgorithm:
         assert len(matching_algorithm.pro_rata([], [])) == 0
         assert len(matching_algorithm.pro_rata([], s)) == len(s)
         assert len(matching_algorithm.pro_rata(b, [])) == 0
-        #TODO scenarios: 4,2 match perfectly, matched partially, only one 1 quantity
 
-
-    def test_extract_buy_and_sell_orders(self):
-        dummy_orders = []
-        for i in range(5):
-            dummy_orders.append(TradingClass.Order.create_dummy_order())
-        dummy_orders[0].side = TradingClass.OrderSideType.SELL
-        dummy_orders[1].side = TradingClass.OrderSideType.BUY
-        dummy_orders[2].side = TradingClass.OrderSideType.SELL
-        dummy_orders[3].side = TradingClass.OrderSideType.BUY
-        dummy_orders[4].side = TradingClass.OrderSideType.SELL
-        buy_orders, sell_orders = matching_algorithm.extract_buy_and_sell_orders(dummy_orders)
-        assert buy_orders[0] == dummy_orders[1]
-        assert buy_orders[1] == dummy_orders[3]
-        assert sell_orders[0] == dummy_orders[0]
-        assert sell_orders[1] == dummy_orders[2]
-        assert sell_orders[2] == dummy_orders[4]
-
+        print(matching_algorithm.pro_rata(b,s))
