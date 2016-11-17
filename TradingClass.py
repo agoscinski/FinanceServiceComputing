@@ -1,6 +1,24 @@
 import datetime
 
 
+class MDEntryType:
+    TRADE = 2
+    OPENING = 4
+    CLOSING = 5
+    SESSION_HIGH = 7
+    SESSION_LOW = 8
+
+
+class FIXHandler:
+    ENTRY_TYPE_OFFER = 0
+    ENTRY_TYPE_BIDS = 1
+    ENTRY_TYPE_CURRENT_PRICE = 2
+    ENTRY_TYPE_OPENING_PRICE = 4
+    ENTRY_TYPE_CLOSING_PRICE = 5
+    ENTRY_TYPE_DAY_HIGH = 7
+    ENTRY_TYPE_DAY_LOW = 8
+
+
 class MarketDataRequest(object):
     """Constructor of class MarketDataRequest:
         @Parameter:
@@ -108,7 +126,7 @@ class MarketDataResponse(object):
             md_req_id : market data response ID related to market data request ID (string)
             no_md_entry_types = no_md_entry_types (int)
             symbol = symbol (string)
-            md_entry_type_list = md entry type list (list of char)
+            md_entry_type_list = md entry type list (list of int)
             md_entry_px_list = md entry price list (list of float)
             md_entry_size_list = md entry size list (list of float)
             md_entry_date_list = md entry date list (list of DateFix Object=> datetime UTC Date YYYYMMDD)
@@ -116,9 +134,8 @@ class MarketDataResponse(object):
     """
 
     def __init__(self, md_req_id, no_md_entry_types, symbol, md_entry_type_list, md_entry_px_list,
-                 md_entry_size_list, md_entry_date_list, md_entry_time_list):
+                 md_entry_size_list, md_entry_date_list, md_entry_time_list, md_total_volume_traded=None):
         self.md_req_id = md_req_id
-
         self.no_md_entry_types = no_md_entry_types
         self.symbol = symbol
         self.md_entry_type_list = md_entry_type_list
@@ -126,115 +143,80 @@ class MarketDataResponse(object):
         self.md_entry_size_list = md_entry_size_list
         self.md_entry_date_list = md_entry_date_list
         self.md_entry_time_list = md_entry_time_list
-
-    "return market data request ID"
+        self.md_total_volume_traded = md_total_volume_traded
 
     def get_md_req_id(self):
         return self.md_req_id
 
-    "return number of market data entries response"
-
     def get_no_md_entry_types(self):
         return self.no_md_entry_types
-
-    "return symbol requested"
 
     def get_symbol(self):
         return self.symbol
 
-    "return list of market data entries"
-
     def get_md_entry_type_list(self):
         return self.md_entry_type_list
-
-    "return list of market data price"
 
     def get_md_entry_px_list(self):
         return self.md_entry_px_list
 
-    "return list of market data entry size"
-
     def get_md_entry_size_list(self):
         return self.md_entry_size_list
-
-    "return list of market data entry date"
 
     def get_md_entry_date_list(self):
         return self.md_entry_date_list
 
-    "return list of market data entry time"
-
     def get_md_entry_time_list(self):
         return self.md_entry_time_list
 
-    "return a market data entry at index i"
+    def get_md_entry_type(self, index):
+        return self.md_entry_type_list[index]
 
-    def get_md_entry_type(self, i):
-        return self.md_entry_type_list[i]
+    def get_md_entry_px(self, index):
+        return self.md_entry_px_list[index]
 
-    "return a market data price at index i"
+    def get_md_entry_size(self, index):
+        return self.md_entry_size_list[index]
 
-    def get_md_entry_px(self, i):
-        return self.md_entry_px_list[i]
+    def get_md_entry_date(self, index):
+        return self.md_entry_date_list[index]
 
-    "return a market data entry size at index i"
+    def get_md_entry_time(self, index):
+        return self.md_entry_time_list[index]
 
-    def get_md_entry_size(self, i):
-        return self.md_entry_size_list[i]
-
-    "return a market data entry date at index i"
-
-    def get_md_entry_date(self, i):
-        return self.md_entry_date_list[i]
-
-    "return a market data entry time at index i"
-
-    def get_md_entry_time(self, i):
-        return self.md_entry_time_list[i]
-
-    "set market data request ID"
+    def get_md_total_volume_traded(self):
+        return self.md_total_volume_traded
 
     def set_md_req_id(self, md_req_id):
         self.md_req_id = md_req_id
 
-    "set number of market data entries response"
-
     def set_no_md_entry_types(self, no_md_entry_types):
         self.no_md_entry_types = no_md_entry_types
-
-    "set a symbol"
 
     def set_symbol(self, symbol):
         self.symbol = symbol
 
-    "set list of market data entries"
-
     def set_md_entry_type_list(self, md_entry_type_list):
         self.md_entry_type_list = md_entry_type_list
-
-    "set list of market data price"
 
     def set_md_entry_px_list(self, md_entry_px_list):
         self.md_entry_px_list = md_entry_px_list
 
-    "set list of market data entry size"
-
     def set_md_entry_size_list(self, md_entry_size_list):
         self.md_entry_size_list = md_entry_size_list
-
-    "set list of market data entry date"
 
     def set_md_entry_date_list(self, md_entry_date_list):
         self.md_entry_date_list = md_entry_date_list
 
-    "set list of market data entry time"
-
     def set_md_entry_time_list(self, md_entry_time_list):
         self.md_entry_time_list = md_entry_time_list
 
+    def get_md_total_volume_traded(self):
+        return self.md_total_volume_traded
 
-class FixOrder(object):
-    """Constructor of class FixOrder:
+
+class FIXOrder(object):
+    """Constructor of class FIXOrder:
         @Parameter:
         cl_ord_id = client order id (String)
         handl_inst = handling instruction (char)
@@ -270,162 +252,98 @@ class FixOrder(object):
         self.on_behalf_of_comp_id = on_behalf_of_comp_id
         self.sender_sub_id = sender_sub_id
 
-    "return client order id"
-
     def get_cl_ord_id(self):
         return self.cl_ord_id
-
-    "return handling institution"
 
     def get_handl_inst(self):
         return self.handl_inst
 
-    "return execution instruction"
-
     def get_exec_inst(self):
         return self.exec_inst
-
-    "return symbol"
 
     def get_symbol(self):
         return self.symbol
 
-    "return maturity month year"
-
     def get_maturity_month_year(self):
         return self.maturity_month_year
-
-    "return maturity day"
 
     def get_maturity_day(self):
         return self.maturity_day
 
-    "return side buy/sell"
-
     def get_side(self):
         return self.side
-
-    "return transaction time"
 
     def get_transact_time(self):
         return self.transact_time
 
-    "return order quantity"
-
     def get_order_qty(self):
         return self.order_qty
-
-    "return order type"
 
     def get_ord_type(self):
         return self.ord_type
 
-    "return order price"
-
     def get_price(self):
         return self.price
-
-    "return order stop price"
 
     def get_stop_px(self):
         return self.stop_px
 
-    "return sender company id of order "
-
     def get_sender_comp_id(self):
         return self.sender_comp_id
-
-    "return sending time of order"
 
     def get_sending_time(self):
         return self.sending_time
 
-    "return original sender company of order "
-
     def get_on_behalf_of_comp_id(self):
         return self.on_behalf_of_comp_id
-
-    "return additional sender id"
 
     def get_sender_sub_id(self):
         return self.sender_sub_id
 
-    "set client order id"
-
     def set_cl_ord_id(self, cl_ord_id):
         self.cl_ord_id = cl_ord_id
-
-    "set handling institution"
 
     def set_handl_inst(self, handl_inst):
         self.handl_inst = handl_inst
 
-    "set execution instruction"
-
     def set_exec_inst(self, exec_inst):
         self.exec_inst = exec_inst
-
-    "set symbol"
 
     def set_symbol(self, symbol):
         self.symbol = symbol
 
-    "set maturity month year"
-
     def set_maturity_month_year(self, maturity_month_year):
         self.maturity_month_year = maturity_month_year
-
-    "set maturity day"
 
     def set_maturity_day(self, maturity_day):
         self.maturity_day = maturity_day
 
-    "set side buy/sell"
-
     def set_side(self, side):
         self.side = side
-
-    "set transaction time"
 
     def set_transact_time(self, transact_time):
         self.transact_time = transact_time
 
-    "set order quantity"
-
     def set_order_qty(self, order_qty):
         self.order_qty = order_qty
-
-    "set order type"
 
     def set_ord_type(self, ord_type):
         self.ord_type = ord_type
 
-    "set order price"
-
     def set_price(self, price):
         self.price
-
-    "set order stop price"
 
     def set_stop_px(self, stop_px):
         self.stop_px = stop_px
 
-    "set sender company id of order "
-
     def set_sender_comp_id(self, sender_comp_id):
         self.sender_comp_id = sender_comp_id
-
-    "set sending time of order"
 
     def set_sending_time(self, sending_time):
         self.sending_time = sending_time
 
-    "set original sender company of order "
-
     def set_on_behalf_of_comp_id(self, on_behalf_of_comp_id):
         self.on_behalf_of_comp_id = on_behalf_of_comp_id
-
-    "set additional sender id"
 
     def set_sender_sub_id(self, sender_sub_id):
         self.sender_sub_id = sender_sub_id
@@ -465,12 +383,8 @@ class OrderExecution(object):
         self.price = price
         self.stop_px = stop_px
 
-    "return order id "
-
     def get_order_id(self):
         return self.order_id
-
-    "return client order id"
 
     def get_cl_ord_id(self):
         return self.cl_ord_id
@@ -489,8 +403,6 @@ class OrderExecution(object):
 
     def get_exec_type(self):
         return self.exec_type
-
-    "return order status"
 
     def get_ord_status(self):
         return self.ord_status
@@ -530,12 +442,8 @@ class OrderExecution(object):
     def get_stop_px(self):
         return self.stop_px
 
-    "set order id "
-
     def set_order_id(self):
         return self.order_id
-
-    "set client order id"
 
     def set_cl_ord_id(self, cl_ord_id):
         self.cl_ord_id = cl_ord_id
@@ -554,8 +462,6 @@ class OrderExecution(object):
 
     def set_exec_type(self, exec_type):
         self.exec_type = exec_type
-
-    "set order status"
 
     def set_ord_status(self, ord_status):
         self.ord_status = ord_status
@@ -621,36 +527,81 @@ class YearMonthFix(object):
     def set_year_month_value(self, date):
         self.month_year = date
 
+class FIXDate(object):
+    """The FixDate object encapsulates a date object
 
-class DateFix(object):
-    """Constructor of YearMonthFix
-        @Parameter:
-            year : year in int
-            month: month in int
-            date: date in int
+    Attributes:
+        date (datetime.date): the date
     """
 
-    def __init__(self, year, month, date):
-        self.date = datetime.date(year, month, date)
+    def __init__(self, date_object):
+        self.date = date_object
 
-    def get_date(self):
-        return self.date
+    @classmethod
+    def from_date_stamp_string(cls, date_stamp_string):
+        """Constructor from date stamp strings
+
+        Args:
+            date_stamp_string (string): string in format YYYY-MM-DD
+        Returns:
+            (FIXDate object)
+        """
+        date_object = datetime.datetime.strptime(date_stamp_string, "%Y-%m-%d").date()
+        return cls(date_object)
+
+    @classmethod
+    def from_year_month_day(cls, year, month, day):
+        """Constructor from date stamp strings
+
+        Args:
+            year (int): an integer representing the year
+            month (int): an integer representing the month
+            day (int): an integer representing the day
+        Returns:
+            (FIXDate object)
+        """
+        date_object = datetime.date(year, month, day)
+        return cls(date_object)
 
     def __str__(self):
-        return self.date.strftime("%Y%m%d")
+        return self.date.strftime("%Y-%m-%d")
 
-    def set_date(self, year, month, date):
+    @property
+    def year(self):
+        return self.date.year
+
+    @year.setter
+    def year(self, year):
+        self.date.year = year
+
+    @property
+    def month(self):
+        return self.date.month
+
+    @month.setter
+    def month(self, month):
+        self.date.month = month
+
+    @property
+    def day(self):
+        return self.date.day
+
+    @day.setter
+    def day(self, day):
+        self.date.day = day
+
+    def set_date_from_year_month_day(self, year, month, date):
         self.date = datetime.date(year, month, date)
 
-    def set_date_string(self, string):
-        self.date = datetime.datetime.strptime(string, "%Y%m%d").date()
+    def set_date_from_date_stamp_string(self, string):
+        self.date = datetime.datetime.strptime(string, "%Y-%m-%d").date()
 
-    def set_date_value(self, date):
-        self.date = date
+    def set_date_today(self):
+        self.date = datetime.date.today()
 
 
-class TimeFix(object):
-    """Constructor of TimeFix
+class FIXTime(object):
+    """Constructor of FIXTime
         @Parameter:
             hour : hour in int
             minute : minutes in int
@@ -676,8 +627,8 @@ class TimeFix(object):
         self.time = time
 
 
-class DateTimeUTCFix(object):
-    """Constructor of DateTimeFix
+class FIXDateTimeUTC(object):
+    """Constructor of FIXDateTimeUTC
         @Parameter:
             year : year in int
             month : month in int
@@ -687,7 +638,7 @@ class DateTimeUTCFix(object):
             second : second in int
     """
 
-    def __init__(self, year, month, date, hour, minute, second):
+    def __init__(self, year=None, month=None, date=None, hour=None, minute=None, second=None):
         self.date_time = datetime.datetime(year, month, date, hour, minute, second, 0)
 
     def get_date_time(self):
@@ -716,14 +667,14 @@ class Order(object):
     """Constructor of class Order:
         @Parameter:
         client_order_id = client order id (String)
-        account_company_id= account company id related to the order (String)
-        received_time = received time (DateTimeFix Object=> DateTime datetime UTC YYYYMMDD-HH:MM:SS)
+        account_company_id = account company id related to the order (String)
+        received_date = received_date (DateFix object)
         handling_instruction = handling instruction (char)
-        symbol = symbol (String)
+        symbol = symbol (string)
         side = side (char)
         order_type = order type (char)
-        order_quantity = order quantity (float)
-        price = price (float)
+        order_quantity = order quantity (int)
+        price = price (int)
         last_status = last status (int)
         msg_seq_num = message sequence number (int)
         on_behalf_of_company_id = original sender who sends order (String)
@@ -731,12 +682,13 @@ class Order(object):
         cash_order_quantity = amount of order requested (float)
     """
 
-    def __init__(self, client_order_id, account_company_id, received_time, handling_instruction, stock_ticker, side,
-                 order_type, order_quantity, price, last_status, msg_seq_num, on_behalf_of_company_id, sender_sub_id,
-                 cash_order_quantity):
+    def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
+                 order_type, order_quantity, price, last_status, msg_seq_num=None, on_behalf_of_company_id=None,
+                 sender_sub_id=None,
+                 cash_order_quantity=None):
         self.client_order_id = client_order_id
         self.account_company_id = account_company_id
-        self.received_time = received_time
+        self.received_date = received_date
         self.handling_instruction = handling_instruction
         self.stock_ticker = stock_ticker
         self.side = side
@@ -761,8 +713,8 @@ class Order(object):
 
     "return received time"
 
-    def get_received_time(self):
-        return self.received_time
+    def get_received_date(self):
+        return self.received_date
 
     "return handling instruction"
 
@@ -831,8 +783,8 @@ class Order(object):
 
     "set received time"
 
-    def set_received_time(self):
-        self.received_time
+    def set_received_date(self):
+        self.received_date
 
     "set handling instruction"
 
@@ -889,6 +841,23 @@ class Order(object):
     def set_cash_order_quantity(self, cash_order_quantity):
         self.cash_order_quantity = cash_order_quantity
 
+
+################################
+### Database related classes ###
+################################
+
+
+class DatabaseStockInformation:
+    def __init__(self, current_price=None, current_volume=None, opening_price=None, closing_price=None, day_high=None,
+                 day_low=None):
+        self.current_price = current_price
+        self.current_volume = current_volume
+        self.opening_price = opening_price
+        self.closing_price = closing_price
+        self.day_high = day_high
+        self.day_low = day_low
+
+
 ###########################
 ### GUI related classes ###
 ###########################
@@ -902,7 +871,13 @@ class StockInformation():
 
 class StockHistory():
     def __init__(self, p_time, p_price, p_quantity):
-        # time,price,quantity are list type
+        """ A stock history object to be represented
+
+        Args:
+            p_time (list of string):  YYYY-MM-DD-HH-MM
+            p_price (list of float):
+            p_quantity (list of int): quantities
+        """
         self.time = p_time
         self.price = p_price
         self.quantity = p_quantity

@@ -55,7 +55,7 @@
   width: 70%;
   margin-left: 15%;
   margin-right: 15%;
-  
+
 }
 
 .fsc-trade .tabbable .active a{
@@ -96,6 +96,7 @@
 .fsc-transaction{
   width: 100%;
   border-bottom: 1px solid #e3e3e3;
+  height: 300px;
 }
 
 .fsc-transaction table{
@@ -117,6 +118,7 @@
 
 .fsc-history{
   width: 100%;
+
 }
 
 .fsc-history table{
@@ -172,6 +174,3 @@
   margin-top: 10px;
   margin-bottom:10px;
 }
-
-
-
