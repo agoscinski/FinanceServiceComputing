@@ -350,6 +350,7 @@ class ServerFIXHandler:
 
 
 def transform_fix_order_to_order(fix_order):
+    #TODO move to TradingClass.Order.create_from_new_single_order()
     """Process an order request from the FIX Handler
 
     Args:
@@ -377,6 +378,7 @@ def transform_fix_order_to_order(fix_order):
                                fix_order.get_price(), last_status, msg_seq_num, on_behalf_of_comp_id,
                                 sender_sub_id,
                                 cash_order_quantity)
+    fix.Order()
     return order
 
 
@@ -459,9 +461,13 @@ class ServerLogic:
 
 
     def process_valid_order_request(self, requested_order):
+        """
+        Args:
+            requested_order (TradingClass.Order)
+        """
         self.server_database_handler.insert_order(requested_order)
         #TODO send ACK MsgType 8
-        orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(requested_order.symbol)
+        orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(requested_order.stock_ticker)
         order_executions = matching_algorithm.match(orders)
         for order_execution in order_executions:
             inserted_processed_order = self.server_database_handler.insert_order_execution(order_execution)

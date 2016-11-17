@@ -18,6 +18,9 @@ class FIXHandler:
     ENTRY_TYPE_DAY_HIGH = 7
     ENTRY_TYPE_DAY_LOW = 8
 
+    SIDE_BUY = 1
+    SIDE_SELL = 2
+
 
 class MarketDataRequest(object):
     """Constructor of class MarketDataRequest:
@@ -527,6 +530,7 @@ class YearMonthFix(object):
     def set_year_month_value(self, date):
         self.month_year = date
 
+
 class FIXDate(object):
     """The FixDate object encapsulates a date object
 
@@ -664,17 +668,18 @@ class FIXDateTimeUTC(object):
 
 
 class Order(object):
-    """Constructor of class Order:
-        @Parameter:
-        client_order_id = client order id (String)
-        account_company_id = account company id related to the order (String)
-        received_date = received_date (DateFix object)
+    """Constructor of class Order, it is designed after the Order table from the database
+
+    Args:
+        client_order_id (string): The order ID from the client side
+        account_company_id (string): account company id related to the order
+        received_date = received_date (FIXDate object)
         handling_instruction = handling instruction (char)
-        symbol = symbol (string)
-        side = side (char)
-        order_type = order type (char)
+        stock_ticker (string): ticker symbol of the stock referring in the order
+        side = side (int)
+        order_type (char): the type of order, see fix.Side_ for different types
         order_quantity = order quantity (int)
-        price = price (int)
+        price (float): price of the stock
         last_status = last status (int)
         msg_seq_num = message sequence number (int)
         on_behalf_of_company_id = original sender who sends order (String)
@@ -684,8 +689,7 @@ class Order(object):
 
     def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
                  order_type, order_quantity, price, last_status, msg_seq_num=None, on_behalf_of_company_id=None,
-                 sender_sub_id=None,
-                 cash_order_quantity=None):
+                 sender_sub_id=None, cash_order_quantity=None):
         self.client_order_id = client_order_id
         self.account_company_id = account_company_id
         self.received_date = received_date
@@ -701,6 +705,49 @@ class Order(object):
         self.sender_sub_id = sender_sub_id
         self.cash_order_quantity = cash_order_quantity
 
+    @classmethod
+    def create_dummy_order(cls):
+        """For testing"""
+        dummy_client_id = "DUMMY_CLIENT_ID"
+        dummy_account_company_id = "DUMMY_ACCOUNT_COMPANY_ID"
+        dummy_received_date = "2000-00-00"
+        dummy_handling_instruction = "1"
+        dummy_stock_ticker = "DUMMY_SYMBOL"
+        dummy_side = "1"
+        dummy_order_type = "1"
+        dummy_order_quantity = 100
+        dummy_price = 10.11
+        dummy_last_status = 0
+        dummy_order = cls(dummy_client_id, dummy_account_company_id, dummy_received_date, dummy_handling_instruction,
+                          dummy_stock_ticker, dummy_side, dummy_order_type, dummy_order_quantity, dummy_price,
+                          dummy_last_status)
+        return dummy_order
+
+    @classmethod
+    def create_from_new_single_order(cls, new_single_order):
+        # TODO
+        return cls()
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def __eq__(self, other):
+
+        equal = (self.client_order_id == other.client_order_id and
+                self.account_company_id == other.account_company_id and
+                self.received_date == other.received_date and
+                self.handling_instruction == other.handling_instruction and
+                self.stock_ticker == other.stock_ticker and
+                self.side == other.side and
+                self.order_type == other.order_type and
+                self.order_quantity == other.order_quantity and
+                self.price == other.price and
+                self.last_status == other.last_status and
+                self.msg_seq_num == other.msg_seq_num and
+                self.on_behalf_of_company_id == other.on_behalf_of_company_id and
+                self.sender_sub_id == other.sender_sub_id and
+                self.cash_order_quantity == other.cash_order_quantity)
+        return equal
     "return client order id"
 
     def get_client_order_id(self):

@@ -30,4 +30,3 @@ OrderCancel
 OrderCancelID: The same as OrderID in FIX Cancel Order request
 Order_ClientOrderID: The same as OrigClientOrderID in FIX Cancel Order request
 ClientOrderID: The same as ClientOrderID in FIX Cancel Order request
-

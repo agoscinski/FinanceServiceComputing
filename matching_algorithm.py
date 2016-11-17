@@ -6,6 +6,8 @@ Created on Wed Oct 26 13:13:40 2016
 """
 
 import numpy as np
+import TradingClass
+import quickfix as fix
 
 """matching algorithm using pro rata algorithm
     @parameter:
@@ -71,11 +73,30 @@ def match(orders):
     Returns:
         order_executions (list of TradingClass.OrderExecution)
     """
-    buy, sell = extract_orders
-    trading_matrix = pro_rata(orders)
+    buy_orders, sell_orders = extract_buy_and_sell_orders(orders)
+    trading_matrix = pro_rata(buy_orders, sell_orders)
     order_executions = extract_order_executions_of_trading_matrix(trading_matrix)
     return order_executions
 
+
+def extract_buy_and_sell_orders(orders):
+    """This function takes a list of orders and returns one list with all buy orders, and one with all sell orders
+
+    Args:
+        orders (list of TradingClass.Order): These are the are orders the algorithm received
+
+    Returns:
+        buy_orders (list of TradingClass.OrderExecution): Orders from type buy/bid
+        sell_orders (list of TradingClass.OrderExecution): Order from type sell/offer
+    """
+    buy_orders = []
+    sell_orders = []
+    for order in orders:
+        if order.side == TradingClass.FIXHandler.SIDE_BUY:
+            buy_orders.append(order)
+        elif order.side == TradingClass.FIXHandler.SIDE_SELL:
+            sell_orders.append(order)
+    return buy_orders, sell_orders
 
 def extract_order_executions_of_trading_matrix(trading_matrix):
     """Transforms a trading matrix to a list of buy and sell orders
