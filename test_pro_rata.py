@@ -1,19 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Nov  1 15:04:18 2016
+Created on Thu Nov 17 14:32:20 2016
 
 @author: Emely
 """
 
-"""py.test for matching algorithm"""
-
-import numpy as np
 import TradingClass
 import matching_algorithm
 
-
-class TestMatchingAlgorithm:
-    def test_pro_rata(self):
+def test_pro_rata():
         b1 = TradingClass.FIXOrder(1, 0, 0, 0, 0, 0, 0, 0, 120, 0, 200, 0, 0 ,0, 0, 0)
         b2 = TradingClass.FIXOrder(2, 0, 0, 0, 0, 0, 0, 0, 180, 0, 220, 0, 0 ,0, 0, 0)
         b3 = TradingClass.FIXOrder(3, 0, 0, 0, 0, 0, 0, 0, 100, 0, 190, 0, 0 ,0, 0, 0)
@@ -33,5 +28,5 @@ class TestMatchingAlgorithm:
         assert len(matching_algorithm.pro_rata([], [])) == 0
         assert len(matching_algorithm.pro_rata([], s)) == len(s)
         assert len(matching_algorithm.pro_rata(b, [])) == 0
-        #TODO scenarios: 4,2 match perfectly, matched partially, only one 1 quantity
 
+        print(matching_algorithm.pro_rata(b,s))

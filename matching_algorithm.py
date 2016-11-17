@@ -18,46 +18,65 @@ return trade matrix with traded shares
 set buy and sell shares to new amount"""
 def pro_rata(buy, sell):
     
+    print(buy)
+    lb = len(buy)
+    ls = len(sell)
+    print(lb,len(buy),ls)
+    
     "get total volume of buy"
     volbuy = 0
-    for i in range(len(buy)):
+    for i in range(lb):
         volbuy += buy[i].get_order_qty()
-
+        
+    print(volbuy)
     "get total volume of sell"
     volsell = 0
-    for i in range(len(sell)):
+    for i in range(ls):
         volsell += sell[i].get_order_qty()
+        
+    "compare volumes"
+    while(volsell>volbuy):
+        ls = ls-1
+        for i in range(ls):
+            volsell += sell[i].get_order_qty()
+            
+    print(volsell, volbuy)
+        
+        
 
-    sum = 0
+    summ = 0
 
-    for i in range(len(sell)):
-        if(len(buy)>i):
-            sum += buy[i].get_order_qty()*i
+    
+    for i in range(ls):
+        if(lb>i):
+            summ += buy[i].get_order_qty()*i
+
 
     "list of transactions, line is seller(i), row is buyer(j)"
-    trade = np.zeros(shape=(len(sell), len(sell)))
+    trade = np.zeros(shape=(len(sell), len(buy)))
 
     "time pro rata algorithm"
     p = []
-    for i in range(len(sell)):
-        if(len(buy)>i):
-            p.append((buy[i].get_order_qty()*buy[i].get_price()*i)/sum)
+    for i in range(ls):
+        if(lb>i):
+            p.append((buy[i].get_order_qty()*buy[i].get_price()*i)/summ)
 
     P = []
-    for i in range(len(sell)):
-        if(len(buy)>i):
+    for i in range(ls):
+        if(lb>i):
             comp = [buy[i].get_order_qty()*buy[i].get_price(), np.ﬂoor(p[i]*len(sell))]
             P.append(np.min(comp))
 
-    for i in range(len(sell)):
-        if(len(buy)>i):
+    for i in range(ls):
+        if(lb>i):
             while(sell[i].get_order_qty()>0):
-                for j in range(len(sell)):
+                for j in range(ls):
                     if P[j] > 0:
                         P[j] -= 1
                         buy[j].set_order_qty(buy[j].get_order_qty()-1)
                         sell[i].set_order_qty(sell[i].get_order_qty()-1)
                         trade[[i],[j]] += 1
+
 
     return trade
 
@@ -71,7 +90,7 @@ def match(orders):
     Returns:
         order_executions (list of TradingClass.OrderExecution)
     """
-    buy, sell = extract_orders
+    buy, sell = extract_order
     trading_matrix = pro_rata(orders)
     order_executions = extract_order_executions_of_trading_matrix(trading_matrix)
     return order_executions
