@@ -1,25 +1,23 @@
 import datetime
+import enum
 
+class MarketDataEntryType(enum):
+    OFFER = 0
+    BID = 1
+    CURRENT_PRICE = 2
+    OPENING_PRICE = 4
+    CLOSING_PRICE = 5
+    DAY_HIGH = 7
+    DAY_LOW = 8
 
-class MDEntryType:
-    TRADE = 2
-    OPENING = 4
-    CLOSING = 5
-    SESSION_HIGH = 7
-    SESSION_LOW = 8
+class OrderSideType(enum):
+    BUY = 1
+    SELL = 2
 
-
-class FIXHandler:
-    ENTRY_TYPE_OFFER = 0
-    ENTRY_TYPE_BIDS = 1
-    ENTRY_TYPE_CURRENT_PRICE = 2
-    ENTRY_TYPE_OPENING_PRICE = 4
-    ENTRY_TYPE_CLOSING_PRICE = 5
-    ENTRY_TYPE_DAY_HIGH = 7
-    ENTRY_TYPE_DAY_LOW = 8
-
-    SIDE_BUY = 1
-    SIDE_SELL = 2
+class OrderStatus(enum):
+    DONE = 0
+    PENDING = 1
+    CANCELED = 2
 
 
 class MarketDataRequest(object):
@@ -632,24 +630,34 @@ class FIXTime(object):
 
 
 class FIXDateTimeUTC(object):
-    """Constructor of FIXDateTimeUTC
-        @Parameter:
-            year : year in int
-            month : month in int
-            date : date in int
-            hour : hour in int
-            minute : minutes in int
-            second : second in int
-    """
 
-    def __init__(self, year=None, month=None, date=None, hour=None, minute=None, second=None):
-        self.date_time = datetime.datetime(year, month, date, hour, minute, second, 0)
+    def __init__(self, datetime_object):
+        self.date_time = datetime_object
 
-    def get_date_time(self):
-        return self.date_time
+    @classmethod
+    def from_year_month_date_hour_minute_second(cls, year, month, date, hour, minute, second):
+        """
+        Args
+            year (int): year
+            month (int): month
+            date (int): date
+            hour (int): hour
+            minute (int): minutes
+            second (int): second
+        """
+        datetime_object = datetime.datetime(year, month, date, hour, minute, second, 0)
+        return cls(datetime_object)
+
+    @classmethod
+    def create_for_current_time(cls):
+        current_time_datetime_object = datetime.datetime.utcnow()
+        return cls(current_time_datetime_object)
 
     def __str__(self):
         return self.date_time.strftime("%Y%m%d-%H:%M:%S")
+
+    def get_date_time(self):
+        return self.date_time
 
     def set_date_time(self, year, month, date, hour, minute, second):
         self.date_time = datetime.datetime(year, month, date, hour, minute, second, 0)
@@ -663,8 +671,7 @@ class FIXDateTimeUTC(object):
     def set_date_time_value(self, date_time):
         self.date_time = date_time
 
-    def set_date_time_now(self):
-        self.date_time = datetime.datetime.utcnow()
+
 
 
 class Order(object):
@@ -724,9 +731,36 @@ class Order(object):
         return dummy_order
 
     @classmethod
-    def create_from_new_single_order(cls, new_single_order):
-        # TODO
-        return cls()
+    def from_new_single_order(cls, new_single_order):
+        """Creates a order from a TradingClass.NewSingleOrder
+
+        Args:
+            new_single_order (TradingClass.NewSingleOrder):
+
+        Returns:
+            order (TradingClass.Order): The order object
+        """
+
+        client_order_id = new_single_order.cl_ord_id
+        account_company_id = new_single_order.sender_comp_id
+        received_time = FIXDateTimeUTC.create_for_current_time()
+        handling_instruction = new_single_order.handl_inst
+        stock_ticker = new_single_order.symbol
+        side = new_single_order.side
+        order_type = new_single_order.order_type
+        #TODO maturity_month_year and day
+        order_quantity = new_single_order.order_qty
+        price = new_single_order.price
+        last_status = OrderStatus.PENDING
+        message_sequence_number = None
+        on_behalf_of_company_id = None
+        sender_sub_id = None
+        cash_order_quantity = None
+
+        order = cls(client_order_id, account_company_id, received_time, handling_instruction, stock_ticker,
+                    side, order_type, order_quantity, price, last_status, message_sequence_number,
+                    on_behalf_of_company_id, sender_sub_id, cash_order_quantity)
+        return order
 
     def __str__(self):
         return str(self.__dict__)
@@ -748,6 +782,7 @@ class Order(object):
                 self.sender_sub_id == other.sender_sub_id and
                 self.cash_order_quantity == other.cash_order_quantity)
         return equal
+
     "return client order id"
 
     def get_client_order_id(self):

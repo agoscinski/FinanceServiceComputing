@@ -92,9 +92,9 @@ def extract_buy_and_sell_orders(orders):
     buy_orders = []
     sell_orders = []
     for order in orders:
-        if order.side == TradingClass.FIXHandler.SIDE_BUY:
+        if order.side == TradingClass.OrderSideType.BUY:
             buy_orders.append(order)
-        elif order.side == TradingClass.FIXHandler.SIDE_SELL:
+        elif order.side == TradingClass.OrderSideType.SELL:
             sell_orders.append(order)
     return buy_orders, sell_orders
 
@@ -106,7 +106,7 @@ def extract_order_executions_of_trading_matrix(trading_matrix):
             and each column represents one buy order
 
     Returns:
-        orders (list of TradingClass.orders)
+        orders (list of TradingClass.Order)
     """
     #it should care about virtual orders
     pass

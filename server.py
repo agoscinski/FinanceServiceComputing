@@ -14,7 +14,6 @@ from TradingClass import MarketDataResponse
 from TradingClass import FIXOrder
 from TradingClass import Order
 from TradingClass import OrderExecution
-from TradingClass import FIXDateTimeUTC
 from TradingClass import FIXDate
 from TradingClass import FIXTime
 
@@ -363,8 +362,7 @@ def transform_fix_order_to_order(fix_order):
     # Subscribe means will be sent periodically, so for now we use snapshot
 
     account_company_id = fix_order.get_sender_comp_id()
-    received_time = FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
-    received_time.set_date_time_now()
+    received_time = TradingClass.FIXDateTimeUTC.create_for_current_time()
     last_status = 0
     msg_seq_num = 0
     on_behalf_of_comp_id = fix_order.get_on_behalf_of_comp_id()
@@ -452,7 +450,7 @@ class ServerLogic:
             None
         """
 
-        requested_order = transform_fix_order_to_order(requested_fix_order)
+        requested_order = TradingClass.Order.from_new_single_order(requested_fix_order)
         order_is_valid = self.check_if_order_is_valid(requested_order)
         if order_is_valid:
             self.process_valid_order_request(requested_order)
@@ -543,15 +541,15 @@ class ServerLogic:
                                                 current_date_time.day)
         current_fix_time = TradingClass.FIXTime(current_date_time.hour, current_date_time.minute,
                                                 current_date_time.second)
-        if TradingClass.MDEntryType.TRADE in market_data_entry_types:
-            market_data_entry_type_list.append(TradingClass.MDEntryType.TRADE)
+        if TradingClass.MarketDataEntryType.TRADE in market_data_entry_types:
+            market_data_entry_type_list.append(TradingClass.MarketDataEntryType.TRADE)
             market_data_entry_price_list.append(stock_information.current_price)
             market_data_entry_size_list.append(0)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
         # TODO
-        # if TradingClass.MDEntryType.OPENING in market_data_entry_types_integer:
+        # if TradingClass.MarketDataEntryType.OPENING in market_data_entry_types_integer:
 
         # if 5 in market_data_entry_types_integer:
         # if 7 in market_data_entry_types_integer:

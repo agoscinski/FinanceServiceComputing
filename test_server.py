@@ -21,8 +21,5 @@ class TestStaticFunctions:
 class TestServerLogic:
 
     def test_pack_into_fix_market_data_response(self):
-        market_data_required_id = '0'
-        TradingClass.Order('0', 'GS', TradingClass.DateFix(2000,10,10), '1', 'TSLA', '1',
-                 order_type, order_quantity, price, last_status)
-        , md_entry_type_list, symbol, pending_stock_orders,
-        stock_information
+        #MAYBETODO
+        pass
