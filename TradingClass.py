@@ -1,23 +1,22 @@
 import datetime
-import enum
 
-class MarketDataEntryType(enum):
-    OFFER = 0
-    BID = 1
-    CURRENT_PRICE = 2
-    OPENING_PRICE = 4
-    CLOSING_PRICE = 5
-    DAY_HIGH = 7
-    DAY_LOW = 8
 
-class OrderSideType(enum):
-    BUY = 1
-    SELL = 2
+class MDEntryType:
+    TRADE = '2'
+    OPENING = '4'
+    CLOSING = '5'
+    SESSION_HIGH = '7'
+    SESSION_LOW = '8'
 
-class OrderStatus(enum):
-    DONE = 0
-    PENDING = 1
-    CANCELED = 2
+
+class FIXHandler:
+    ENTRY_TYPE_OFFER = 0
+    ENTRY_TYPE_BIDS = 1
+    ENTRY_TYPE_CURRENT_PRICE = 2
+    ENTRY_TYPE_OPENING_PRICE = 4
+    ENTRY_TYPE_CLOSING_PRICE = 5
+    ENTRY_TYPE_DAY_HIGH = 7
+    ENTRY_TYPE_DAY_LOW = 8
 
 
 class MarketDataRequest(object):
@@ -42,80 +41,8 @@ class MarketDataRequest(object):
         self.no_related_sym = no_related_sym
         self.symbol_list = symbol_list
 
-    "return market data request ID"
-
-    def get_md_req_id(self):
-        return self.md_req_id
-
-    "return subscription request type "
-
-    def get_subscription_request_type(self):
-        return self.subscription_request_type
-
-    "return market depth (top or full or N tier market depth)"
-
-    def get_market_depth(self):
-        return self.market_depth
-
-    "return number of market data entry requested"
-
-    def get_no_md_entry_types(self):
-        return self.no_md_entry_types
-
-    "return list of md entry requested"
-
-    def get_md_entry_type_list(self):
-        return self.md_entry_type_list
-
-    "return number of symbol requested"
-
-    def get_no_related_symbol(self):
-        return self.no_related_symbol
-
-    "return list of symbol requested"
-
-    def get_symbol_list(self):
-        return self.symbol_list
-
-    "return symbol from list of symbol in i index requested"
-
     def get_symbol(self, i):
         return self.symbol_list[i]
-
-    "set market data request ID"
-
-    def set_md_req_id(self, md_req_id):
-        self.md_req_id = md_req_id
-
-    "set subscription request type "
-
-    def set_subscription_request_type(self, subscription_request_type):
-        self.subscription_request_type = subscription_request_type
-
-    "set market depth (top or full or N tier market depth)"
-
-    def set_market_depth(self, market_depth):
-        self.market_depth = market_depth
-
-    "set number of market data entry requested"
-
-    def set_no_md_entry_types(self, no_md_entry_types):
-        self.no_md_entry_types = no_md_entry_types
-
-    "set list of md entry requested"
-
-    def set_md_entry_type_list(self, md_entry_type_list):
-        self.md_entry_type_list = md_entry_type_list
-
-    "set number of symbol requested"
-
-    def set_no_related_symbol(self, no_related_symbol):
-        self.no_related_symbol = no_related_symbol
-
-    "set list of symbol requested"
-
-    def set_symbol_list(self, symbol_list):
-        self.symbol_list = symbol_list
 
     def set_symbol(self, i, symbol):
         self.symbol_list[i] = symbol
@@ -145,75 +72,6 @@ class MarketDataResponse(object):
         self.md_entry_date_list = md_entry_date_list
         self.md_entry_time_list = md_entry_time_list
         self.md_total_volume_traded = md_total_volume_traded
-
-    def get_md_req_id(self):
-        return self.md_req_id
-
-    def get_no_md_entry_types(self):
-        return self.no_md_entry_types
-
-    def get_symbol(self):
-        return self.symbol
-
-    def get_md_entry_type_list(self):
-        return self.md_entry_type_list
-
-    def get_md_entry_px_list(self):
-        return self.md_entry_px_list
-
-    def get_md_entry_size_list(self):
-        return self.md_entry_size_list
-
-    def get_md_entry_date_list(self):
-        return self.md_entry_date_list
-
-    def get_md_entry_time_list(self):
-        return self.md_entry_time_list
-
-    def get_md_entry_type(self, index):
-        return self.md_entry_type_list[index]
-
-    def get_md_entry_px(self, index):
-        return self.md_entry_px_list[index]
-
-    def get_md_entry_size(self, index):
-        return self.md_entry_size_list[index]
-
-    def get_md_entry_date(self, index):
-        return self.md_entry_date_list[index]
-
-    def get_md_entry_time(self, index):
-        return self.md_entry_time_list[index]
-
-    def get_md_total_volume_traded(self):
-        return self.md_total_volume_traded
-
-    def set_md_req_id(self, md_req_id):
-        self.md_req_id = md_req_id
-
-    def set_no_md_entry_types(self, no_md_entry_types):
-        self.no_md_entry_types = no_md_entry_types
-
-    def set_symbol(self, symbol):
-        self.symbol = symbol
-
-    def set_md_entry_type_list(self, md_entry_type_list):
-        self.md_entry_type_list = md_entry_type_list
-
-    def set_md_entry_px_list(self, md_entry_px_list):
-        self.md_entry_px_list = md_entry_px_list
-
-    def set_md_entry_size_list(self, md_entry_size_list):
-        self.md_entry_size_list = md_entry_size_list
-
-    def set_md_entry_date_list(self, md_entry_date_list):
-        self.md_entry_date_list = md_entry_date_list
-
-    def set_md_entry_time_list(self, md_entry_time_list):
-        self.md_entry_time_list = md_entry_time_list
-
-    def get_md_total_volume_traded(self):
-        return self.md_total_volume_traded
 
 
 class FIXOrder(object):
@@ -369,7 +227,7 @@ class OrderExecution(object):
     """
 
     def __init__(self, order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol, side, leaves_qty
-                 , cum_qty, avg_px, price, stop_px):
+                 , cum_qty, avg_px, price, stop_px, receiver_comp_id=None):
         self.order_id = order_id
         self.cl_ord_id = cl_ord_id
         self.exec_id = exec_id
@@ -383,6 +241,7 @@ class OrderExecution(object):
         self.avg_px = avg_px
         self.price = price
         self.stop_px = stop_px
+        self.receiver_comp_id= receiver_comp_id
 
     def get_order_id(self):
         return self.order_id
@@ -528,7 +387,6 @@ class YearMonthFix(object):
     def set_year_month_value(self, date):
         self.month_year = date
 
-
 class FIXDate(object):
     """The FixDate object encapsulates a date object
 
@@ -630,34 +488,24 @@ class FIXTime(object):
 
 
 class FIXDateTimeUTC(object):
+    """Constructor of FIXDateTimeUTC
+        @Parameter:
+            year : year in int
+            month : month in int
+            date : date in int
+            hour : hour in int
+            minute : minutes in int
+            second : second in int
+    """
 
-    def __init__(self, datetime_object):
-        self.date_time = datetime_object
-
-    @classmethod
-    def from_year_month_date_hour_minute_second(cls, year, month, date, hour, minute, second):
-        """
-        Args
-            year (int): year
-            month (int): month
-            date (int): date
-            hour (int): hour
-            minute (int): minutes
-            second (int): second
-        """
-        datetime_object = datetime.datetime(year, month, date, hour, minute, second, 0)
-        return cls(datetime_object)
-
-    @classmethod
-    def create_for_current_time(cls):
-        current_time_datetime_object = datetime.datetime.utcnow()
-        return cls(current_time_datetime_object)
-
-    def __str__(self):
-        return self.date_time.strftime("%Y%m%d-%H:%M:%S")
+    def __init__(self, year=None, month=None, date=None, hour=None, minute=None, second=None):
+        self.date_time = datetime.datetime(year, month, date, hour, minute, second, 0)
 
     def get_date_time(self):
         return self.date_time
+
+    def __str__(self):
+        return self.date_time.strftime("%Y%m%d-%H:%M:%S")
 
     def set_date_time(self, year, month, date, hour, minute, second):
         self.date_time = datetime.datetime(year, month, date, hour, minute, second, 0)
@@ -671,22 +519,22 @@ class FIXDateTimeUTC(object):
     def set_date_time_value(self, date_time):
         self.date_time = date_time
 
-
+    def set_date_time_now(self):
+        self.date_time = datetime.datetime.utcnow()
 
 
 class Order(object):
-    """Constructor of class Order, it is designed after the Order table from the database
-
-    Args:
-        client_order_id (string): The order ID from the client side
-        account_company_id (string): account company id related to the order
-        received_date = received_date (FIXDate object)
+    """Constructor of class Order:
+        @Parameter:
+        client_order_id = client order id (String)
+        account_company_id = account company id related to the order (String)
+        received_date = received_date (DateFix object)
         handling_instruction = handling instruction (char)
-        stock_ticker (string): ticker symbol of the stock referring in the order
-        side = side (int)
-        order_type (char): the type of order, see fix.Side_ for different types
+        symbol = symbol (string)
+        side = side (char)
+        order_type = order type (char)
         order_quantity = order quantity (int)
-        price (float): price of the stock
+        price = price (int)
         last_status = last status (int)
         msg_seq_num = message sequence number (int)
         on_behalf_of_company_id = original sender who sends order (String)
@@ -696,7 +544,8 @@ class Order(object):
 
     def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
                  order_type, order_quantity, price, last_status, msg_seq_num=None, on_behalf_of_company_id=None,
-                 sender_sub_id=None, cash_order_quantity=None):
+                 sender_sub_id=None,
+                 cash_order_quantity=None):
         self.client_order_id = client_order_id
         self.account_company_id = account_company_id
         self.received_date = received_date
@@ -711,77 +560,6 @@ class Order(object):
         self.on_behalf_of_company_id = on_behalf_of_company_id
         self.sender_sub_id = sender_sub_id
         self.cash_order_quantity = cash_order_quantity
-
-    @classmethod
-    def create_dummy_order(cls):
-        """For testing"""
-        dummy_client_id = "DUMMY_CLIENT_ID"
-        dummy_account_company_id = "DUMMY_ACCOUNT_COMPANY_ID"
-        dummy_received_date = "2000-00-00"
-        dummy_handling_instruction = "1"
-        dummy_stock_ticker = "DUMMY_SYMBOL"
-        dummy_side = "1"
-        dummy_order_type = "1"
-        dummy_order_quantity = 100
-        dummy_price = 10.11
-        dummy_last_status = 0
-        dummy_order = cls(dummy_client_id, dummy_account_company_id, dummy_received_date, dummy_handling_instruction,
-                          dummy_stock_ticker, dummy_side, dummy_order_type, dummy_order_quantity, dummy_price,
-                          dummy_last_status)
-        return dummy_order
-
-    @classmethod
-    def from_new_single_order(cls, new_single_order):
-        """Creates a order from a TradingClass.NewSingleOrder
-
-        Args:
-            new_single_order (TradingClass.NewSingleOrder):
-
-        Returns:
-            order (TradingClass.Order): The order object
-        """
-
-        client_order_id = new_single_order.cl_ord_id
-        account_company_id = new_single_order.sender_comp_id
-        received_time = FIXDateTimeUTC.create_for_current_time()
-        handling_instruction = new_single_order.handl_inst
-        stock_ticker = new_single_order.symbol
-        side = new_single_order.side
-        order_type = new_single_order.order_type
-        #TODO maturity_month_year and day
-        order_quantity = new_single_order.order_qty
-        price = new_single_order.price
-        last_status = OrderStatus.PENDING
-        message_sequence_number = None
-        on_behalf_of_company_id = None
-        sender_sub_id = None
-        cash_order_quantity = None
-
-        order = cls(client_order_id, account_company_id, received_time, handling_instruction, stock_ticker,
-                    side, order_type, order_quantity, price, last_status, message_sequence_number,
-                    on_behalf_of_company_id, sender_sub_id, cash_order_quantity)
-        return order
-
-    def __str__(self):
-        return str(self.__dict__)
-
-    def __eq__(self, other):
-
-        equal = (self.client_order_id == other.client_order_id and
-                self.account_company_id == other.account_company_id and
-                self.received_date == other.received_date and
-                self.handling_instruction == other.handling_instruction and
-                self.stock_ticker == other.stock_ticker and
-                self.side == other.side and
-                self.order_type == other.order_type and
-                self.order_quantity == other.order_quantity and
-                self.price == other.price and
-                self.last_status == other.last_status and
-                self.msg_seq_num == other.msg_seq_num and
-                self.on_behalf_of_company_id == other.on_behalf_of_company_id and
-                self.sender_sub_id == other.sender_sub_id and
-                self.cash_order_quantity == other.cash_order_quantity)
-        return equal
 
     "return client order id"
 
