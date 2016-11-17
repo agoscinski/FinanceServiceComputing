@@ -61,30 +61,46 @@
             <div class="tab-pane active" id="tab1">
               <form class="navbar-form pull-left">
                 <div>
+                  <span>T:</span>
+                  <select id="buyT" class="form-control">
+                    <option value="" selected disabled>Type of order</option>
+                    <option value="limit">Limit</option>
+                    <option value="market">Market</option>
+                  </select>
+                </div>
+                <div>
                   <span>P:</span>
-                  <input type="text" placeholder="Price">
+                  <input id="buyP" type="text" placeholder="Price">
                 </div>
                 <div>
                   <span>Q:</span>
-                  <input type="text" placeholder="Quantity">
+                  <input id="buyQ" type="text" placeholder="Quantity">
                 </div>
                 <div class="text-center">
-                  <button class="btn btn-info" type="button">Buy</button>
+                  <button onclick="orderBuy()"  class="btn btn-info" type="button">Buy</button>
                 </div>
               </form>
             </div>
             <div class="tab-pane" id="tab2">
               <form class="navbar-form pull-left">
                 <div>
+                  <span>T:</span>
+                  <select id="sellT" class="form-control">
+                    <option value="" selected disabled>Type of order</option>
+                    <option value="limit">Limit</option>
+                    <option value="market">Market</option>
+                  </select>
+                </div>
+                <div>
                   <span>P:</span>
-                  <input type="text" placeholder="Price">
+                  <input id="sellP" type="text" placeholder="Price">
                 </div>
                 <div>
                   <span>Q:</span>
-                  <input type="text" placeholder="Quantity">
+                  <input id="sellQ" type="text" placeholder="Quantity">
                 </div>
                 <div class="text-center">
-                  <button class="btn btn-info" type="button">Sell</button>
+                  <button onclick="orderSell()" class="btn btn-info" type="button">Sell</button>
                 </div>
               </form>
             </div>
@@ -418,6 +434,19 @@
           //freshChart(stockCode);
         //}
       }
+    }
+
+    function orderSell(){
+      var type=$("#sellT").val();
+      var q=$("#sellQ").val();
+      var p=$("#sellP").val();
+      GUISignal.orderSell(p,q,type);
+    }
+    function orderBuy(){
+      var type=$("#buyT").val();
+      var q=$("#buyQ").val();
+      var p=$("#buyP").val();
+      GUISignal.orderBuy(p,q,type);
     }
 
 
