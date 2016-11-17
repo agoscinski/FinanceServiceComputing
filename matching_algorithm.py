@@ -5,7 +5,7 @@ Created on Wed Oct 26 13:13:40 2016
 @author: Emely
 """
 
-import orderclass
+import TradingClass
 import numpy as np
 
 
@@ -14,26 +14,26 @@ import numpy as np
     buy: list with buy orders
     sell: list with sell orders
     marketprice: actual markeprice
-return void
+return trade matrix with traded shares
 set buy and sell shares to new amount"""
 def match(buy, sell):
     
     "get total volume of buy"
     volbuy = 0
     for i in range(len(buy)):
-        volbuy += buy[i].getBuy()
+        volbuy += buy[i].get_order_qty()
 
     "get total volume of sell"
     volsell = 0
     for i in range(len(sell)):
-        volsell += sell[i].getSell()
+        volsell += sell[i].get_order_qty()
         
         
     sum = 0
     
     for i in range(len(sell)):
         if(len(buy)>i):
-            sum += buy[i].getBuy()*i
+            sum += buy[i].get_order_qty()*i
     
     "list of transactions, line is seller(i), row is buyer(j)"
     trade = np.zeros(shape=(len(sell), len(sell)))
@@ -42,22 +42,22 @@ def match(buy, sell):
     p = []
     for i in range(len(sell)):
         if(len(buy)>i):
-            p.append((buy[i].getBuy()*buy[i].getPrice()*i)/sum)
+            p.append((buy[i].get_order_qty()*buy[i].get_price()*i)/sum)
 
     P = []
     for i in range(len(sell)):
         if(len(buy)>i):
-            comp = [buy[i].getBuy()*buy[i].getPrice(), np.ﬂoor(p[i]*len(sell))]
+            comp = [buy[i].get_order_qty()*buy[i].get_price(), np.ﬂoor(p[i]*len(sell))]
             P.append(np.min(comp))
       
     for i in range(len(sell)):
         if(len(buy)>i):
-            while(sell[i].getSell()>0):
+            while(sell[i].get_order_qty()>0):
                 for j in range(len(sell)):
                     if P[j]>0 :
                         P[j] -= 1
-                        buy[j].setBuy(buy[j].getBuy()-1)
-                        sell[i].setSell(sell[i].getSell()-1)
+                        buy[j].set_order_qty(buy[j].get_order_qty()-1)
+                        sell[i].set_order_qty(sell[i].get_order_qty()-1)
                         trade[[i],[j]] += 1
                     
     return trade
