@@ -5,7 +5,7 @@ import quickfix42 as fix42
 import TradingClass
 from TradingClass import MarketDataResponse
 from TradingClass import OrderExecution
-from TradingClass import FIXOrder
+from TradingClass import NewSingleOrder
 from TradingClass import YearMonthFix
 from TradingClass import FIXDateTimeUTC
 from TradingClass import FIXTime
@@ -530,10 +530,10 @@ class ClientLogic():
         on_behalf_of_comp_id = None
         sender_sub_id = None
 
-        fix_order = FIXOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side
-                             , transact_time, order_qty, ord_type, price, stop_px, sender_comp_id, sending_time,
-                             on_behalf_of_comp_id
-                             , sender_sub_id)
+        fix_order = NewSingleOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side
+                                   , transact_time, order_qty, ord_type, price, stop_px, sender_comp_id, sending_time,
+                                   on_behalf_of_comp_id
+                                   , sender_sub_id)
         self.client_fix_handler.send_order(fix_order)
         return
 

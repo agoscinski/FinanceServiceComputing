@@ -11,7 +11,7 @@ import matching_algorithm
 import TradingClass
 from TradingClass import MarketDataRequest
 from TradingClass import MarketDataResponse
-from TradingClass import FIXOrder
+from TradingClass import NewSingleOrder
 from TradingClass import Order
 from TradingClass import OrderExecution
 from TradingClass import FIXDateTimeUTC
@@ -144,44 +144,10 @@ class ServerFIXHandler:
     		Returns:
     			None
     		"""
-
-        # Retrieving Fix Data from market data request sent by client
-        md_req_id_fix = fix.MDReqID()
-        subscription_request_type_fix = fix.SubscriptionRequestType()
-        market_depth_fix = fix.MarketDepth()
-        no_md_entry_types_fix = fix.NoMDEntryTypes()
-        md_entry_type_fix = fix.MDEntryType()
-        no_related_sym_fix = fix.NoRelatedSym()
-
-        message.getField(md_req_id_fix)
-        message.getField(subscription_request_type_fix)
-        message.getField(market_depth_fix)
-        message.getField(no_md_entry_types_fix)
-        message.getField(no_related_sym_fix)
-
-        group_md = fix42.MarketDataRequest().NoMDEntryTypes()
-        md_entries = []
-        for md_idx in range(no_md_entry_types_fix.getValue()):
-            message.getGroup(md_idx + 1, group_md)
-            group_md.getField(md_entry_type_fix)
-            md_entries.append(int(md_entry_type_fix.getValue()))
-
-        group_symbol = fix42.MarketDataRequest().NoRelatedSym()
-        symbols = []
-        symbol = fix.Symbol()
-        for symbol_idx in range(no_related_sym_fix.getValue()):
-            message.getGroup(symbol_idx + 1, group_symbol)
-            group_symbol.getField(symbol)
-            symbols.append(symbol.getValue())
-
-        # Encapsulate data into market data request object
-        md_request = MarketDataRequest(md_req_id_fix.getValue(), subscription_request_type_fix.getValue()
-                                       , market_depth_fix.getValue(), no_md_entry_types_fix.getValue(), md_entries,
-                                       no_related_sym_fix.getValue()
-                                       , symbols)
+        market_data_request = TradingClass.MarketDataRequest.from_fix_message(message)
 
         # Market data Object sent to server logic to be processed
-        self.server_logic.process_market_data_request(md_request)
+        self.server_logic.process_market_data_request(market_data_request)
         return
 
     # return_to_gui: current_price, day_high, day_low : json_string;
@@ -260,10 +226,10 @@ class ServerFIXHandler:
         on_behalf_of_comp_id = self.get_header_field_value(fix.OnBehalfOfCompID(), message)
         sender_sub_id = self.get_header_field_value(fix.SenderSubID(), message)
 
-        # Create FixOrder Object to be sent to server logic
-        fix_order = FIXOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side,
-                             transact_time, order_qty, ord_type,  price, stop_px, sender_comp_id,
-                             sending_time, on_behalf_of_comp_id, sender_sub_id)
+        # Create NewSingleOrder Object to be sent to server logic
+        fix_order = NewSingleOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side,
+                                   transact_time, order_qty, ord_type, price, stop_px, sender_comp_id,
+                                   sending_time, on_behalf_of_comp_id, sender_sub_id)
 
         self.server_logic.process_order_request(fix_order)
 
@@ -372,7 +338,7 @@ def transform_fix_order_to_order(fix_order):
     """Process an order request from the FIX Handler
 
     Args:
-        fix_order (TradingClass.FIXOrder): FixOrder Object from fix handler
+        fix_order (TradingClass.NewSingleOrder): NewSingleOrder Object from fix handler
 
     Returns:
         order (TradingClass.Order): The order object
@@ -447,7 +413,7 @@ class ServerLogic:
 
         md_req_id = md_request.md_req_id
         no_md_entries = md_request.no_md_entry_types
-        symbol = md_request.get_symbol(0)
+        symbol = md_request.symbol_list[0]
         md_entry_type_list = md_request.md_entry_type_list
 
         pending_stock_orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(symbol)
@@ -463,13 +429,13 @@ class ServerLogic:
         """Process an order request from the FIX Handler
 
         Args:
-            requested_fix_order (FIXOrder): FixOrder Object from fix handler
+            requested_fix_order (NewSingleOrder): NewSingleOrder Object from fix handler
 
         Returns:
             None
         """
 
-        requested_order = transform_fix_order_to_order(requested_fix_order)
+        requested_order = TradingClass.Order.from_new_single_order(requested_fix_order)
         order_is_valid = self.check_if_order_is_valid(requested_order)
         if order_is_valid:
             self.process_valid_order_request(requested_order)
