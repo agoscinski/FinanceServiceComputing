@@ -7,7 +7,6 @@ Created on Wed Oct 26 13:13:40 2016
 
 
 import numpy as np
-import TradingClass
 
 
 def pro_rata(buy, sell):
@@ -26,19 +25,20 @@ def pro_rata(buy, sell):
     "get total volume of buy"
     volbuy = 0
     for i in range(lb):
-        volbuy += buy[i].get_order_qty()
+        volbuy += buy[i].get_order_quantity()
         
     print(volbuy)
     "get total volume of sell"
     volsell = 0
     for i in range(ls):
-        volsell += sell[i].get_order_qty()
+        volsell += sell[i].get_order_quantity()
         
     "compare volumes"
-    while(volsell>volbuy):
-        ls = ls-1
-        for i in range(ls):
-            volsell += sell[i].get_order_qty()
+    if(volsell>volbuy):
+        dif = volsell - volbuy -1
+        while(dif>0):
+            dif = dif - sell[ls-1].get_order_quantity()
+            ls = ls-1
             
     print(volsell, volbuy)
         
@@ -49,7 +49,7 @@ def pro_rata(buy, sell):
     
     for i in range(ls):
         if(lb>i):
-            summ += buy[i].get_order_qty()*i
+            summ += buy[i].get_order_quantity()*i
 
 
     "list of transactions, line is seller(i), row is buyer(j)"
@@ -59,22 +59,22 @@ def pro_rata(buy, sell):
     p = []
     for i in range(ls):
         if(lb>i):
-            p.append((buy[i].get_order_qty()*buy[i].get_price()*i)/summ)
+            p.append((buy[i].get_order_quantity()*buy[i].get_price()*i)/summ)
 
     P = []
     for i in range(ls):
         if(lb>i):
-            comp = [buy[i].get_order_qty()*buy[i].get_price(), np.ﬂoor(p[i]*len(sell))]
+            comp = [buy[i].get_order_quantity()*buy[i].get_price(), np.ﬂoor(p[i]*len(sell))]
             P.append(np.min(comp))
 
     for i in range(ls):
         if(lb>i):
-            while(sell[i].get_order_qty()>0):
+            while(sell[i].get_order_quantity()>0):
                 for j in range(ls):
                     if P[j] > 0:
                         P[j] -= 1
-                        buy[j].set_order_qty(buy[j].get_order_qty()-1)
-                        sell[i].set_order_qty(sell[i].get_order_qty()-1)
+                        buy[j].set_order_quantity(buy[j].get_order_quantity()-1)
+                        sell[i].set_order_quantity(sell[i].get_order_quantity()-1)
                         trade[[i],[j]] += 1
 
 
