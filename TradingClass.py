@@ -1,10 +1,10 @@
 import datetime
 import quickfix as fix
 import quickfix42 as fix42
-import enum
+from enum import Enum
 
 
-class MarketDataEntryType(enum):
+class MarketDataEntryType(Enum):
     OFFER = 0
     BID = 1
     CURRENT_PRICE = 2
@@ -14,33 +14,23 @@ class MarketDataEntryType(enum):
     DAY_LOW = 8
 
 
-class OrderSideType(enum):
+class OrderSideType(Enum):
     BUY = 1
     SELL = 2
 
 
-class OrderStatus(enum):
+class OrderStatus(Enum):
     DONE = 0
     PENDING = 1
     CANCELED = 2
 
-
+#TODO replace with MarketDataEntryType
 class MDEntryType:
     TRADE = '2'
     OPENING = '4'
     CLOSING = '5'
     SESSION_HIGH = '7'
     SESSION_LOW = '8'
-
-
-class FIXHandler:
-    ENTRY_TYPE_OFFER = 0
-    ENTRY_TYPE_BIDS = 1
-    ENTRY_TYPE_CURRENT_PRICE = 2
-    ENTRY_TYPE_OPENING_PRICE = 4
-    ENTRY_TYPE_CLOSING_PRICE = 5
-    ENTRY_TYPE_DAY_HIGH = 7
-    ENTRY_TYPE_DAY_LOW = 8
 
 
 class MarketDataRequest(object):

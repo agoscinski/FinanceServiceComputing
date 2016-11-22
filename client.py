@@ -144,7 +144,7 @@ class ClientFIXApplication(fix.Application):
         return self.market_data_request_id
 
 
-class ClientFIXHandler(TradingClass.FIXHandler):
+class ClientFIXHandler:
     def __init__(self, client_logic, client_config_file_name):
         self.client_logic = client_logic
         self.client_database_handler = ClientDatabaseHandler()
@@ -575,110 +575,142 @@ class ClientLogic():
         trading_transaction = None
         return trading_transaction
 
-    def extract_offers_price_quantity(self, market_data_entry_types, market_data_entry_prices,
+    @staticmethod
+    def extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
                                       market_data_entry_quantity):
-        prices = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_OFFER]
-        quantity = market_data_entry_quantity[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_OFFER]
+        prices = market_data_entry_prices[market_data_entry_types == TradingClass.OrderEntryType.OFFER]
+        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.OrderEntryType.OFFER]
         return prices, quantity
 
-    def extract_bids_price_quantity(self, market_data_entry_types, market_data_entry_prices,
-                                    market_data_entry_quantity):
-        prices = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_BIDS]
-        quantity = market_data_entry_quantity[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_BIDS]
+    @staticmethod
+    def extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                   market_data_entry_quantity):
+        prices = market_data_entry_prices[market_data_entry_types == TradingClass.MarketDataEntryType.BID]
+        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.MarketDataEntryType.BID]
         return prices, quantity
 
-    def extract_current_price(self, market_data_entry_types, market_data_entry_prices):
-        current_price = \
-            market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_CURRENT_PRICE]
+    @staticmethod
+    def extract_current_price(market_data_entry_types, market_data_entry_prices):
+        current_price = ClientLogic.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.CURRENT_PRICE)
         return current_price
 
-    def extract_opening_price(self, market_data_entry_types, market_data_entry_prices):
-        opening_price = \
-            market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_OPENING_PRICE]
+    @staticmethod
+    def extract_opening_price(market_data_entry_types, market_data_entry_prices):
+        opening_price = ClientLogic.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.OPENING_PRICE)
         return opening_price
 
-    def extract_closing_price(self, market_data_entry_types, market_data_entry_prices):
-        closing_price = \
-            market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_CLOSING_PRICE]
+    @staticmethod
+    def extract_closing_price(market_data_entry_types, market_data_entry_prices):
+        closing_price = ClientLogic.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.CLOSING_PRICE)
         return closing_price
 
-    def extract_day_high(self, market_data_entry_types, market_data_entry_prices):
-        session_high = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_DAY_HIGH]
+    @staticmethod
+    def extract_day_high(market_data_entry_types, market_data_entry_prices):
+        session_high = ClientLogic.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.DAY_HIGH)
         return session_high
 
-    def extract_day_low(self, market_data_entry_types, market_data_entry_prices):
-        session_low = market_data_entry_prices[market_data_entry_types == self.client_fix_handler.ENTRY_TYPE_DAY_LOW]
+    @staticmethod
+    def extract_day_low(market_data_entry_types, market_data_entry_prices):
+        session_low = ClientLogic.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.DAY_LOW)
         return session_low
 
-    def extract_market_data_information(self, market_data):
-        market_data_entry_types = np.array(market_data.md_entry_type_list)
-        market_data_entry_prices = np.array(market_data.md_entry_px_list)
-        market_data_entry_quantity = np.array(market_data.md_entry_size_list)
+    @staticmethod
+    def extract_market_data_information(market_data):
+        market_data_entry_types = np.array(market_data.get_md_entry_type_list())
+        market_data_entry_prices = np.array(market_data.get_md_entry_px_list())
+        market_data_entry_quantity = np.array(market_data.get_md_entry_size_list())
 
-        offers_price, offers_quantity = self.extract_offers_price_quantity(market_data_entry_types,
+        offers_price, offers_quantity = ClientLogic.extract_offers_price_quantity(market_data_entry_types,
                                                                            market_data_entry_prices,
                                                                            market_data_entry_quantity)
-        bids_price, bids_quantity = self.extract_bids_price_quantity(market_data_entry_types, market_data_entry_prices,
-                                                                     market_data_entry_quantity)
-        current_price = self.extract_current_price(market_data_entry_types, market_data_entry_prices)
-        current_quantity = market_data.md_total_volume_traded
-        opening_price = self.extract_opening_price(market_data_entry_types,market_data_entry_prices)
-        closing_price = self.extract_closing_price(market_data_entry_types,market_data_entry_prices)
-        day_high = self.extract_day_high(market_data_entry_types,market_data_entry_prices)
-        day_low = self.extract_day_low(market_data_entry_types,market_data_entry_prices)
+        bids_price, bids_quantity = ClientLogic.extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                                                           market_data_entry_quantity)
+        current_price = ClientLogic.extract_current_price(market_data_entry_types, market_data_entry_prices)
+        current_quantity = market_data.get_md_total_volume_traded()
+        opening_price = ClientLogic.extract_opening_price(market_data_entry_types)
+        closing_price = ClientLogic.extract_closing_price(market_data_entry_types)
+        day_high = ClientLogic.extract_day_high(market_data_entry_types)
+        day_low = ClientLogic.extract_low_low(market_data_entry_types)
 
         offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
         closing_price, day_high, day_low = \
-            transform_numpy_array_to_list(offers_price, offers_quantity, bids_price, bids_quantity, current_price,
+            ClientLogic.transform_numpy_array_to_list(offers_price, offers_quantity, bids_price, bids_quantity, current_price,
                                           current_quantity, opening_price, closing_price, day_high, day_low)
         return offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
                closing_price, day_high, day_low
 
 
-    def extract_five_smallest_offers(self, offers_price, offers_quantity):
-        five_smallest_offers_indices = extract_n_smallest_indices(offers_price, 5)
-        print five_smallest_offers_indices
+    @staticmethod
+    def extract_five_smallest_offers(offers_price, offers_quantity):
+        five_smallest_offers_indices = ClientLogic.extract_n_smallest_indices(offers_price, 5)
         five_smallest_offers_price, five_smallest_offers_quantity = \
-            get_values_from_lists_for_certain_indices(five_smallest_offers_indices, offers_price, offers_quantity)
+            ClientLogic.get_values_from_lists_for_certain_indices(five_smallest_offers_indices, offers_price, offers_quantity)
         return five_smallest_offers_price, five_smallest_offers_quantity
 
 
-    def extract_five_biggest_bids(self, bids_price, bids_quantity):
-        five_biggest_bids_indices = extract_n_biggest_indices(bids_price, 5)
-        print five_biggest_bids_indices
-        five_biggest_bids_price, five_biggest_bids_quantity = get_values_from_lists_for_certain_indices(
+    @staticmethod
+    def extract_five_biggest_bids(bids_price, bids_quantity):
+        five_biggest_bids_indices = ClientLogic.extract_n_biggest_indices(bids_price)
+        five_biggest_bids_price, five_biggest_bids_quantity = ClientLogic.get_values_from_lists_for_certain_indices(
             five_biggest_bids_indices, bids_price, bids_quantity)
         return five_biggest_bids_price, five_biggest_bids_quantity
 
-
-def extract_n_smallest_indices(integer_list, n, order="ascending"):
-    n_smallest_indices = np.argsort(integer_list)[:n]
-    if order == "descending":
-        n_smallest_indices = n_smallest_indices[::-1]
-
-    return n_smallest_indices
+    @staticmethod
+    def get_index_of_first_occurring_value(numpy_array, value):
+        indices_of_occurrences = numpy_array[numpy_array == value]
+        index = indices_of_occurrences[0] if len(indices_of_occurrences) > 0 else None
+        return index
 
 
-def extract_n_biggest_indices(integer_list, n, order="ascending"):
-    n_biggest_indices = np.argsort(integer_list)[-n:]
-    if order == "descending":
-        n_biggest_indices = n_biggest_indices[::-1]
-    return n_biggest_indices
+    @staticmethod
+    def get_value_for_id(values, ids, id):
+        """Gets the value of the entry in the numpy array values with the index of the id in the numpy array ids
+        Args:
+            values (numpy.array of float64): collection of values
+            ids (numpy.array of int64): collection of different ids
+            id (int): the id for which the index is determined in ids
+        """
+        index_of_first_occurring_value = ClientLogic.get_index_of_first_occurring_value(ids, id)
+        value = None if index_of_first_occurring_value is None else values[index_of_first_occurring_value]
+        return value
 
 
-def get_values_from_lists_for_certain_indices(certain_indices, *lists):
-    values_of_lists = []
-    for list_ in lists:
-        values_of_lists.append(list(np.array(list_)[certain_indices]))
-    return values_of_lists
+    @staticmethod
+    def extract_n_smallest_indices(integer_list, n, order="ascending"):
+        n_smallest_indices = np.argsort(integer_list)[:n]
+        if order == "descending":
+            n_smallest_indices = n_smallest_indices[::-1]
+
+        return n_smallest_indices
 
 
-def transform_numpy_array_to_list(*numpy_arrays):
-    lists = []
-    #for numpy_array in numpy_arrays:
-        #lists.append(list(numpy_array))
-    lists=np.array(numpy_arrays, dtype='f')
-    return lists
+    @staticmethod
+    def extract_n_biggest_indices(integer_list, n, order="ascending"):
+        n_biggest_indices = np.argsort(integer_list)[-n:]
+        if order == "descending":
+            n_biggest_indices = n_biggest_indices[::-1]
+        return n_biggest_indices
+
+
+    @staticmethod
+    def get_values_from_lists_for_certain_indices(certain_indices, *lists):
+        values_of_lists = []
+        for list_ in lists:
+            values_of_lists.append(list(np.array(list_)[certain_indices]))
+        return values_of_lists
+
+
+    @staticmethod
+    def transform_numpy_array_to_list(*numpy_arrays):
+        lists = []
+        for numpy_array in numpy_arrays:
+            lists.append(list(numpy_array))
+        return lists
 
 
 
