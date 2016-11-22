@@ -11,7 +11,7 @@ import matching_algorithm
 import TradingClass
 from TradingClass import MarketDataRequest
 from TradingClass import MarketDataResponse
-from TradingClass import FIXOrder
+from TradingClass import NewSingleOrder
 from TradingClass import Order
 from TradingClass import OrderExecution
 from TradingClass import FIXDateTimeUTC
@@ -144,44 +144,10 @@ class ServerFIXHandler:
     		Returns:
     			None
     		"""
-
-        # Retrieving Fix Data from market data request sent by client
-        md_req_id_fix = fix.MDReqID()
-        subscription_request_type_fix = fix.SubscriptionRequestType()
-        market_depth_fix = fix.MarketDepth()
-        no_md_entry_types_fix = fix.NoMDEntryTypes()
-        md_entry_type_fix = fix.MDEntryType()
-        no_related_sym_fix = fix.NoRelatedSym()
-
-        message.getField(md_req_id_fix)
-        message.getField(subscription_request_type_fix)
-        message.getField(market_depth_fix)
-        message.getField(no_md_entry_types_fix)
-        message.getField(no_related_sym_fix)
-
-        group_md = fix42.MarketDataRequest().NoMDEntryTypes()
-        md_entries = []
-        for md_idx in range(no_md_entry_types_fix.getValue()):
-            message.getGroup(md_idx + 1, group_md)
-            group_md.getField(md_entry_type_fix)
-            md_entries.append(int(md_entry_type_fix.getValue()))
-
-        group_symbol = fix42.MarketDataRequest().NoRelatedSym()
-        symbols = []
-        symbol = fix.Symbol()
-        for symbol_idx in range(no_related_sym_fix.getValue()):
-            message.getGroup(symbol_idx + 1, group_symbol)
-            group_symbol.getField(symbol)
-            symbols.append(symbol.getValue())
-
-        # Encapsulate data into market data request object
-        md_request = MarketDataRequest(md_req_id_fix.getValue(), subscription_request_type_fix.getValue()
-                                       , market_depth_fix.getValue(), no_md_entry_types_fix.getValue(), md_entries,
-                                       no_related_sym_fix.getValue()
-                                       , symbols)
+        market_data_request = TradingClass.MarketDataRequest.from_fix_message(message)
 
         # Market data Object sent to server logic to be processed
-        self.server_logic.process_market_data_request(md_request)
+        self.server_logic.process_market_data_request(market_data_request)
         return
 
     # return_to_gui: current_price, day_high, day_low : json_string;
@@ -203,19 +169,20 @@ class ServerFIXHandler:
         header.setField(fix.MsgType(fix.MsgType_MarketDataSnapshotFullRefresh))
         header.setField(fix.MsgSeqNum(1))
         header.setField(fix.SendingTime())
-        message.setField(fix.MDReqID(market_data.get_md_req_id()))
-        message.setField(fix.NoMDEntries(market_data.get_no_md_entry_types()))
-        message.setField(fix.Symbol(market_data.get_symbol()))
+        message.setField(fix.MDReqID(market_data.md_req_id))
+        message.setField(fix.NoMDEntries(market_data.no_md_entry_types))
+        message.setField(fix.Symbol(market_data.symbol))
+        message.setField(fix.TotalVolumeTraded(market_data.md_total_volume_traded))
 
         group_md_entry = fix42.MarketDataSnapshotFullRefresh.NoMDEntries()
-        md_entry_type = market_data.get_md_entry_type_list()
-        md_entry_px = market_data.get_md_entry_px_list()
-        md_entry_size = market_data.get_md_entry_size_list()
-        md_entry_date = market_data.get_md_entry_date_list()
-        md_entry_time = market_data.get_md_entry_time_list()
+        md_entry_type = market_data.md_entry_type_list
+        md_entry_px = market_data.md_entry_px_list
+        md_entry_size = market_data.md_entry_size_list
+        md_entry_date = market_data.md_entry_date_list
+        md_entry_time = market_data.md_entry_time_list
         entry_date_fix = fix.MDEntryDate()
         entry_time_fix = fix.MDEntryTime()
-        for md_index in range(market_data.get_no_md_entry_types()):
+        for md_index in range(market_data.no_md_entry_types):
             entry_date_fix.setString(md_entry_date[md_index].__str__())
             # TODO time should not be here i think
             # entry_time_fix.setString(md_entry_time[md_index].__str__())
@@ -242,43 +209,27 @@ class ServerFIXHandler:
         """
         # Retrieving Fix Data from order request sent by client
         header = message.getHeader()
-        cl_ord_id_fix = fix.ClOrdID()
-        handl_inst_fix = fix.HandlInst()
-        exec_inst_fix = fix.ExecInst()
-        symbol_fix = fix.Symbol()
-        maturity_month_year_fix = fix.MaturityMonthYear()
-        maturity_day_fix = fix.MaturityDay()
-        side_fix = fix.Side()
-        transact_time_fix = fix.TransactTime()
-        order_qty_fix = fix.OrderQty()
-        ord_type_fix = fix.OrdType()
-        price_fix = fix.Price()
-        stop_px_fix = fix.StopPx()
+        cl_ord_id = self.get_field_value(fix.ClOrdID(), message)
+        handl_inst = self.get_field_value(fix.HandlInst(), message)
+        exec_inst = self.get_field_value(fix.ExecInst(), message)
+        symbol = self.get_field_value(fix.Symbol(), message)
+        maturity_month_year = self.get_field_value(fix.MaturityMonthYear(), message)
+        maturity_day = self.get_field_value(fix.MaturityDay(), message)
+        side = self.get_field_value(fix.Side(), message)
+        transact_time = self.get_field_string(fix.TransactTime(), message)
+        order_qty = self.get_field_value(fix.OrderQty(), message)
+        ord_type = self.get_field_value(fix.OrdType(), message)
+        price = self.get_field_value(fix.Price(), message)
+        stop_px = self.get_field_value(fix.StopPx(), message)
         sender_comp_id = self.get_header_field_value(fix.SenderCompID(), message)
         sending_time = self.get_header_field_string(fix.SendingTime(), message)
         on_behalf_of_comp_id = self.get_header_field_value(fix.OnBehalfOfCompID(), message)
         sender_sub_id = self.get_header_field_value(fix.SenderSubID(), message)
 
-        message.getField(cl_ord_id_fix)
-        message.getField(handl_inst_fix)
-        message.getField(exec_inst_fix)
-        message.getField(symbol_fix)
-        message.getField(maturity_month_year_fix)
-        message.getField(maturity_day_fix)
-        message.getField(side_fix)
-        message.getField(transact_time_fix)
-        message.getField(order_qty_fix)
-        message.getField(ord_type_fix)
-        message.getField(price_fix)
-        message.getField(stop_px_fix)
-
-        # Create FixOrder Object to be sent to server logic
-        fix_order = FIXOrder(cl_ord_id_fix.getValue(), handl_inst_fix.getValue(), exec_inst_fix.getValue(),
-                             symbol_fix.getValue(), maturity_month_year_fix.getValue(), maturity_day_fix.getValue(),
-                             side_fix.getValue(), transact_time_fix.getString(), order_qty_fix.getValue(),
-                             ord_type_fix.getValue(),
-                             price_fix.getValue(), stop_px_fix.getValue(), sender_comp_id, sending_time,
-                             on_behalf_of_comp_id, sender_sub_id)
+        # Create NewSingleOrder Object to be sent to server logic
+        fix_order = NewSingleOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side,
+                                   transact_time, order_qty, ord_type, price, stop_px, sender_comp_id,
+                                   sending_time, on_behalf_of_comp_id, sender_sub_id)
 
         self.server_logic.process_order_request(fix_order)
 
@@ -320,6 +271,40 @@ class ServerFIXHandler:
         fix.Session.sendToTarget(message, self.fix_application.sessionID)
         return
 
+    def send_reject_order_execution_respond(self, order_execution):
+        """Send order reject execution respond
+
+            Args:
+                order_execution : OrderExecution object created in server logic
+
+            Returns:
+                None
+            """
+        # Create Execution Report Fix Message based on order_execution object created in server logic
+        message = fix.Message()
+        header = message.getHeader()
+        header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
+        header.setField(fix.MsgSeqNum(self.fix_application.exec_id))
+        header.setField(fix.SendingTime())
+
+        message.setField(fix.OrderID(order_execution.order_id))
+        message.setField(fix.ClOrdID(order_execution.cl_ord_id))
+        message.setField(fix.ExecID(order_execution.exec_id))
+        message.setField(fix.ExecTransType(order_execution.exec_trans_type))
+        message.setField(fix.ExecType(order_execution.exec_type))
+        message.setField(fix.OrdStatus(order_execution.ord_status))
+        message.setField(fix.Symbol(order_execution.symbol))
+        message.setField(fix.Side(order_execution.side))
+        message.setField(fix.LeavesQty(order_execution.leaves_qty))
+        message.setField(fix.CumQty(order_execution.cum_qty))
+        message.setField(fix.AvgPx(order_execution.avg_px))
+        message.setField(fix.Price(order_execution.price))
+        if(order_execution.stop_px != None):
+            message.setField(fix.StopPx(order_execution.stop_px))
+
+        fix.Session.sendToTarget(message, self.fix_application.sessionID)
+        return
+
     def get_field_value(self, fix_object, message):
         if message.isSetField(fix_object.getField()):
             message.getField(fix_object)
@@ -353,7 +338,7 @@ def transform_fix_order_to_order(fix_order):
     """Process an order request from the FIX Handler
 
     Args:
-        fix_order (TradingClass.FIXOrder): FixOrder Object from fix handler
+        fix_order (TradingClass.NewSingleOrder): NewSingleOrder Object from fix handler
 
     Returns:
         order (TradingClass.Order): The order object
@@ -413,22 +398,22 @@ class ServerLogic:
 		"""
 
         # Subscribe means will be sent periodically, so for now we use snapshot
-        if md_request.get_subscription_request_type() == 0:
+        if md_request.subscription_request_type == 0:
             print("0 = Snapshot")
-        elif md_request.get_subscription_request_type() == 1:
+        elif md_request.subscription_request_type == 1:
             print("1 = Snapshot + Updates (Subscribe)")
-        elif md_request.get_subscription_request_type() == 2:
+        elif md_request.subscription_request_type == 2:
             print("2 = Disable previous Snapshot + Update Request (Un-subscribe)")
 
         # Now we wll only support Top of Book (only best prices quoted), Full of Book means all the traded data.
-        if md_request.get_market_depth() == 0:
+        if md_request.market_depth == 0:
             print("Full Book")
-        elif md_request.get_market_depth() == 1:
+        elif md_request.market_depth == 1:
             print("Top of Book")
 
-        md_req_id = md_request.get_md_req_id()
-        no_md_entries = md_request.get_no_md_entry_types()
-        symbol = md_request.get_symbol(0)
+        md_req_id = md_request.md_req_id
+        no_md_entries = md_request.no_md_entry_types
+        symbol = md_request.symbol_list[0]
         md_entry_type_list = md_request.md_entry_type_list
 
         pending_stock_orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(symbol)
@@ -444,13 +429,13 @@ class ServerLogic:
         """Process an order request from the FIX Handler
 
         Args:
-            requested_fix_order (FIXOrder): FixOrder Object from fix handler
+            requested_fix_order (NewSingleOrder): NewSingleOrder Object from fix handler
 
         Returns:
             None
         """
 
-        requested_order = transform_fix_order_to_order(requested_fix_order)
+        requested_order = TradingClass.Order.from_new_single_order(requested_fix_order)
         order_is_valid = self.check_if_order_is_valid(requested_order)
         if order_is_valid:
             self.process_valid_order_request(requested_order)
@@ -471,10 +456,40 @@ class ServerLogic:
 
     def process_invalid_order_request(self, requested_order):
         #TODO Husein
-        pass
+        order_id= str(self.server_fix_handler.fix_application.gen_order_id())
+        exec_id=str(self.server_fix_handler.fix_application.gen_exec_id())
+        cl_ord_id=requested_order.client_order_id
+        receiver_comp_id=requested_order.account_company_id
+        exec_trans_type='0'
+        exec_type='8'
+        ord_status='8'
+        symbol=requested_order.stock_ticker
+        side=requested_order.side
+        price=requested_order.price
+        stop_px=None
+        leaves_qty=0
+        cum_qty=0
+        avg_px=0
+
+        #Encapsulate result of processing into execution report
+        reject_order_execution= OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status
+            , symbol, side, leaves_qty, cum_qty, avg_px, price, stop_px, receiver_comp_id)
+        self.server_fix_handler.send_reject_order_execution_respond(reject_order_execution)
 
     def check_if_order_is_valid(self, requested_order):
         #TODO Husein
+        stock_total_volume=self.server_database_handler.fetch_stock_total_volume(requested_order.stock_ticker)
+        stock_information = self.server_database_handler.fetch_stock_information(requested_order.stock_ticker)
+        current_price=stock_information.current_price
+
+        price_difference=requested_order.price-current_price
+        traded_value_difference=requested_order.price*requested_order.order_quantity-stock_total_volume*current_price
+
+        if(price_difference<=0.1 and price_difference>=-0.1 and traded_value_difference<=0.2
+           and traded_value_difference>=-0.2):
+            return True
+        else:
+            return False
         pass
 
     def authenticate_user(self, user_id, password):
@@ -526,7 +541,7 @@ class ServerLogic:
                 # pending_order_fix_time = TradingClass.TimeFix(pending_order_date_time.hour, pending_order_date_time.minute,
                 #                                           pending_order_date_time.second)
 
-                market_data_entry_type_list.append(order_entry_type)
+                market_data_entry_type_list.append(str(order_entry_type))
                 market_data_entry_price_list.append(pending_order.price)
                 market_data_entry_size_list.append(pending_order.order_quantity)
                 market_data_entry_date_list.append(pending_order_fix_date)
@@ -544,13 +559,41 @@ class ServerLogic:
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
-        # TODO
+        # TODO Not Finished! Filled with dummy only to not cause error in client side
         # if TradingClass.MDEntryType.OPENING in market_data_entry_types_integer:
-
         # if 5 in market_data_entry_types_integer:
         # if 7 in market_data_entry_types_integer:
         # if 8 in market_data_entry_types_integer:
 
+        if TradingClass.MDEntryType.OPENING in market_data_entry_types:
+            market_data_entry_type_list.append(TradingClass.MDEntryType.OPENING)
+            market_data_entry_price_list.append(20)
+            market_data_entry_size_list.append(0)
+            market_data_entry_date_list.append(current_fix_date)
+            market_date_entry_time_list.append(current_fix_time)
+
+        if TradingClass.MDEntryType.CLOSING in market_data_entry_types:
+            market_data_entry_type_list.append(TradingClass.MDEntryType.CLOSING)
+            market_data_entry_price_list.append(20)
+            market_data_entry_size_list.append(0)
+            market_data_entry_date_list.append(current_fix_date)
+            market_date_entry_time_list.append(current_fix_time)
+
+        if TradingClass.MDEntryType.SESSION_HIGH in market_data_entry_types:
+            market_data_entry_type_list.append(TradingClass.MDEntryType.SESSION_HIGH)
+            market_data_entry_price_list.append(20)
+            market_data_entry_size_list.append(0)
+            market_data_entry_date_list.append(current_fix_date)
+            market_date_entry_time_list.append(current_fix_time)
+
+        if TradingClass.MDEntryType.SESSION_LOW in market_data_entry_types:
+            market_data_entry_type_list.append(TradingClass.MDEntryType.SESSION_LOW)
+            market_data_entry_price_list.append(stock_information.current_price)
+            market_data_entry_size_list.append(20)
+            market_data_entry_date_list.append(current_fix_date)
+            market_date_entry_time_list.append(current_fix_time)
+
+        #TODO Add Total Volume Traded but not readed from database yet!
         market_data = MarketDataResponse(market_data_required_id, len(market_data_entry_type_list), symbol,
                                          market_data_entry_type_list, market_data_entry_price_list,
                                          market_data_entry_size_list, market_data_entry_date_list,
@@ -622,10 +665,10 @@ class ServerDatabaseHandler:
             "INSERT INTO `Order`(ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
             "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum) VALUES('%s','%s','%s','%s','%s','%s',"
             "'%s','%s','%s','%s','%s')"
-            % (order.get_client_order_id(), order.get_account_company_id(),
-               order.get_received_time().get_date_time().__str__(),
-               order.get_handling_instruction(), order.get_stock_ticker(), order.get_side(), order.get_order_type(),
-               order.get_order_quantity(), order.get_price(), order.get_last_status(), order.get_msg_seq_num()))
+            % (order.client_order_id, order.account_company_id,
+               order.received_time.date_time().__str__(), order.handling_instruction, order.stock_ticker, order.side, order.order_type,
+               order.order_quantity, order.price, order.last_status, order.msg_seq_num
+            ))
         self.execute_nonresponsive_sql_command(command)
         return
 
@@ -682,8 +725,7 @@ class ServerDatabaseHandler:
     def insert_stock_data(self, stock):
         command = (
             "insert into Stock(Ticker, CompanyName, LotSize, TickSize, TotalVolume) values( '%s', '%s', '%s', '%s')" % (
-                stock.get_ticker, stock.get_company_name, stock.get_lot_size(), stock.get_tick_size(),
-                stock.get_total_volume()))
+                stock.ticker, stock.company_name, stock.lot_size, stock.tick_size, stock.total_volume))
         self.execute_nonresponsive_sql_command(command)
 
     def fetch_stock_information(self, stock_ticker_symbol):
@@ -704,6 +746,20 @@ class ServerDatabaseHandler:
         order_arguments_row_list[1] = int(order_arguments_row_list[1])
         database_stock_information = TradingClass.DatabaseStockInformation(*order_arguments_row_list)
         return database_stock_information
+
+    def fetch_stock_total_volume(self, stock_ticker_symbol):
+        """Retrieves stock total volume from database
+
+        Args:
+            stock_ticker_symbol (string): The stock's ticker symbol
+
+        Returns:
+             Stock Total Volume (float)"""
+        sql_command = ("SELECT TotalVolume FROM Stock where Ticker='%s'" % stock_ticker_symbol)
+        stock_arguments_rows = self.execute_responsive_sql_command(sql_command)
+        stock_total_volume = stock_arguments_rows[0][0]
+
+        return stock_total_volume
 
     def fetch_orders_of_type(self, order):
         """Returns all orders for the same stock as the given order
