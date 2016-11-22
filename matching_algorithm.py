@@ -7,6 +7,7 @@ Created on Wed Oct 26 13:13:40 2016
 
 
 import numpy as np
+import TradingClass
 
 
 def pro_rata(buy, sell):
