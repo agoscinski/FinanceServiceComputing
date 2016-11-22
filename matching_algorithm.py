@@ -18,10 +18,8 @@ return trade matrix with traded shares
 set buy and sell shares to new amount"""
 def pro_rata(buy, sell):
     
-    print(buy)
     lb = len(buy)
     ls = len(sell)
-    print(lb,len(buy),ls)
     
     "get total volume of buy"
     volbuy = 0
