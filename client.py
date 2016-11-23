@@ -6,7 +6,7 @@ import TradingClass
 from TradingClass import MarketDataResponse
 from TradingClass import OrderExecution
 from TradingClass import NewSingleOrder
-from TradingClass import YearMonthFix
+from TradingClass import FIXYearMonth
 from TradingClass import FIXDateTimeUTC
 from TradingClass import FIXTime
 import datetime
@@ -509,31 +509,14 @@ class ClientLogic():
         return
 
     def process_order_request(self, order):
-        # Get Order instruction from GUI
-        # Left Blank
+        """ Processes the order
+        Args:
+            order (TradingClass.Order): order to be processed
+        """
 
-        # Construct Fix Order Object to be sent to the fix handler
-        cl_ord_id = '1'#self.client_fix_handler.fix_application.gen_order_id()
-        handl_inst = '1'
-        exec_inst = '2'
-        symbol = 'TSLA'
-        maturity_month_year = YearMonthFix(2016, 1)
-        maturity_day = 1
-        side = Side_BUY
-        transact_time = FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
-        order_qty = 10
-        ord_type = '1'
-        price = 20000
-        stop_px = 10000
-        sender_comp_id = "client"
-        sending_time = None
-        on_behalf_of_comp_id = None
-        sender_sub_id = None
-
-        fix_order = NewSingleOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side
-                                   , transact_time, order_qty, ord_type, price, stop_px, sender_comp_id, sending_time,
-                                   on_behalf_of_comp_id
-                                   , sender_sub_id)
+        #TODO should be like this, but what data is user input, and what, is added
+        #fix_order = TradingClass.NewSingleOrder.from_order(order)
+        fix_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
         self.client_fix_handler.send_order(fix_order)
         return
 

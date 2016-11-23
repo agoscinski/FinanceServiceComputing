@@ -445,6 +445,10 @@ class ServerLogic:
 
     def process_valid_order_request(self, requested_order):
         self.server_database_handler.insert_order(requested_order)
+        #self.server_fix_handler.create_order_execution =
+        #TradingClass.OrderStatus.NEW
+        #TradingClass.OrderExecution()
+        #self.server_fix_handler.send_order_execution_respond(order_execution)
         #TODO send ACK MsgType 8
         orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(requested_order.symbol)
         order_executions = matching_algorithm.match(orders)

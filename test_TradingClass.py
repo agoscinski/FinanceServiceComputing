@@ -10,8 +10,18 @@ def teardown_module(module):
     method.
     """
 
+class TestNewSingleOrder:
+    def test_create_dummy_new_single_order(self):
+        TradingClass.NewSingleOrder.create_dummy_new_single_order()
+
 
 class TestOrder:
+
+    def test_from_new_single_order(self):
+        dummy_new_single_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
+        TradingClass.Order.from_new_single_order(dummy_new_single_order)
+
+
     def test_create_dummy_order(self):
         TradingClass.Order.create_dummy_order()
 

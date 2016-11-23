@@ -24,7 +24,16 @@ class OrderStatus(Enum):
     PENDING = 1
     CANCELED = 2
 
-#TODO replace with MarketDataEntryType
+class ExecutionTransactionType(Enum):
+    NEW = 0
+    PARTIAL_FILL = 1
+    FILL = 2
+    CANCELED = 4
+    REJECTED = 8
+
+
+
+# TODO replace with MarketDataEntryType
 class MDEntryType:
     TRADE = '2'
     OPENING = '4'
@@ -108,7 +117,7 @@ def get_fix_group_field(fix_message, fix_group, fix_field_type, no_group_element
         fix_message.getGroup(i + 1, fix_group)
         fix_group.getField(fix_field_type)
         group_element = fix_field_type.getValue() if transform_group_element is None else transform_group_element(
-            fix_field_type.getValue() )
+            fix_field_type.getValue())
         group_elements.append(group_element)
     return group_elements
 
@@ -142,48 +151,81 @@ class MarketDataResponse(object):
 class NewSingleOrder(object):
     """Constructor of class FIXOrder:
         @Parameter:
-        cl_ord_id = client order id (String)
-        handl_inst = handling instruction (char)
-        exec_inst= execution instruction (String)
-        symbol = symbol (String)
-        side = side (char)
-        maturity_month_year = maturity month year (YearMonthFix Object=> datetime Date with format YYYYMM)
-        maturity_day = maturity day (int 1-31)
-        transact_time = transaction time (DateTimeFix Object=> DateTime datetime UTC YYYYMMDD-HH:MM:SS)
-        order_qty = order quantity (float)
-        ord_type = order type (char)
-        price = price (float)
-        stop_px = stop price (float)
+        client_order_id (string): client order id
+        handling_instruction (char): handling instruction
+        execution_instruction (string): execution instruction
+        symbol (String): symbol of a stock
+        maturity_month_year (FIXYearMonth object): the month when the order will mature
+        maturity_day (int): maturity day
+        side (char): type of order
+        transaction_time (FIXDateTimeUTC object): transaction time
+        order_quantity (float): order quantity
+        order_type (char): order type
+        price (float): price
+        stop_prices (float): stop price
     """
 
-    def __init__(self, cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side, transact_time
-                 , order_qty, ord_type, price, stop_px, sender_comp_id, sending_time, on_behalf_of_comp_id
-                 , sender_sub_id):
-        self.cl_ord_id = cl_ord_id
-        self.handl_inst = handl_inst
-        self.exec_inst = exec_inst
+    def __init__(self, client_order_id, handling_instruction, execution_instruction, symbol, maturity_month_year,
+                 maturity_day, side, transaction_time, order_quantity, order_type, price, stop_prices,
+                 sender_company_id, sending_time,
+                 on_behalf_of_comp_id, sender_sub_id):
+        self.client_order_id = client_order_id
+        self.handling_instruction = handling_instruction
+        self.execution_instruction = execution_instruction
         self.symbol = symbol
         self.maturity_month_year = maturity_month_year
         self.maturity_day = maturity_day
         self.side = side
-        self.transact_time = transact_time
-        self.order_qty = order_qty
-        self.ord_type = ord_type
+        self.transaction_time = transaction_time
+        self.order_quantity = order_quantity
+        self.order_type = order_type
         self.price = price
-        self.stop_px = stop_px
-        self.sender_comp_id = sender_comp_id
+        self.stop_prices = stop_prices
+        self.sender_company_id = sender_company_id
         self.sending_time = sending_time
         self.on_behalf_of_comp_id = on_behalf_of_comp_id
         self.sender_sub_id = sender_sub_id
 
+    @classmethod
+    def create_dummy_new_single_order(cls):
+        """For testing"""
+        dummy_client_order_id = "DUMMY_CLIENT_ID"
+        dummy_handling_instruction = "1"
+        dummy_execution_instruction = "1"
+        dummy_symbol = "DUMMY_SYMBOL"
+        dummy_maturity_month_year = FIXYearMonth.from_year_month(2000, 01)
+        dummy_maturity_day = 2
+        dummy_side = OrderSideType.BUY
+        dummy_transaction_time = FIXDateTimeUTC("20000101-10:00:00")
+        dummy_order_quantity = 10.
+        dummy_order_type = '1'
+        dummy_price = 100.
+        dummy_stop_prices = None
+        dummy_sender_company_id = "client"
+        dummy_sending_time = None
+        dummy_on_behalf_of_company_id = None
+        dummy_sender_sub_id = None
+        dummy_new_single_order = cls(dummy_client_order_id, dummy_handling_instruction, dummy_execution_instruction,
+                                     dummy_symbol, dummy_maturity_month_year, dummy_maturity_day, dummy_side,
+                                     dummy_transaction_time, dummy_order_quantity, dummy_order_type, dummy_price,
+                                     dummy_stop_prices, dummy_sender_company_id, dummy_sending_time,
+                                     dummy_on_behalf_of_company_id, dummy_sender_sub_id)
+        return dummy_new_single_order
+
+    @classmethod
+    def from_fix_message(cls, fix_message):
+        """Constructor from a quickfix.Message"""
+        #TODO
+        pass
+
     def get_cl_ord_id(self):
-        return self.cl_ord_id
+        return self.client_order_id
 
     def get_handl_inst(self):
-        return self.handl_inst
+        return self.handling_instruction
 
     def get_exec_inst(self):
-        return self.exec_inst
+        return self.execution_instruction
 
     def get_symbol(self):
         return self.symbol
@@ -198,22 +240,22 @@ class NewSingleOrder(object):
         return self.side
 
     def get_transact_time(self):
-        return self.transact_time
+        return self.transaction_time
 
     def get_order_qty(self):
-        return self.order_qty
+        return self.order_quantity
 
     def get_ord_type(self):
-        return self.ord_type
+        return self.order_type
 
     def get_price(self):
         return self.price
 
     def get_stop_px(self):
-        return self.stop_px
+        return self.stop_prices
 
     def get_sender_comp_id(self):
-        return self.sender_comp_id
+        return self.sender_company_id
 
     def get_sending_time(self):
         return self.sending_time
@@ -225,13 +267,13 @@ class NewSingleOrder(object):
         return self.sender_sub_id
 
     def set_cl_ord_id(self, cl_ord_id):
-        self.cl_ord_id = cl_ord_id
+        self.client_order_id = cl_ord_id
 
     def set_handl_inst(self, handl_inst):
-        self.handl_inst = handl_inst
+        self.handling_instruction = handl_inst
 
     def set_exec_inst(self, exec_inst):
-        self.exec_inst = exec_inst
+        self.execution_instruction = exec_inst
 
     def set_symbol(self, symbol):
         self.symbol = symbol
@@ -246,22 +288,22 @@ class NewSingleOrder(object):
         self.side = side
 
     def set_transact_time(self, transact_time):
-        self.transact_time = transact_time
+        self.transaction_time = transact_time
 
     def set_order_qty(self, order_qty):
-        self.order_qty = order_qty
+        self.order_quantity = order_qty
 
     def set_ord_type(self, ord_type):
-        self.ord_type = ord_type
+        self.order_type = ord_type
 
     def set_price(self, price):
         self.price
 
     def set_stop_px(self, stop_px):
-        self.stop_px = stop_px
+        self.stop_prices = stop_px
 
     def set_sender_comp_id(self, sender_comp_id):
-        self.sender_comp_id = sender_comp_id
+        self.sender_company_id = sender_comp_id
 
     def set_sending_time(self, sending_time):
         self.sending_time = sending_time
@@ -276,12 +318,12 @@ class NewSingleOrder(object):
 class OrderExecution(object):
     """Constructor
         @Parameter:
-        order_id = order id (String)
-        cl_ord_id = client order id (String)
-        exec_id = execution id (String)
-        exec_trans_type = execution transaction type (char)
-        exec_type = execution type (char)
-        ord_status = order status (char)
+        order_id (string): order id
+        client_order_id (string): client order id
+        execution_id (string): execution id
+        execution_transaction_type (char): execution transaction type
+        execution_type (char): execution type
+        order_status = order status (char)
         symbol = symbol (String)
         side = side (char)
         leaves_qty = quantity leaves to be fulfiled (float)
@@ -291,14 +333,14 @@ class OrderExecution(object):
         stop_px = stop price (float)
     """
 
-    def __init__(self, order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol, side, leaves_qty
+    def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type, order_status, symbol, side, leaves_qty
                  , cum_qty, avg_px, price, stop_px, receiver_comp_id=None):
         self.order_id = order_id
-        self.cl_ord_id = cl_ord_id
-        self.exec_id = exec_id
-        self.exec_trans_type = exec_trans_type
-        self.exec_type = exec_type
-        self.ord_status = ord_status
+        self.client_order_id = client_order_id
+        self.execution_id = execution_id
+        self.execution_transaction_type = execution_transaction_type
+        self.execution_type = execution_type
+        self.order_status = order_status
         self.symbol = symbol
         self.side = side
         self.leaves_qty = leaves_qty
@@ -308,29 +350,37 @@ class OrderExecution(object):
         self.stop_px = stop_px
         self.receiver_comp_id = receiver_comp_id
 
+    @classmethod
+    def from_order(cls, order, order_status):
+        """
+        Args:
+            order (TradingClass.Order)
+        """
+        order.c
+
     def get_order_id(self):
         return self.order_id
 
     def get_cl_ord_id(self):
-        return self.cl_ord_id
+        return self.client_order_id
 
     "return execution id"
 
     def get_exec_id(self):
-        return self.exec_id
+        return self.execution_id
 
     "return execution transaction type"
 
     def get_exec_trans_type(self):
-        return self.exec_trans_type
+        return self.execution_transaction_type
 
     "return execution type"
 
     def get_exec_type(self):
-        return self.exec_type
+        return self.execution_type
 
     def get_ord_status(self):
-        return self.ord_status
+        return self.order_status
 
     "return symbol"
 
@@ -371,25 +421,25 @@ class OrderExecution(object):
         return self.order_id
 
     def set_cl_ord_id(self, cl_ord_id):
-        self.cl_ord_id = cl_ord_id
+        self.client_order_id = cl_ord_id
 
     "set execution id"
 
     def set_exec_id(self, exec_id):
-        self.exec_id = exec_id
+        self.execution_id = exec_id
 
     "set execution transaction type"
 
     def set_exec_trans_type(self, exec_trans_type):
-        self.exec_trans_type = exec_trans_type
+        self.execution_transaction_type = exec_trans_type
 
     "set execution type"
 
     def set_exec_type(self, exec_type):
-        self.exec_type = exec_type
+        self.execution_type = exec_type
 
     def set_ord_status(self, ord_status):
-        self.ord_status = ord_status
+        self.order_status = ord_status
 
     "set symbol"
 
@@ -427,21 +477,55 @@ class OrderExecution(object):
         self.stop_px = stop_px
 
 
-class YearMonthFix(object):
-    """Constructor of YearMonthFix
-        @Parameter:
-            year : year in int
-            month: month in int
-    """
+class FIXYearMonth(object):
 
-    def __init__(self, year, month):
-        self.month_year = datetime.date(year, month, 1)
+    def __init__(self, date_object):
+        self.date = date_object
 
-    def get_year_month(self):
-        return self.month_year
+    @classmethod
+    def from_year_month(cls, year, month):
+        """Constructor of YearMonthFix
+        Args:
+            year (int)
+            month (int)
+        """
+        date_object = datetime.date(year, month, 1)
+        return cls(date_object)
+
+    @classmethod
+    def from_date_stamp_string(cls, date_stamp_string):
+        """Constructor from date stamp strings
+
+        Args:
+            date_stamp_string (string): string in format YYYYMM
+        Returns:
+            (FIXYearMonth object)
+        """
+        date_object = datetime.datetime.strptime(date_stamp_string, "%Y%m").date()
+        return cls(date_object)
+
+    @property
+    def year(self):
+        return self.date.year
+
+    @year.setter
+    def year(self, year):
+        self.date.year = year
+
+    @property
+    def month(self):
+        return self.date.month
+
+    @month.setter
+    def month(self, month):
+        self.date.month = month
 
     def __str__(self):
         return self.month_year.strftime("%Y%m")
+
+    # TODO remove
+    def get_year_month(self):
+        return self.month_year
 
     def set_year_month(self, year, month):
         self.month_year = datetime.date(year, month, 1)
@@ -468,11 +552,11 @@ class FIXDate(object):
         """Constructor from date stamp strings
 
         Args:
-            date_stamp_string (string): string in format YYYY-MM-DD
+            date_stamp_string (string): string in format YYYYMMDD
         Returns:
             (FIXDate object)
         """
-        date_object = datetime.datetime.strptime(date_stamp_string, "%Y-%m-%d").date()
+        date_object = datetime.datetime.strptime(date_stamp_string, "%Y%m%d").date()
         return cls(date_object)
 
     @classmethod
@@ -554,23 +638,17 @@ class FIXTime(object):
 
 
 class FIXDateTimeUTC(object):
-    """Constructor of FIXDateTimeUTC
-        @Parameter:
-            year : year in int
-            month : month in int
-            date : date in int
-            hour : hour in int
-            minute : minutes in int
-            second : second in int
-    """
-
 
     def __init__(self, datetime_object):
+        """Constructor of FIXDateTimeUTC from
+        Args:
+            datetime_object (datetime.datetime object)
+        """
         self.date_time = datetime_object
 
     @classmethod
     def from_year_month_date_hour_minute_second(cls, year, month, date, hour, minute, second):
-        """
+        """Constructor of FIXDateTimeUTC
         Args
             year (int): year
             month (int): month
@@ -587,10 +665,22 @@ class FIXDateTimeUTC(object):
         current_time_datetime_object = datetime.datetime.utcnow()
         return cls(current_time_datetime_object)
 
+    @classmethod
+    def from_date_time_stamp_string(cls, date_time_stamp_string):
+        """Constructor from date stamp strings
+
+        Args:
+            date_time_stamp_string (string): string in format YYYYMMDD-HH:MM:SS
+        Returns:
+            (FIXDate object)
+        """
+        date_object = datetime.datetime.strptime(date_time_stamp_string, "%Y%m%d-%H:%M:%S").date()
+        return cls(date_object)
+
     def __str__(self):
         return self.date_time.strftime("%Y%m%d-%H:%M:%S")
 
-    #TODO clean
+    # TODO clean
     def get_date_time(self):
         return self.date_time
 
@@ -612,21 +702,22 @@ class Order(object):
     Args:
         client_order_id (string): The order ID from the client side
         account_company_id (string): account company id related to the order
-        received_date = received_date (FIXDate object)
-        handling_instruction = handling instruction (char)
+        received_date (FIXDate object): received_date
+        handling_instruction (char): handling instruction
         stock_ticker (string): ticker symbol of the stock referring in the order
-        side = side (int)
+        side (int): type of order
+        maturity_date (FIXDate object): the date when order will mature
         order_type (char): the type of order, see fix.Side_ for different types
-        order_quantity = order quantity (int)
+        order_quantity (float): order quantity
         price (float): price of the stock
-        last_status = last status (int)
-        msg_seq_num = message sequence number (int)
-        on_behalf_of_company_id = original sender who sends order (String)
-        sender_sub_id = sub identifier of sender (String)
-        cash_order_quantity = amount of order requested (float)
+        last_status (OrderStatus): last status
+        msg_seq_num (int): message sequence number
+        on_behalf_of_company_id (string): original sender who sends order
+        sender_sub_id (string): sub identifier of sender
+        cash_order_quantity (float): amount of order requested
     """
 
-    def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
+    def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side, maturity_date,
                  order_type, order_quantity, price, last_status, msg_seq_num=None, on_behalf_of_company_id=None,
                  sender_sub_id=None, cash_order_quantity=None):
         self.client_order_id = client_order_id
@@ -635,6 +726,7 @@ class Order(object):
         self.handling_instruction = handling_instruction
         self.stock_ticker = stock_ticker
         self.side = side
+        self.maturity_date = maturity_date
         self.order_type = order_type
         self.order_quantity = order_quantity
         self.price = price
@@ -649,16 +741,17 @@ class Order(object):
         """For testing"""
         dummy_client_id = "DUMMY_CLIENT_ID"
         dummy_account_company_id = "DUMMY_ACCOUNT_COMPANY_ID"
-        dummy_received_date = "2000-00-00"
+        dummy_received_date = FIXDate.from_date_stamp_string("20000101")
         dummy_handling_instruction = "1"
         dummy_stock_ticker = "DUMMY_SYMBOL"
         dummy_side = "1"
+        dummy_maturity_date = FIXDate.from_date_stamp_string("20000202")
         dummy_order_type = "1"
         dummy_order_quantity = 100
         dummy_price = 10.11
         dummy_last_status = 0
         dummy_order = cls(dummy_client_id, dummy_account_company_id, dummy_received_date, dummy_handling_instruction,
-                          dummy_stock_ticker, dummy_side, dummy_order_type, dummy_order_quantity, dummy_price,
+                          dummy_stock_ticker, dummy_side, dummy_maturity_date, dummy_order_type, dummy_order_quantity, dummy_price,
                           dummy_last_status)
         return dummy_order
 
@@ -671,15 +764,15 @@ class Order(object):
             order (TradingClass.Order): The order object
         """
 
-        client_order_id = new_single_order.cl_ord_id
-        account_company_id = new_single_order.sender_comp_id
+        client_order_id = new_single_order.client_order_id
+        account_company_id = new_single_order.sender_company_id
         received_time = FIXDateTimeUTC.create_for_current_time()
-        handling_instruction = new_single_order.handl_inst
+        handling_instruction = new_single_order.handling_instruction
         stock_ticker = new_single_order.symbol
         side = new_single_order.side
+        maturity_date = FIXDate.from_year_month_day(new_single_order.maturity_month_year.year, new_single_order.maturity_month_year.month, new_single_order.maturity_day)
         order_type = new_single_order.order_type
-        #TODO maturity_month_year and day
-        order_quantity = new_single_order.order_qty
+        order_quantity = new_single_order.order_quantity
         price = new_single_order.price
         last_status = OrderStatus.PENDING
         message_sequence_number = None
@@ -688,7 +781,7 @@ class Order(object):
         cash_order_quantity = None
 
         order = cls(client_order_id, account_company_id, received_time, handling_instruction, stock_ticker,
-                    side, order_type, order_quantity, price, last_status, message_sequence_number,
+                    side, maturity_date, order_type, order_quantity, price, last_status, message_sequence_number,
                     on_behalf_of_company_id, sender_sub_id, cash_order_quantity)
         return order
 
@@ -696,24 +789,23 @@ class Order(object):
         return str(self.__dict__)
 
     def __eq__(self, other):
-
         equal = (self.client_order_id == other.client_order_id and
-                self.account_company_id == other.account_company_id and
-                self.received_date == other.received_date and
-                self.handling_instruction == other.handling_instruction and
-                self.stock_ticker == other.stock_ticker and
-                self.side == other.side and
-                self.order_type == other.order_type and
-                self.order_quantity == other.order_quantity and
-                self.price == other.price and
-                self.last_status == other.last_status and
-                self.msg_seq_num == other.msg_seq_num and
-                self.on_behalf_of_company_id == other.on_behalf_of_company_id and
-                self.sender_sub_id == other.sender_sub_id and
-                self.cash_order_quantity == other.cash_order_quantity)
+                 self.account_company_id == other.account_company_id and
+                 self.received_date == other.received_date and
+                 self.handling_instruction == other.handling_instruction and
+                 self.stock_ticker == other.stock_ticker and
+                 self.side == other.side and
+                 self.order_type == other.order_type and
+                 self.order_quantity == other.order_quantity and
+                 self.price == other.price and
+                 self.last_status == other.last_status and
+                 self.msg_seq_num == other.msg_seq_num and
+                 self.on_behalf_of_company_id == other.on_behalf_of_company_id and
+                 self.sender_sub_id == other.sender_sub_id and
+                 self.cash_order_quantity == other.cash_order_quantity)
         return equal
 
-    #TODO clean
+    # TODO clean
     def get_client_order_id(self):
         return self.client_order_id
 
