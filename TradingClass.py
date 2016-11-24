@@ -739,20 +739,21 @@ class Order(object):
     @classmethod
     def create_dummy_order(cls):
         """For testing"""
-        dummy_client_id = "DUMMY_CLIENT_ID"
-        dummy_account_company_id = "DUMMY_ACCOUNT_COMPANY_ID"
-        dummy_received_date = FIXDate.from_date_stamp_string("20000101")
+        dummy_client_id = "20161120-001"
+        dummy_account_company_id = "client"
+        dummy_received_date = FIXDate.from_date_stamp_string("20161120")
         dummy_handling_instruction = "1"
-        dummy_stock_ticker = "DUMMY_SYMBOL"
+        dummy_stock_ticker = "TSLA"
         dummy_side = "1"
-        dummy_maturity_date = FIXDate.from_date_stamp_string("20000202")
+        dummy_maturity_date = FIXDate.from_date_stamp_string("20161125")
         dummy_order_type = "1"
-        dummy_order_quantity = 100
+        dummy_order_quantity = 100.00
         dummy_price = 10.11
         dummy_last_status = 0
+        dummy_msg_seq_num = 0
         dummy_order = cls(dummy_client_id, dummy_account_company_id, dummy_received_date, dummy_handling_instruction,
                           dummy_stock_ticker, dummy_side, dummy_maturity_date, dummy_order_type, dummy_order_quantity, dummy_price,
-                          dummy_last_status)
+                          dummy_last_status, dummy_msg_seq_num)
         return dummy_order
 
     @classmethod

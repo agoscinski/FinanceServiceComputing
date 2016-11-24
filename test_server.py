@@ -43,3 +43,8 @@ class TestServerDatabaseHandler:
         assert parsed_sql_commands[0] == asserted_sql_commands[0]
         assert parsed_sql_commands[1] == asserted_sql_commands[1]
         assert parsed_sql_commands[2] == asserted_sql_commands[2]
+
+    def test_insert_order(self):
+        dummy_order = TradingClass.Order.create_dummy_order()
+        fsc_server_database_handler.insert_order(dummy_order)
+

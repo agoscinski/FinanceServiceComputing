@@ -605,12 +605,13 @@ class ServerLogic:
         return market_data
 
     @staticmethod
-    def create_execution_report_from_new_single_order(new_single_order):
+    def create_execution_report_from_new_single_order(new_single_order, order_id):
+        TradingClass.ExecutionReport(order_id,)
         pass
 
 
 class ServerDatabaseHandler:
-    # TODO send SQL Queries
+
     def __init__(self, user_name="root", user_password="root", database_name="FSCDatabase", database_port=3306,
                  init_database_script_path="./database/init_fsc_database.sql"):
         """
@@ -727,12 +728,12 @@ class ServerDatabaseHandler:
         command = (
             "INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
             "Side, MaturityDate, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum) VALUES('%s','%s','%s','%s','%s','%s',"
-            "'%s','%s','%s','%s','%s')"
-            % (order.client_order_id, order.account_company_id, str(order.received_time.date_time),
-               order.handling_instruction, order.stock_ticker, order.side,
-               order.maturity_date, order.order_type, order.order_quantity,
-               order.price, order.last_status, order.msg_seq_num))
-        order_id = self.execute_insert_sql_command(command)
+            "'%s','%s','%s','%s','%s', '%s')"
+            % (order.client_order_id, order.account_company_id, str(order.received_date),
+               order.handling_instruction, order.stock_ticker, str(order.side),
+               str(order.maturity_date), order.order_type, str(order.order_quantity),
+               str(order.price), str(order.last_status), str(order.msg_seq_num)))
+        order_id = self.execute_nonresponsive_sql_command(command)
         return order_id
 
     def execute_responsive_sql_command(self, sql_command):
@@ -774,7 +775,7 @@ class ServerDatabaseHandler:
         except MySQLdb.Error, e:
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 
-    def execute_insert_sql_command(self, insert_sql_command):
+    def execute_responsive_insert_sql_command(self, insert_sql_command):
         """Used to execute commands INSERT which returns the produced ID from database server
         Args:
             insert_sql_command (string): the sql command to be executed
