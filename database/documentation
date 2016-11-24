@@ -30,35 +30,16 @@ Order_ClientOrderID: The same as OrigClientOrderID in FIX Cancel Order request
 ClientOrderID: The same as ClientOrderID in FIX Cancel Order request
 
 
+FILE INFORMATION
+
 init script file format
 A line with a file has this format:
 source FILE_PATH
 A line with a comment has this format
 -- COMMENT_TEXT
 
-
--- -----------------------------------------------------
--- Schema FSCDatabase
--- -----------------------------------------------------
-DROP SCHEMA IF EXISTS `FSCDatabase` ;
-
--- -----------------------------------------------------
--- Schema FSCDatabase
--- -----------------------------------------------------
-
-USE `FSCDatabase` ;
+mysql_init_fsc_database.sql should be used if executed with mysql
+init_fsc_database.sql should be used if executed with python
 
 
-        order_id (string): order id <- from database
-        client_order_id (string): client order id <- from last order
-        execution_id (string): execution id <- database
-        execution_transaction_type (char): execution transaction type <- serverlogic
-        execution_type (char): execution type <- serverlogic
-        order_status = order status (char) <- serverlogic
-        symbol = symbol (String) <- order
-        side = side (char) <- order
-        leaves_qty = quantity leaves to be fulfiled (float) <- serverLogic
-        cum_qty = cumulative quantity (float) <- 0 ServerLogic
-        avg_px = average price (float) <- 0 serverlogic
-        price = price (float) <- order
-        stop_px = stop price (float) <- order
+
