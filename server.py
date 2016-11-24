@@ -441,13 +441,13 @@ class ServerLogic:
             self.process_invalid_order_request(requested_order)
 
     def process_valid_order_request(self, requested_order):
+        """
+        Args:
+            requested_order (TradingClass.Order):
+        """
         self.server_database_handler.insert_order(requested_order)
-        # self.server_fix_handler.create_order_execution =
-        # TradingClass.OrderStatus.NEW
-        # TradingClass.OrderExecution()
-        # self.server_fix_handler.send_order_execution_respond(order_execution)
-        # TODO send ACK MsgType 8
-        self.server_fix_handler.send_order_execution_respond()
+        acknowledge_execution_report = self.create_execution_report_for_new_order(requested_order)
+        #TODO self.server_fix_handler.send_execution_report_respond(acknowledge_execution_report)
         orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(requested_order.symbol)
         order_executions = matching_algorithm.match(orders)
         for order_execution in order_executions:
@@ -604,10 +604,22 @@ class ServerLogic:
                                          stock_information.current_volume)
         return market_data
 
-    @staticmethod
-    def create_execution_report_from_new_single_order(new_single_order, order_id):
-        TradingClass.ExecutionReport(order_id,)
-        pass
+    def create_execution_report_for_new_order(self, new_order):
+        """Used to create a execution report for a new order
+        Args:
+            new_order (TradingClass.Order):
+            order_status (TradingClass.LastStatus):
+        Returns:
+            execution_report (TradingClass.ExecutionReport)
+        """
+        left_quantity = new_order.order_quantity
+        cumulative_quantity = 0
+        average_price = 0
+        stop_price = 0
+        execution_report = TradingClass.ExecutionReport.from_order(new_order, TradingClass.ExecutionTransactionType.NEW, TradingClass.ExecutionType.NEW, TradingClass.OrderStatus.NEW, left_quantity, cumulative_quantity, average_price, stop_price)
+        execution_id = self.server_database_handler.insert_execution_report(execution_report)
+        execution_report.execution_id = execution_id
+        return execution_report
 
 
 class ServerDatabaseHandler:
@@ -702,6 +714,9 @@ class ServerDatabaseHandler:
                 sql_commands.append(sql_command)
         return sql_commands
 
+    def insert_execution_report(self, execution_report):
+        #MAYBETODO
+        return 0
 
     def insert_order_execution(self, order_execution):
         """Inserts an order execution and returns this order execution with an added execution ID

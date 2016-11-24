@@ -18,19 +18,38 @@ class OrderSideType(Enum):
     BUY = 1
     SELL = 2
 
-
-class OrderStatus(Enum):
+class LastStatus(Enum):
     DONE = 0
     PENDING = 1
     CANCELED = 2
+    EXPIRED = 3
 
-class ExecutionTransactionType(Enum):
+class OrderStatus(Enum):
+    NEW = 2
+    REPLACED = 3
+    PARTIALLY_FILLED = 4
+    EXPIRED = 5
+    CANCELED = 6
+    FILLED = 8
+    PENDING_REPLACE = 12
+    PENDING_CANCEL = 12
+
+
+class ExecutionType(Enum):
     NEW = 0
     PARTIAL_FILL = 1
     FILL = 2
     CANCELED = 4
     REJECTED = 8
 
+class ExecutionTransactionType(Enum):
+    NEW = '0'
+    PARTIAL_FILL = '1'
+    FILL = '2'
+    CANCELED = '4'
+    REPLACE = '5'
+    REJECTED = '8'
+    EXPIRED = 'C'
 
 
 # TODO replace with MarketDataEntryType
@@ -317,24 +336,24 @@ class NewSingleOrder(object):
 
 class ExecutionReport(object):
     """Constructor
-        @Parameter:
+    Args:
         order_id (string): order id
         client_order_id (string): client order id
         execution_id (string): execution id
         execution_transaction_type (char): execution transaction type
         execution_type (char): execution type
-        order_status = order status (char)
-        symbol = symbol (String)
-        side = side (char)
-        leaves_qty = quantity leaves to be fulfiled (float)
-        cum_qty = cumulative quantity (float)
-        avg_px = average price (float)
-        price = price (float)
-        stop_px = stop price (float)
+        order_status (char):
+        symbol (String): ticker symbol of the stock
+        side (char):
+        left_quantity (float): amount of shares open for further execution
+        cumulative_quantity (float): total number of shares filled
+        average_price (float): calculated average price of all fills on this order
+        price (float):
+        stop_price (float):
     """
 
-    def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type, order_status, symbol, side, leaves_qty
-                 , cum_qty, avg_px, price, stop_px, receiver_comp_id=None):
+    def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type, order_status, symbol, side, left_quantity
+                 , cumulative_quantity, average_price, price, stop_price, receiver_comp_id=None):
         self.order_id = order_id
         self.client_order_id = client_order_id
         self.execution_id = execution_id
@@ -343,20 +362,41 @@ class ExecutionReport(object):
         self.order_status = order_status
         self.symbol = symbol
         self.side = side
-        self.leaves_qty = leaves_qty
-        self.cum_qty = cum_qty
-        self.avg_px = avg_px
+        self.left_quantity = left_quantity
+        self.cumulative_quantity = cumulative_quantity
+        self.average_price = average_price
         self.price = price
-        self.stop_px = stop_px
+        self.stop_price = stop_price
         self.receiver_comp_id = receiver_comp_id
 
     @classmethod
-    def from_order(cls, order, order_status):
+    def from_order(cls, order, execution_transaction_type, execution_type, order_status, left_quantity, cumulative_quantity, average_price, stop_price):
         """
         Args:
             order (TradingClass.Order)
+            execution_transaction_type (char)
+            execution_type (int)
+            order_status (int)
+            left_quantity (float): amount of shares open for further execution
+            cumulative_quantity (float): total number of shares filled
+            average_price (float): calculated average price of all fills on this order
+            stop_price (float):
         """
-        order.c
+        order_id = order.order_id
+        client_order_id = order.client_order_id
+        execution_id = None
+        #execution_transaction_type
+        #str(execution_type)
+        #str(order_status)
+        symbol = order.stock_ticker
+        side = order.side
+        #left_quantity
+        #cumulative_quantity
+        #average_price
+        price = order.price
+        #stop_price
+        execution_report = cls(order_id, client_order_id, execution_id, execution_transaction_type, str(execution_type), str(order_status), symbol, side, left_quantity, cumulative_quantity, average_price, price, stop_price)
+        return execution_report
 
     def get_order_id(self):
         return self.order_id
@@ -395,17 +435,17 @@ class ExecutionReport(object):
     "return quantity leaves to be fulfiled"
 
     def get_leaves_qty(self):
-        return self.leaves_qty
+        return self.left_quantity
 
     "return cumulative quantity"
 
     def get_cum_qty(self):
-        return self.cum_qty
+        return self.cumulative_quantity
 
     "return average price"
 
     def get_avg_px(self):
-        return self.avg_px
+        return self.average_price
 
     "return price"
 
@@ -415,7 +455,7 @@ class ExecutionReport(object):
     "return stop price"
 
     def get_stop_px(self):
-        return self.stop_px
+        return self.stop_price
 
     def set_order_id(self):
         return self.order_id
@@ -454,17 +494,17 @@ class ExecutionReport(object):
     "set quantity leaves to be fulfiled"
 
     def set_leaves_qty(self, leaves_qty):
-        self.leaves_qty = leaves_qty
+        self.left_quantity = leaves_qty
 
     "set cumulative quantity"
 
     def set_cum_qty(self, cum_qty):
-        self.cum_qty = cum_qty
+        self.cumulative_quantity = cum_qty
 
     "set average price"
 
     def set_avg_px(self, avg_px):
-        self.avg_px = avg_px
+        self.average_price = avg_px
 
     "set price"
 
@@ -474,7 +514,7 @@ class ExecutionReport(object):
     "set stop price"
 
     def set_stop_px(self, stop_px):
-        self.stop_px = stop_px
+        self.stop_price = stop_px
 
 
 class FIXYearMonth(object):
@@ -574,7 +614,7 @@ class FIXDate(object):
         return cls(date_object)
 
     def __str__(self):
-        return self.date.strftime("%Y-%m-%d")
+        return self.date.strftime("%Y%m%d")
 
     @property
     def year(self):
@@ -710,7 +750,7 @@ class Order(object):
         order_type (char): the type of order, see fix.Side_ for different types
         order_quantity (float): order quantity
         price (float): price of the stock
-        last_status (OrderStatus): last status
+        last_status (LastStatus): last status
         msg_seq_num (int): message sequence number
         on_behalf_of_company_id (string): original sender who sends order
         sender_sub_id (string): sub identifier of sender
@@ -775,8 +815,8 @@ class Order(object):
         order_type = new_single_order.order_type
         order_quantity = new_single_order.order_quantity
         price = new_single_order.price
-        last_status = OrderStatus.PENDING
-        message_sequence_number = None
+        last_status = LastStatus.PENDING
+        message_sequence_number = 0
         on_behalf_of_company_id = None
         sender_sub_id = None
         cash_order_quantity = None
@@ -805,6 +845,15 @@ class Order(object):
                  self.sender_sub_id == other.sender_sub_id and
                  self.cash_order_quantity == other.cash_order_quantity)
         return equal
+
+    @property
+    def order_id(self):
+        """
+        Returns:
+             order_id (string):
+        """
+        order_id = self.client_order_id + "_" + self.account_company_id + "_" + str(self.received_date)
+        return order_id
 
     # TODO clean
     def get_client_order_id(self):
