@@ -1,25 +1,45 @@
 import server
 import TradingClass
+
 nasdaq_stock_ticker = "TESTTICKER"
 nasdaq_stock = server.Stock(nasdaq_stock_ticker)
 
+fsc_server_database_handler = server.ServerDatabaseHandler(user_name="root", user_password="root",
+                                                           database_name="TestFSCDatabase", database_port=3306,
+                                                           init_database_script_path="./tests/database/init_test_database.sql")
+
 def setup_module(module):
     """ setup any state specific to the execution of the given module."""
+    fsc_server_database_handler.init_database()
+
 
 
 def teardown_module(module):
     """ teardown any state that was previously setup with a setup_module
     method.
     """
+    fsc_server_database_handler.teardown_database()
 
-class TestStaticFunctions:
+class TestServerDatabaseHandler:
 
-    def test_read_file(self):
-        value = server.read_file("./test_file.txt")
-        assert value == "word1;\nword2;\n"
-
-class TestServerLogic:
-
-    def test_pack_into_fix_market_data_response(self):
-        #MAYBETODO
+    def test_insert_order(self):
         pass
+
+    def test_extract_file_names_from_init_script(self):
+        parsed_file_names = server.ServerDatabaseHandler.parse_file_names_from_init_script("tests/example_init_script.sql")
+        asserted_file_names = ["tests/database/create_tables.sql",
+                             "tests/database/create_view.sql",
+                             "tests/database/account_insert.sql",
+                             "tests/database/stock_insert.sql",
+                             "tests/database/order_insert.sql",
+                             "tests/database/order_execution_insert.sql"]
+        assert parsed_file_names == asserted_file_names
+
+    def test_parse_sql_commands_from_sql_file(self):
+        parsed_sql_commands = server.ServerDatabaseHandler.parse_sql_commands_from_sql_file("tests/example_sql_commands.sql")
+        asserted_sql_commands = ["SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0",
+                                "CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`Stock` (  `Ticker` VARCHAR(6) NOT NULL,  `CompanyName` VARCHAR(45) NULL,  `LotSize` INT NULL,  `TickSize` DECIMAL(20,2) NULL,  `TotalVolume` INT NULL,  PRIMARY KEY (`Ticker`))ENGINE = InnoDB",
+                                "INSERT INTO Stock(Ticker, CompanyName, LotSize, TickSize, TotalVolume) VALUES('MS','Morgan Stanley','100','0.01','10000000')"]
+        assert parsed_sql_commands[0] == asserted_sql_commands[0]
+        assert parsed_sql_commands[1] == asserted_sql_commands[1]
+        assert parsed_sql_commands[2] == asserted_sql_commands[2]

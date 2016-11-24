@@ -4,7 +4,7 @@ from quickfix import Side_BUY, Side_SELL
 import quickfix42 as fix42
 import TradingClass
 from TradingClass import MarketDataResponse
-from TradingClass import OrderExecution
+from TradingClass import ExecutionReport
 from TradingClass import NewSingleOrder
 from TradingClass import FIXYearMonth
 from TradingClass import FIXDateTimeUTC
@@ -364,8 +364,8 @@ class ClientFIXHandler:
         stop_px = self.get_field_value(fix.StopPx(),message)
 
         # Encapsulate result of receiving execution report into order execution report
-        order_execution = OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol
-                                         , side, leaves_qty, cum_qty,avg_px, price, stop_px)
+        order_execution = ExecutionReport(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol
+                                          , side, leaves_qty, cum_qty, avg_px, price, stop_px)
 
         self.client_logic.process_order_execution_respond(order_execution)
 

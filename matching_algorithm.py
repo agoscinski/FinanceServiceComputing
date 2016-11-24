@@ -64,8 +64,8 @@ def pro_rata(buy, sell):
 
     P = []
     for i in range(ls):
-        if(lb>i):
-            comp = [buy[i].get_order_quantity()*buy[i].get_price(), np.ﬂoor(p[i]*len(sell))]
+        if lb>i:
+            comp = [buy[i].get_order_quantity() * buy[i].get_price(), np.floor(p[i]*len(sell))]
             P.append(np.min(comp))
 
     for i in range(ls):
@@ -89,7 +89,7 @@ def match(orders):
         orders (list of TradingClass.Order): These are the are orders the algorithm received
 
     Returns:
-        order_executions (list of TradingClass.OrderExecution)
+        order_executions (list of TradingClass.ExecutionReport)
     """
     buy_orders, sell_orders = extract_buy_and_sell_orders(orders)
     trading_matrix = pro_rata(buy_orders, sell_orders)
@@ -104,8 +104,8 @@ def extract_buy_and_sell_orders(orders):
         orders (list of TradingClass.Order): These are the are orders the algorithm received
 
     Returns:
-        buy_orders (list of TradingClass.OrderExecution): Orders from type buy/bid
-        sell_orders (list of TradingClass.OrderExecution): Order from type sell/offer
+        buy_orders (list of TradingClass.ExecutionReport): Orders from type buy/bid
+        sell_orders (list of TradingClass.ExecutionReport): Order from type sell/offer
     """
     buy_orders = []
     sell_orders = []

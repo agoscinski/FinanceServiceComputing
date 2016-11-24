@@ -315,7 +315,7 @@ class NewSingleOrder(object):
         self.sender_sub_id = sender_sub_id
 
 
-class OrderExecution(object):
+class ExecutionReport(object):
     """Constructor
         @Parameter:
         order_id (string): order id
