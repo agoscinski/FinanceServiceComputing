@@ -615,8 +615,7 @@ class ServerLogic:
         left_quantity = new_order.order_quantity
         cumulative_quantity = 0
         average_price = 0
-        stop_price = 0
-        execution_report = TradingClass.ExecutionReport.from_order(new_order, TradingClass.ExecutionTransactionType.NEW, TradingClass.ExecutionType.NEW, TradingClass.OrderStatus.NEW, left_quantity, cumulative_quantity, average_price, stop_price)
+        execution_report = TradingClass.ExecutionReport.from_order(new_order, TradingClass.ExecutionTransactionType.NEW, TradingClass.ExecutionType.NEW, TradingClass.OrderStatus.NEW, left_quantity, cumulative_quantity, average_price)
         execution_id = self.server_database_handler.insert_execution_report(execution_report)
         execution_report.execution_id = execution_id
         return execution_report

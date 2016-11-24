@@ -17,11 +17,10 @@ class TestExecutionReport:
         left_quantity = dummy_order.order_quantity
         cumulative_quantity = 0
         average_price = 0
-        stop_price = 0
         TradingClass.ExecutionReport.from_order(dummy_order, TradingClass.ExecutionTransactionType.NEW,
                                                                    TradingClass.ExecutionType.NEW,
                                                                    TradingClass.OrderStatus.NEW, left_quantity,
-                                                                   cumulative_quantity, average_price, stop_price)
+                                                                   cumulative_quantity, average_price)
 class TestNewSingleOrder:
 
     def test_create_dummy_new_single_order(self):

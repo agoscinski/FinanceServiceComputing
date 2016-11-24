@@ -20,10 +20,15 @@ def teardown_module(module):
     """
     fsc_server_database_handler.teardown_database()
 
-class TestServerDatabaseHandler:
+class TestServerLogic:
 
-    def test_insert_order(self):
-        pass
+    def test_create_execution_report_for_new_order(self):
+        dummy_order = TradingClass.Order.create_dummy_order()
+        server.create_execution_report_for_new_order(dummy_order)
+
+
+
+class TestServerDatabaseHandler:
 
     def test_extract_file_names_from_init_script(self):
         parsed_file_names = server.ServerDatabaseHandler.parse_file_names_from_init_script("tests/example_init_script.sql")

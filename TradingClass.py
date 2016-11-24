@@ -349,11 +349,10 @@ class ExecutionReport(object):
         cumulative_quantity (float): total number of shares filled
         average_price (float): calculated average price of all fills on this order
         price (float):
-        stop_price (float):
     """
 
     def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type, order_status, symbol, side, left_quantity
-                 , cumulative_quantity, average_price, price, stop_price, receiver_comp_id=None):
+                 , cumulative_quantity, average_price, price, receiver_comp_id=None):
         self.order_id = order_id
         self.client_order_id = client_order_id
         self.execution_id = execution_id
@@ -366,11 +365,10 @@ class ExecutionReport(object):
         self.cumulative_quantity = cumulative_quantity
         self.average_price = average_price
         self.price = price
-        self.stop_price = stop_price
         self.receiver_comp_id = receiver_comp_id
 
     @classmethod
-    def from_order(cls, order, execution_transaction_type, execution_type, order_status, left_quantity, cumulative_quantity, average_price, stop_price):
+    def from_order(cls, order, execution_transaction_type, execution_type, order_status, left_quantity, cumulative_quantity, average_price):
         """
         Args:
             order (TradingClass.Order)
@@ -394,8 +392,7 @@ class ExecutionReport(object):
         #cumulative_quantity
         #average_price
         price = order.price
-        #stop_price
-        execution_report = cls(order_id, client_order_id, execution_id, execution_transaction_type, str(execution_type), str(order_status), symbol, side, left_quantity, cumulative_quantity, average_price, price, stop_price)
+        execution_report = cls(order_id, client_order_id, execution_id, execution_transaction_type, str(execution_type), str(order_status), symbol, side, left_quantity, cumulative_quantity, average_price, price)
         return execution_report
 
     def get_order_id(self):
