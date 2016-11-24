@@ -17,11 +17,6 @@ from TradingClass import ExecutionReport
 from TradingClass import FIXDateTimeUTC
 
 
-class ServerRespond(Enum):
-    AUTHENTICATION_FAILED = 0
-    AUTHENTICATION_SUCCESS = 1
-
-
 class ServerFIXApplication(fix.Application):
     exec_id = 0
     order_id = 0
@@ -127,10 +122,6 @@ class ServerFIXHandler:
         password = message.getField(fix.RawData())
         user_id = message.getHeader().getField(fix.SenderSubID())
         logon_respond = self.server_logic.process_logon(user_id, password)
-        if logon_respond == ServerRespond.AUTHENTICATION_FAILED:
-            # TODO reject client AUTHENTICATION_FAILED
-            pass
-
         return
 
     def handle_market_data_request(self, message):
@@ -494,21 +485,6 @@ class ServerLogic:
         else:
             return False
         pass
-
-    def authenticate_user(self, user_id, password):
-        """Authenticates user
-
-        Checks if user with the given id and password exists in database
-
-        Args:
-            user_id (string): The user id
-            password (string): The password
-
-        Returns:
-            success (ServerRespond): success of authentication
-        """
-        # TODO #29 add authentication
-        return ServerRespond.AUTHENTICATION_SUCCESS
 
     def pack_into_fix_market_data_response(self, market_data_required_id, market_data_entry_types, symbol,
                                            pending_stock_orders, stock_information):
@@ -881,36 +857,6 @@ class ServerDatabaseHandler:
         stock_total_volume = stock_arguments_rows[0][0]
 
         return stock_total_volume
-
-    def fetch_orders_of_type(self, order):
-        """Returns all orders for the same stock as the given order
-
-
-        Args:
-            order (string): The user id
-            password (string): The password
-
-        Returns:
-            success (ServerRespond): success of authentication
-        """
-        pass
-
-    def send_client_match_query(self):
-        pass
-
-    def send_add_bid_order_query(self, symbol, price, n_shares, bidder_id):
-        # send query
-        return 0
-
-    def send_remove_bid_order_query(self, bidder_id):
-        return 0
-
-    def send_remove_bid_order_query(self, bidder_id):
-        return 0
-
-    def request_historic_data(self, timestamp):
-        pass
-
 
 class MarketSimulationHandler:
     def __init__(self):
