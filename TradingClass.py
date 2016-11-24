@@ -193,7 +193,7 @@ class NewSingleOrder(object):
         dummy_handling_instruction = "1"
         dummy_execution_instruction = "1"
         dummy_symbol = "DUMMY_SYMBOL"
-        dummy_maturity_month_year = FIXYearMonth.from_year_month(2000, 01)
+        dummy_maturity_month_year = FIXYearMonth.from_year_month(2000, 1)
         dummy_maturity_day = 2
         dummy_side = OrderSideType.BUY
         dummy_transaction_time = FIXDateTimeUTC("20000101-10:00:00")
