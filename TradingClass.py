@@ -774,23 +774,13 @@ class Order(object):
         self.cash_order_quantity = cash_order_quantity
 
     @classmethod
-    def create_dummy_order(cls):
+    def create_dummy_order(cls, client_id="20161120-001", account_company_id="client", received_date=FIXDate.from_date_stamp_string("20161120"), handling_instruction="1",
+                          stock_ticker="TSLA", side="1", maturity_date=FIXDate.from_date_stamp_string("20161125"), order_type="1", order_quantity=100.00, price=10.00,
+                          last_status=0, msg_seq_num=0):
         """For testing"""
-        dummy_client_id = "20161120-001"
-        dummy_account_company_id = "client"
-        dummy_received_date = FIXDate.from_date_stamp_string("20161120")
-        dummy_handling_instruction = "1"
-        dummy_stock_ticker = "TSLA"
-        dummy_side = "1"
-        dummy_maturity_date = FIXDate.from_date_stamp_string("20161125")
-        dummy_order_type = "1"
-        dummy_order_quantity = 100.00
-        dummy_price = 10.11
-        dummy_last_status = 0
-        dummy_msg_seq_num = 0
-        dummy_order = cls(dummy_client_id, dummy_account_company_id, dummy_received_date, dummy_handling_instruction,
-                          dummy_stock_ticker, dummy_side, dummy_maturity_date, dummy_order_type, dummy_order_quantity, dummy_price,
-                          dummy_last_status, dummy_msg_seq_num)
+        dummy_order = cls(client_id, account_company_id, received_date, handling_instruction,
+                          stock_ticker, side, maturity_date, order_type, order_quantity, price,
+                          last_status, msg_seq_num)
         return dummy_order
 
     @classmethod
