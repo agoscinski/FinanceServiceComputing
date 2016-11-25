@@ -1,6 +1,6 @@
 import datetime
-import quickfix as fix
-import quickfix42 as fix42
+"import quickfix as fix"
+"import quickfix42 as fix42"
 from enum import Enum
 
 
