@@ -1,13 +1,10 @@
-from tarfile import _section
 import quickfix as fix
 import quickfix42 as fix42
-import sys
 import re
 import time
 import datetime
 import yahoo_finance
 import MySQLdb
-from enum import Enum
 import matching_algorithm
 import TradingClass
 from TradingClass import MarketDataResponse
@@ -224,40 +221,17 @@ class ServerFIXHandler:
 
         return
 
-    def send_order_execution_respond(self, order_execution):
-        """Send order execution respond
+    def send_execution_report_respond(self, execution_report):
+        """Sends an execution report respond
 
             Args:
-                order_execution : OrderExecution object created in server logic
+                execution_report (TradingClass.ExecutionReport): the report which will be sent
 
             Returns:
                 None
             """
-        # Create Execution Report Fix Message based on order_execution object created in server logic
-        message = fix.Message()
-        header = message.getHeader()
-        header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
-        header.setField(fix.MsgSeqNum(self.fix_application.exec_id))
-        header.setField(fix.SendingTime())
-
-        message.setField(fix.OrderID(order_execution.get_order_id()))
-        message.setField(fix.ClOrdID(order_execution.get_cl_ord_id()))
-        message.setField(fix.ExecID(order_execution.get_exec_id()))
-        message.setField(
-            fix.ExecTransType(order_execution.get_exec_trans_type()))  # 0 = New,1 = Cancel,2 = Correct,3 = Status
-        message.setField(fix.ExecType(
-            order_execution.get_exec_type()))  # 0 = New,1 = Partially filled,2 = Filled,3 = Done for day,4 = Canceled
-        message.setField(fix.OrdStatus(
-            order_execution.get_ord_status()))  # 0 = New,1 = Partially filled,2 = Filled,3 = Done for day,4 = Canceled
-        message.setField(fix.Symbol(order_execution.get_symbol()))
-        message.setField(fix.Side(order_execution.get_side()))
-        message.setField(fix.LeavesQty(order_execution.get_leaves_qty()))
-        message.setField(fix.CumQty(order_execution.get_cum_qty()))
-        message.setField(fix.AvgPx(order_execution.get_avg_px()))
-        message.setField(fix.Price(order_execution.get_price()))
-        message.setField(fix.StopPx(order_execution.get_stop_px()))
-
-        fix.Session.sendToTarget(message, self.fix_application.sessionID)
+        fix_message = execution_report.create_fix_message()
+        fix.Session.sendToTarget(fix_message, self.fix_application.sessionID)
         return
 
     def send_reject_order_execution_respond(self, order_execution):
@@ -269,7 +243,7 @@ class ServerFIXHandler:
             Returns:
                 None
             """
-        # Create Execution Report Fix Message based on order_execution object created in server logic
+        # Create Executio n Report Fix Message based on order_execution object created in server logic
         message = fix.Message()
         header = message.getHeader()
         header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
@@ -438,12 +412,16 @@ class ServerLogic:
         """
         self.server_database_handler.insert_order(requested_order)
         acknowledge_execution_report = self.create_execution_report_for_new_order(requested_order)
-        #TODO self.server_fix_handler.send_execution_report_respond(acknowledge_execution_report)
+        self.server_fix_handler.send_execution_report_respond(acknowledge_execution_report)
         orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(requested_order.symbol)
         order_executions = matching_algorithm.match(orders)
         for order_execution in order_executions:
-            inserted_processed_order = self.server_database_handler.insert_order_execution(order_execution)
-            self.server_fix_handler.send_order_execution_respond(inserted_processed_order)
+            order_execution.execution_id = self.server_database_handler.insert_order_execution(order_execution)
+            execution_report_of_buy_order, execution_report_of_sell_order = self.create_execution_report_for_order_execution(
+                order_execution)
+            self.server_fix_handler.send_order_execution_respond(execution_report_of_buy_order)
+            self.server_fix_handler.send_order_execution_respond(execution_report_of_sell_order)
+
 
         return None
 
@@ -591,14 +569,78 @@ class ServerLogic:
         left_quantity = new_order.order_quantity
         cumulative_quantity = 0
         average_price = 0
-        execution_report = TradingClass.ExecutionReport.from_order(new_order, TradingClass.ExecutionTransactionType.NEW, TradingClass.ExecutionType.NEW, TradingClass.OrderStatus.NEW, left_quantity, cumulative_quantity, average_price)
-        execution_id = self.server_database_handler.insert_execution_report(execution_report)
-        execution_report.execution_id = execution_id
+        execution_report = TradingClass.ExecutionReport.from_order(new_order, TradingClass.ExecutionTransactionType.NEW,
+                                                                   TradingClass.ExecutionType.NEW,
+                                                                   TradingClass.OrderStatus.NEW, left_quantity,
+                                                                   cumulative_quantity, average_price)
+        execution_report.execution_id = self.server_database_handler.insert_execution_report(execution_report)
+        return execution_report
+
+    def create_execution_report_for_order_execution(self, order_execution):
+        """Creates two execution report for the two matched orders in an order execution
+
+        Args:
+            order_execution (TradingClass.OrderExecution): The order execution matching the two orders
+             for which an execution report will be created
+
+        Returns:
+            execution_report_of_buy_order (a tuple of TradingClass.ExecutionReport): The  execution report referring to
+             the buy order of the two matched orders in the order execution.
+            execution_report_of_sell_order (a tuple of TradingClass.ExecutionReport): The  execution report referring to
+             the buy order of the two matched orders in the order execution.
+        """
+        execution_report_of_buy_order = self.create_execution_report_for_executed_order(
+            order_execution.buyer_client_order_id, order_execution.buyer_company_id,
+            order_execution.buyer_received_date, order_execution)
+        execution_report_of_sell_order = self.create_execution_report_for_executed_order(
+            order_execution.seller_client_order_id, order_execution.seller_company_id,
+            order_execution.seller_received_date, order_execution)
+        return execution_report_of_buy_order, execution_report_of_sell_order
+
+    def create_execution_report_for_executed_order(self, client_order_id, account_company_id, received_date,
+                                                   order_execution):
+        """Creates an execution report for the order with the order id (client_order_id, account_company_id,
+         received_date).
+
+        Args:
+            client_order_id (string): first part of order id
+            account_company_id (string: second part of order id
+            received_date (TradingClass.FIXDate): third part of order id
+            order_execution (TradingClass.OrderExecution): The order execution to be inserted
+        Returns:
+            execution_report (a tuple of TradingClass.ExecutionReport): The two execution reports resulting from the
+             inserted order execution. One for buy side, one for sell side.
+        """
+        cumulative_quantity, average_price = self.server_database_handler.fetch_cumulative_quantity_and_average_price_of_order(
+            client_order_id, account_company_id, received_date)
+        order = self.server_database_handler.fetch_order_for_order_id(client_order_id, account_company_id,
+                                                                      received_date)
+        left_quantity = order.order_quantity - cumulative_quantity
+        is_order_filled = left_quantity == 0.
+
+        if is_order_filled:
+            execution_transaction_type = TradingClass.ExecutionTransactionType.FILL
+            execution_type = TradingClass.ExecutionType.FILL
+            order_status = TradingClass.OrderStatus.FILLED
+        else:
+            execution_transaction_type = TradingClass.ExecutionTransactionType.PARTIAL_FILL
+            execution_type = TradingClass.ExecutionType.PARTIAL_FILL
+            order_status = TradingClass.OrderStatus.PARTIALLY_FILLED
+
+        order_id = TradingClass.Order.create_order_id(client_order_id, account_company_id, received_date)
+
+        execution_report = TradingClass.ExecutionReport(order_id=order_id, client_order_id=client_order_id,
+                                                        execution_id=order_execution.execution_id,
+                                                        execution_transaction_type=execution_transaction_type,
+                                                        execution_type=execution_type, order_status=order_status,
+                                                        symbol=order.symbol,
+                                                        side=order.side, price=order.price, left_quantity=left_quantity,
+                                                        cumulative_quantity=cumulative_quantity,
+                                                        average_price=average_price)
         return execution_report
 
 
 class ServerDatabaseHandler:
-
     def __init__(self, user_name="root", user_password="root", database_name="FSCDatabase", database_port=3306,
                  init_database_script_path="./database/init_fsc_database.sql"):
         """
@@ -617,8 +659,8 @@ class ServerDatabaseHandler:
 
     def init_database(self):
         """This function initializes a new database, by first dropping the database with self.database_name and the creating
-            a new one with the same name. It then load all sql files saved in the init script file located in self.init_database_script_path,
-            see database documentation for file format of the init script
+         a new one with the same name. It then load all sql files saved in the init script file located in self.init_database_script_path,
+         see database documentation for file format of the init script
         """
         self.drop_schema()
         self.create_schema()
@@ -629,7 +671,7 @@ class ServerDatabaseHandler:
         self.drop_schema()
 
     def create_schema(self):
-        sql_command = "CREATE SCHEMA IF NOT EXISTS `"+self.database_name+"` DEFAULT CHARACTER SET utf8 ;"
+        sql_command = "CREATE SCHEMA IF NOT EXISTS `" + self.database_name + "` DEFAULT CHARACTER SET utf8 ;"
         try:
             connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password)
             cursor = connection.cursor()
@@ -643,7 +685,7 @@ class ServerDatabaseHandler:
 
     def drop_schema(self):
         """This function drops the database with self.database_name"""
-        sql_command = "DROP SCHEMA IF EXISTS `"+self.database_name+"` ;"
+        sql_command = "DROP SCHEMA IF EXISTS `" + self.database_name + "` ;"
         self.execute_nonresponsive_sql_command(sql_command)
 
     def load_init_script(self):
@@ -667,7 +709,6 @@ class ServerDatabaseHandler:
         for sql_command in sql_commands:
             self.execute_nonresponsive_sql_command(sql_command)
 
-
     @staticmethod
     def parse_sql_commands_from_sql_file(sql_file_file_path):
         """Parses a sql file and extracts the sql commands of it
@@ -678,7 +719,7 @@ class ServerDatabaseHandler:
             sql_commands (list of string): each element is one sql command to be executed
         """
         with open(sql_file_file_path) as sql_file:
-            sql_file_content = sql_file.read().replace("\n","").split(";")
+            sql_file_content = sql_file.read().replace("\n", "").split(";")
 
         sql_commands = []
         pattern_for_sql_command = re.compile("(CREATE|INSERT|SET ..|UPDATE|DELETE).+")
@@ -690,21 +731,51 @@ class ServerDatabaseHandler:
         return sql_commands
 
     def insert_execution_report(self, execution_report):
-        #MAYBETODO
+        # MAYBETODO
         return 0
 
     def insert_order_execution(self, order_execution):
         """Inserts an order execution and returns this order execution with an added execution ID
 
         Args:
-            order_execution (TradingClass.ExecutionReport): The order execution to be inserted
+            order_execution (TradingClass.OrderExecution): The order execution to be inserted
 
         Returns:
-            inserted_order_execution (TradingClass.ExecutionReport): The order execution which have been inserted
-                and have now and execution ID
+            order_execution_id (int): The ID of the order execution when inserted
+
         """
-        # TODO T1
+        # TODO use the insert_order function for this
+
         return None
+
+    def fetch_cumulative_quantity_and_average_price_of_order(self, client_order_id, account_company_id, received_date):
+        """Fetches the cumulative quantity and average price of the order with the order id (client_order_id,
+         account_company_id, received_date).
+
+        Args:
+            client_order_id (string): first part of order id
+            account_company_id (string: second part of order id
+            received_date (TradingClass.FIXDate): third part of order id
+        Returns:
+            cumulative quantity (float): total number of shares filled of an order with the given order id
+            average price (float): the average price of all filled shares
+        """
+        # TODO use execute_select_sql_command
+        return 11.5, 33.33
+
+    def fetch_order_for_order_id(self, client_order_id, account_company_id, received_date):
+        """Fetches the order data for the order with the order id (client_order_id, account_company_id, received_date)
+         and packs it into an order object.
+
+        Args:
+            client_order_id (string): first part of order id
+            account_company_id (string: second part of order id
+            received_date (TradingClass.FIXDate): third part of order id
+        Returns:
+            order quantity (TradingClass.Order): the order object
+        """
+        # TODO use execute_select_sql_command
+        return TradingClass.Order.create_dummy_order()
 
     def insert_order(self, order):
         """Inserts a TradingClass.Order into the database
@@ -726,8 +797,8 @@ class ServerDatabaseHandler:
         order_id = self.execute_nonresponsive_sql_command(command)
         return order_id
 
-    def execute_responsive_sql_command(self, sql_command):
-        """Used to execute commands like SELECT which return a table
+    def execute_select_sql_command(self, sql_command):
+        """Used to execute SELECT commands which return a table
         Args:
             sql_command (string): the sql command to be executed
         Returns:
@@ -793,12 +864,12 @@ class ServerDatabaseHandler:
         Returns:
             order (list of TradingClass.Order): pending orders
         """
-        #TODO! check maturity date
+        # TODO! check maturity date
         sql_command = ("select ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
                        "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
                        "CashOrderQuantity from `Order` where LastStatus=1 and Stock_Ticker='%s'") % (symbol)
 
-        pending_order_arguments_rows = self.execute_responsive_sql_command(sql_command)
+        pending_order_arguments_rows = self.execute_select_sql_command(sql_command)
         pending_order_list = []
         for pending_order_arguments_row in pending_order_arguments_rows:
             received_time = TradingClass.FIXDate(pending_order_arguments_row[2])
@@ -837,7 +908,7 @@ class ServerDatabaseHandler:
             "SELECT CurrentPrice.CurrentPrice, PendingOrderCurrentQuantity.CurrentQuantity "
             "FROM PendingOrderCurrentQuantity INNER JOIN CurrentPrice "
             "ON PendingOrderCurrentQuantity.Ticker = CurrentPrice.Stock_Ticker")
-        order_arguments_rows = self.execute_responsive_sql_command(sql_command)
+        order_arguments_rows = self.execute_select_sql_command(sql_command)
         order_arguments_row_list = list(order_arguments_rows[0])
         order_arguments_row_list[0] = int(order_arguments_row_list[0])
         order_arguments_row_list[1] = int(order_arguments_row_list[1])
@@ -853,10 +924,11 @@ class ServerDatabaseHandler:
         Returns:
              Stock Total Volume (float)"""
         sql_command = ("SELECT TotalVolume FROM Stock where Ticker='%s'" % stock_ticker_symbol)
-        stock_arguments_rows = self.execute_responsive_sql_command(sql_command)
+        stock_arguments_rows = self.execute_select_sql_command(sql_command)
         stock_total_volume = stock_arguments_rows[0][0]
 
         return stock_total_volume
+
 
 class MarketSimulationHandler:
     def __init__(self):

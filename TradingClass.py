@@ -35,7 +35,7 @@ class OrderStatus(Enum):
     EXPIRED = 5
     CANCELED = 6
     FILLED = 8
-    PENDING_REPLACE = 12
+    PENDING_REPLACE = 11
     PENDING_CANCEL = 12
 
 
@@ -634,8 +634,6 @@ class ExecutionReport(object):
         message.setField(fix.CumQty(self.cumulative_quantity))
         message.setField(fix.AvgPx(self.average_price))
         message.setField(fix.Price(self.price))
-        message.setField(fix.StopPx(self.stop_price))
-
         return message
 
 
@@ -729,154 +727,27 @@ class Order(object):
     def __ne__(self, other):
         return  not self.__eq__(self, other)
 
-
     @property
     def order_id(self):
         """
         Returns:
              order_id (string):
         """
-        order_id = self.client_order_id + "_" + self.account_company_id + "_" + str(self.received_date)
-        return order_id
+        return Order.create_order_id(self.client_order_id, self.account_company_id, self.received_date)
 
-    # TODO clean
-    def get_client_order_id(self):
-        return self.client_order_id
+    @staticmethod
+    def create_order_id(client_order_id, account_company_id, received_date):
+        """Creates an order id from the components. Use this method if you want
+         to create an order id
 
-    "return account company id"
-
-    def get_account_company_id(self):
-        return self.account_company_id
-
-    "return received time"
-
-    def get_received_date(self):
-        return self.received_date
-
-    "return handling instruction"
-
-    def get_handling_instruction(self):
-        return self.handling_instruction
-
-    "return stock ticker"
-
-    def get_stock_ticker(self):
-        return self.stock_ticker
-
-    "return side buy/sell"
-
-    def get_side(self):
-        return self.side
-
-    "return order type"
-
-    def get_order_type(self):
-        return self.order_type
-
-    "return order quantity"
-
-    def get_order_quantity(self):
-        return self.order_quantity
-
-    "return order price"
-
-    def get_price(self):
-        return self.price
-
-    "return last status of order"
-
-    def get_last_status(self):
-        return self.last_status
-
-    "return message sequence number of order"
-
-    def get_msg_seq_num(self):
-        return self.msg_seq_num
-
-    "return on behalf of company in order"
-
-    def get_on_behalf_of_company_id(self):
-        return self.on_behalf_of_company_id
-
-    "return sender sub id in order"
-
-    def get_sender_sub_id(self):
-        return self.sender_sub_id
-
-    "return cash order quantity"
-
-    def get_cash_order_quantity(self):
-        return self.cash_order_quantity
-
-    "set client order id"
-
-    def set_client_order_id(self):
-        self.client_order_id
-
-    "set account company id"
-
-    def set_account_company_id(self):
-        self.account_company_id
-
-    "set received time"
-
-    def set_received_date(self):
-        self.received_date
-
-    "set handling instruction"
-
-    def set_handling_instruction(self):
-        self.handling_instruction
-
-    "set stock_tickers"
-
-    def set_stock_ticker(self, stock_ticker):
-        self.stock_ticker = stock_ticker
-
-    "set side buy/sell"
-
-    def set_side(self, side):
-        self.side = side
-
-    "set order type"
-
-    def set_order_type(self, order_type):
-        self.order_type = order_type
-
-    "set order quantity"
-
-    def set_order_quantity(self, order_quantity):
-        self.order_quantity = order_quantity
-
-    "set order price"
-
-    def set_price(self, price):
-        self.price = price
-
-    "set last status of order"
-
-    def set_last_status(self, last_status):
-        self.last_status = last_status
-
-    "set message sequence number of order"
-
-    def set_msg_seq_num(self, msg_seq_num):
-        self.msg_seq_num = msg_seq_num
-
-    "set on behalf of company in order"
-
-    def set_on_behalf_of_company_id(self, on_behalf_of_company_id):
-        self.on_behalf_of_company_id = on_behalf_of_company_id
-
-    "set sender sub id in order"
-
-    def set_sender_sub_id(self, sender_sub_id):
-        self.sender_sub_id = sender_sub_id
-
-    "set cash order quantity"
-
-    def set_cash_order_quantity(self, cash_order_quantity):
-        self.cash_order_quantity = cash_order_quantity
+        Args:
+            client_order_id (string)
+            account_company_id (string)
+            received_date (TradingClass.FIXDate)
+        Returns:
+             order_id (string):
+        """
+        return client_order_id + "_" + account_company_id + "_" + str(received_date)
 
 
 ################################
@@ -966,6 +837,22 @@ class OrderExecution:
 
     def __ne__(self, other):
         return  not self.__eq__(self, other)
+    
+    @property
+    def buyer_order_id(self):
+        """
+        Returns:
+             buyer_order_id (string):
+        """
+        return Order.create_order_id(self.buyer_client_order_id, self.buyer_company_id, self.buyer_received_date)
+    
+    @property
+    def seller_order_id(self):
+        """
+        Returns:
+             seller_order_id (string):
+        """
+        return Order.create_order_id(self.seller_client_order_id, self.seller_company_id, self.seller_received_date)
 
 ###########################
 ### GUI related classes ###
