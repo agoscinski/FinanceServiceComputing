@@ -607,23 +607,9 @@ class ExecutionReport(object):
         return execution_report
 
     def __eq__(self, other):
-
-        is_equal = (self.order_id == other.order_id and
-                 self.client_order_id == other.client_order_id and
-                 self.execution_id == other.execution_id and
-                 self.execution_transaction_type == other.execution_transaction_type and
-                 self.execution_type == other.execution_type and
-                 self.order_status == other.order_status and
-                 self.symbol == other.symbol and
-                 self.side == other.side and
-                 self.left_quantity == other.left_quantity and
-                 self.cumulative_quantity == other.cumulative_quantity and
-                 self.average_price == other.average_price and
-                 self.price == other.price and
-                 self.receiver_comp_id == other.receiver_comp_id)
-
-        return is_equal
-
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
     def __ne__(self, other):
         return  not self.__eq__(self, other)
 
@@ -789,11 +775,11 @@ class Order(object):
         self.cash_order_quantity = cash_order_quantity
 
     @classmethod
-    def create_dummy_order(cls, client_id="20161120-001", account_company_id="client", received_date=FIXDate.from_date_stamp_string("20161120"), handling_instruction="1",
+    def create_dummy_order(cls, client_order_id="20161120-001", account_company_id="client", received_date=FIXDate.from_date_stamp_string("20161120"), handling_instruction="1",
                           stock_ticker="TSLA", side="1", maturity_date=FIXDate.from_date_stamp_string("20161125"), order_type="1", order_quantity=100.00, price=10.00,
                           last_status=0, msg_seq_num=0):
         """For testing"""
-        dummy_order = cls(client_id, account_company_id, received_date, handling_instruction,
+        dummy_order = cls(client_order_id, account_company_id, received_date, handling_instruction,
                           stock_ticker, side, maturity_date, order_type, order_quantity, price,
                           last_status, msg_seq_num)
         return dummy_order
@@ -832,21 +818,9 @@ class Order(object):
         return str(self.__dict__)
 
     def __eq__(self, other):
-        is_equal = (self.client_order_id == other.client_order_id and
-                 self.account_company_id == other.account_company_id and
-                 self.received_date == other.received_date and
-                 self.handling_instruction == other.handling_instruction and
-                 self.stock_ticker == other.stock_ticker and
-                 self.side == other.side and
-                 self.order_type == other.order_type and
-                 self.order_quantity == other.order_quantity and
-                 self.price == other.price and
-                 self.last_status == other.last_status and
-                 self.msg_seq_num == other.msg_seq_num and
-                 self.on_behalf_of_company_id == other.on_behalf_of_company_id and
-                 self.sender_sub_id == other.sender_sub_id and
-                 self.cash_order_quantity == other.cash_order_quantity)
-        return is_equal
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
 
     def __ne__(self, other):
         return  not self.__eq__(self, other)
@@ -1082,17 +1056,9 @@ class OrderExecution:
         return dummy_order_execution
 
     def __eq__(self, other):
-        is_equal = (self.execution_id == other.execution_id and
-                 self.quantity == other.quantity and
-                 self.price == other.price and
-                 self.execution_time == other.execution_time and
-                 self.buyer_client_order_id == other.buyer_client_order_id and
-                 self.buyer_company_id == other.buyer_company_id and
-                 self.buyer_received_date == other.buyer_received_date and
-                 self.seller_client_order_id == other.seller_client_order_id and
-                 self.seller_company_id == other.seller_company_id and
-                 self.seller_received_date == other.seller_received_date)
-        return is_equal
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
 
     def __ne__(self, other):
         return  not self.__eq__(self, other)
