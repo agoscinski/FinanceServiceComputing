@@ -606,6 +606,7 @@ class ExecutionReport(object):
         execution_report = cls(order_id, client_order_id, execution_id, execution_transaction_type, str(execution_type), str(order_status), symbol, side, left_quantity, cumulative_quantity, average_price, price)
         return execution_report
 
+
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__
@@ -613,126 +614,29 @@ class ExecutionReport(object):
     def __ne__(self, other):
         return  not self.__eq__(self, other)
 
-    #TODO clean getter setter
-    def get_order_id(self):
-        return self.order_id
+    def create_fix_message(self):
+        """Creates from an execution report a fix message"""
+        message = fix.Message()
+        header = message.getHeader()
+        header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
+        #header.setField(fix.MsgSeqNum(self.fix_application.exec_id)) TODO? important?
+        header.setField(fix.SendingTime())
 
-    def get_cl_ord_id(self):
-        return self.client_order_id
+        message.setField(fix.OrderID(self.order_id))
+        message.setField(fix.ClOrdID(self.client_order_id))
+        message.setField(fix.ExecID(self.execution_id))
+        message.setField(fix.ExecTransType(self.execution_transaction_type))
+        message.setField(fix.ExecType(self.execution_type))
+        message.setField(fix.OrdStatus(self.order_status))
+        message.setField(fix.Symbol(self.symbol))
+        message.setField(fix.Side(self.side))
+        message.setField(fix.LeavesQty(self.left_quantity))
+        message.setField(fix.CumQty(self.cumulative_quantity))
+        message.setField(fix.AvgPx(self.average_price))
+        message.setField(fix.Price(self.price))
+        message.setField(fix.StopPx(self.stop_price))
 
-    "return execution id"
-
-    def get_exec_id(self):
-        return self.execution_id
-
-    "return execution transaction type"
-
-    def get_exec_trans_type(self):
-        return self.execution_transaction_type
-
-    "return execution type"
-
-    def get_exec_type(self):
-        return self.execution_type
-
-    def get_ord_status(self):
-        return self.order_status
-
-    "return symbol"
-
-    def get_symbol(self):
-        return self.symbol
-
-    "return side buy/sell"
-
-    def get_side(self):
-        return self.side
-
-    "return quantity leaves to be fulfiled"
-
-    def get_leaves_qty(self):
-        return self.left_quantity
-
-    "return cumulative quantity"
-
-    def get_cum_qty(self):
-        return self.cumulative_quantity
-
-    "return average price"
-
-    def get_avg_px(self):
-        return self.average_price
-
-    "return price"
-
-    def get_price(self):
-        return self.price
-
-    "return stop price"
-
-    def get_stop_px(self):
-        return self.stop_price
-
-    def set_order_id(self):
-        return self.order_id
-
-    def set_cl_ord_id(self, cl_ord_id):
-        self.client_order_id = cl_ord_id
-
-    "set execution id"
-
-    def set_exec_id(self, exec_id):
-        self.execution_id = exec_id
-
-    "set execution transaction type"
-
-    def set_exec_trans_type(self, exec_trans_type):
-        self.execution_transaction_type = exec_trans_type
-
-    "set execution type"
-
-    def set_exec_type(self, exec_type):
-        self.execution_type = exec_type
-
-    def set_ord_status(self, ord_status):
-        self.order_status = ord_status
-
-    "set symbol"
-
-    def set_symbol(self, symbol):
-        self.symbol = symbol
-
-    "set side buy/sell"
-
-    def set_side(self, side):
-        self.side = side
-
-    "set quantity leaves to be fulfiled"
-
-    def set_leaves_qty(self, leaves_qty):
-        self.left_quantity = leaves_qty
-
-    "set cumulative quantity"
-
-    def set_cum_qty(self, cum_qty):
-        self.cumulative_quantity = cum_qty
-
-    "set average price"
-
-    def set_avg_px(self, avg_px):
-        self.average_price = avg_px
-
-    "set price"
-
-    def set_price(self, price):
-        self.price = price
-
-    "set stop price"
-
-    def set_stop_px(self, stop_px):
-        self.stop_price = stop_px
-
-
+        return message
 
 
 class Order(object):
