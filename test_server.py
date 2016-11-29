@@ -7,6 +7,8 @@ nasdaq_stock = server.Stock(nasdaq_stock_ticker)
 fsc_server_database_handler = server.ServerDatabaseHandler(user_name="root", user_password="root",
                                                            database_name="TestFSCDatabase", database_port=3306,
                                                            init_database_script_path="./tests/database/init_test_database.sql")
+server_config_file_name = "server.cfg"
+fsc_server_logic = server.ServerLogic(server_config_file_name, fsc_server_database_handler)
 
 def setup_module(module):
     """ setup any state specific to the execution of the given module."""
@@ -24,8 +26,7 @@ class TestServerLogic:
 
     def test_create_execution_report_for_new_order(self):
         dummy_order = TradingClass.Order.create_dummy_order()
-        server.create_execution_report_for_new_order(dummy_order)
-
+        fsc_server_logic.create_execution_report_for_new_order(dummy_order)
 
 
 class TestServerDatabaseHandler:

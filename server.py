@@ -355,9 +355,9 @@ def transform_fix_order_to_order(fix_order):
 
 
 class ServerLogic:
-    def __init__(self, server_config_file_name):
+    def __init__(self, server_config_file_name, server_database_handler=None):
         self.server_fix_handler = ServerFIXHandler(self, server_config_file_name)
-        self.server_database_handler = ServerDatabaseHandler()
+        self.server_database_handler = ServerDatabaseHandler() if server_database_handler == None else server_database_handler
         self.market_simulation_handler = MarketSimulationHandler()
         self.initialize_new_database = True
 
