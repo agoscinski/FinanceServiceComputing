@@ -802,7 +802,7 @@ class OrderExecution:
             sell_order (TradingClass.Order):
             execution_time (TradingClass.FIXDateTimeUTC)
         """
-        order_execution = cls(execution_id=0, quantity=executed_quantity, price=executed_price,
+        order_execution = cls(execution_id=None, quantity=executed_quantity, price=executed_price,
                               execution_time=execution_time, buyer_client_order_id=buy_order.client_order_id,
                               buyer_company_id=buy_order.account_company_id, buyer_received_date=buy_order.received_date,
                               seller_client_order_id=sell_order.client_order_id,
