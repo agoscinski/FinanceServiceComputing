@@ -1,6 +1,6 @@
 import datetime
-"import quickfix as fix"
-"import quickfix42 as fix42"
+import quickfix as fix
+import quickfix42 as fix42
 from enum import Enum
 
 
@@ -15,8 +15,12 @@ class MarketDataEntryType(Enum):
 
 
 class OrderSideType(Enum):
-    BUY = 1
-    SELL = 2
+    BUY = fix.Side_BUY
+    SELL = fix.Side_SELL
+
+class OrderType(Enum):
+    LIMIT =  fix.TriggerOrderType_LIMIT
+    MARKET = fix.TriggerOrderType_MARKET
 
 class LastStatus(Enum):
     DONE = 0
@@ -59,460 +63,6 @@ class MDEntryType:
     CLOSING = '5'
     SESSION_HIGH = '7'
     SESSION_LOW = '8'
-
-
-class MarketDataRequest(object):
-    """Constructor of class MarketDataRequest:
-    Args:
-        md_req_id (string): market data request ID
-        subscription_request_type : Type of subscription of market data request (char)
-        market_depth : market depth of market data request (int)
-        no_md_entry_types (int) : number of market data entry requested
-        md_entry_type_list (list of int): market data entries
-        no_related_sym : number of symbols requested (int)
-        symbol_list : list of ticker symbol (list of string)
-    """
-
-    def __init__(self, md_req_id, subscription_request_type, market_depth, no_md_entry_types, md_entry_type_list,
-                 no_related_sym, symbol_list):
-        self.md_req_id = md_req_id
-        self.subscription_request_type = subscription_request_type
-        self.market_depth = market_depth
-        self.no_md_entry_types = no_md_entry_types
-        self.md_entry_type_list = md_entry_type_list
-        self.no_related_sym = no_related_sym
-        self.symbol_list = symbol_list
-
-    @classmethod
-    def from_fix_message(cls, fix_message):
-        """Constructor from a quickfix.Message"""
-        message_fields = [fix.MDReqID(), fix.SubscriptionRequestType(), fix.MarketDepth(), fix.NoMDEntryTypes(),
-                          fix.NoRelatedSym()]
-        market_data_required_id, subscription_request_type, market_depth, no_market_data_entry_types, no_related_symbols = get_values_from_fix_message_fields(
-            fix_message, message_fields)
-
-        market_data_entry_types = get_fix_group_field(fix_message, fix42.MarketDataRequest().NoMDEntryTypes(),
-                                                      fix.MDEntryType(), no_market_data_entry_types,
-                                                      transform_group_element=int)
-        related_symbols = get_fix_group_field(fix_message, fix42.MarketDataRequest().NoRelatedSym(), fix.Symbol(),
-                                              no_related_symbols)
-
-        market_data_request = cls(market_data_required_id, subscription_request_type, market_depth,
-                                  no_market_data_entry_types, market_data_entry_types, no_related_symbols,
-                                  related_symbols)
-        return market_data_request
-
-
-def get_values_from_fix_message_fields(fix_message, message_field_types):
-    """Gets the values of the message fields in the message
-    Args:
-        fix_message (quickfix.Message)
-        message_field_types (list of quickfix field types)
-    Returns:
-        values (list of different types)"""
-    values = []
-    for i in range(len(message_field_types)):
-        fix_field = message_field_types[i]
-        fix_message.getField(fix_field)
-        values[i] = fix_field.getValue()
-    return values
-
-
-def get_fix_group_field(fix_message, fix_group, fix_field_type, no_group_elements,
-                        transform_group_element=None):
-    """
-    Args:
-        fix_message (quickfix.Message):
-        fix_group (FIX::Group *)
-        fix_field_type (quickfix field type)
-        no_group_elements (int)
-        transform_group_element (function): This function is applied on each group entry after the value is
-            retrieved
-    Returns:
-        group_elements (list of different types): list of group elements
-    """
-    group_elements = []
-    for i in range(no_group_elements):
-        fix_message.getGroup(i + 1, fix_group)
-        fix_group.getField(fix_field_type)
-        group_element = fix_field_type.getValue() if transform_group_element is None else transform_group_element(
-            fix_field_type.getValue())
-        group_elements.append(group_element)
-    return group_elements
-
-
-class MarketDataResponse(object):
-    """Constructor of class MarketDataResponse:
-        @Parameter:
-            md_req_id : market data response ID related to market data request ID (string)
-            no_md_entry_types = no_md_entry_types (int)
-            symbol = symbol (string)
-            md_entry_type_list = md entry type list (list of int)
-            md_entry_px_list = md entry price list (list of float)
-            md_entry_size_list = md entry size list (list of float)
-            md_entry_date_list = md entry date list (list of DateFix Object=> datetime UTC Date YYYYMMDD)
-            md_entry_time_list = md entry time list (list of TimeFix Object=> datetime UTC Time HH:MM:SS)
-    """
-
-    def __init__(self, md_req_id, no_md_entry_types, symbol, md_entry_type_list, md_entry_px_list,
-                 md_entry_size_list, md_entry_date_list, md_entry_time_list, md_total_volume_traded=None):
-        self.md_req_id = md_req_id
-        self.no_md_entry_types = no_md_entry_types
-        self.symbol = symbol
-        self.md_entry_type_list = md_entry_type_list
-        self.md_entry_px_list = md_entry_px_list
-        self.md_entry_size_list = md_entry_size_list
-        self.md_entry_date_list = md_entry_date_list
-        self.md_entry_time_list = md_entry_time_list
-        self.md_total_volume_traded = md_total_volume_traded
-
-
-class NewSingleOrder(object):
-    """Constructor of class FIXOrder:
-        @Parameter:
-        client_order_id (string): client order id
-        handling_instruction (char): handling instruction
-        execution_instruction (string): execution instruction
-        symbol (String): symbol of a stock
-        maturity_month_year (FIXYearMonth object): the month when the order will mature
-        maturity_day (int): maturity day
-        side (char): type of order
-        transaction_time (FIXDateTimeUTC object): transaction time
-        order_quantity (float): order quantity
-        order_type (char): order type
-        price (float): price
-        stop_prices (float): stop price
-    """
-
-    def __init__(self, client_order_id, handling_instruction, execution_instruction, symbol, maturity_month_year,
-                 maturity_day, side, transaction_time, order_quantity, order_type, price, stop_prices,
-                 sender_company_id, sending_time,
-                 on_behalf_of_comp_id, sender_sub_id):
-        self.client_order_id = client_order_id
-        self.handling_instruction = handling_instruction
-        self.execution_instruction = execution_instruction
-        self.symbol = symbol
-        self.maturity_month_year = maturity_month_year
-        self.maturity_day = maturity_day
-        self.side = side
-        self.transaction_time = transaction_time
-        self.order_quantity = order_quantity
-        self.order_type = order_type
-        self.price = price
-        self.stop_prices = stop_prices
-        self.sender_company_id = sender_company_id
-        self.sending_time = sending_time
-        self.on_behalf_of_comp_id = on_behalf_of_comp_id
-        self.sender_sub_id = sender_sub_id
-
-    @classmethod
-    def create_dummy_new_single_order(cls):
-        """For testing"""
-        dummy_client_order_id = "DUMMY_CLIENT_ID"
-        dummy_handling_instruction = "1"
-        dummy_execution_instruction = "1"
-        dummy_symbol = "DUMMY_SYMBOL"
-        dummy_maturity_month_year = FIXYearMonth.from_year_month(2000, 1)
-        dummy_maturity_day = 2
-        dummy_side = OrderSideType.BUY
-        dummy_transaction_time = FIXDateTimeUTC("20000101-10:00:00")
-        dummy_order_quantity = 10.
-        dummy_order_type = '1'
-        dummy_price = 100.
-        dummy_stop_prices = None
-        dummy_sender_company_id = "client"
-        dummy_sending_time = None
-        dummy_on_behalf_of_company_id = None
-        dummy_sender_sub_id = None
-        dummy_new_single_order = cls(dummy_client_order_id, dummy_handling_instruction, dummy_execution_instruction,
-                                     dummy_symbol, dummy_maturity_month_year, dummy_maturity_day, dummy_side,
-                                     dummy_transaction_time, dummy_order_quantity, dummy_order_type, dummy_price,
-                                     dummy_stop_prices, dummy_sender_company_id, dummy_sending_time,
-                                     dummy_on_behalf_of_company_id, dummy_sender_sub_id)
-        return dummy_new_single_order
-
-    @classmethod
-    def from_fix_message(cls, fix_message):
-        """Constructor from a quickfix.Message"""
-        #TODO
-        pass
-
-    def get_cl_ord_id(self):
-        return self.client_order_id
-
-    def get_handl_inst(self):
-        return self.handling_instruction
-
-    def get_exec_inst(self):
-        return self.execution_instruction
-
-    def get_symbol(self):
-        return self.symbol
-
-    def get_maturity_month_year(self):
-        return self.maturity_month_year
-
-    def get_maturity_day(self):
-        return self.maturity_day
-
-    def get_side(self):
-        return self.side
-
-    def get_transact_time(self):
-        return self.transaction_time
-
-    def get_order_qty(self):
-        return self.order_quantity
-
-    def get_ord_type(self):
-        return self.order_type
-
-    def get_price(self):
-        return self.price
-
-    def get_stop_px(self):
-        return self.stop_prices
-
-    def get_sender_comp_id(self):
-        return self.sender_company_id
-
-    def get_sending_time(self):
-        return self.sending_time
-
-    def get_on_behalf_of_comp_id(self):
-        return self.on_behalf_of_comp_id
-
-    def get_sender_sub_id(self):
-        return self.sender_sub_id
-
-    def set_cl_ord_id(self, cl_ord_id):
-        self.client_order_id = cl_ord_id
-
-    def set_handl_inst(self, handl_inst):
-        self.handling_instruction = handl_inst
-
-    def set_exec_inst(self, exec_inst):
-        self.execution_instruction = exec_inst
-
-    def set_symbol(self, symbol):
-        self.symbol = symbol
-
-    def set_maturity_month_year(self, maturity_month_year):
-        self.maturity_month_year = maturity_month_year
-
-    def set_maturity_day(self, maturity_day):
-        self.maturity_day = maturity_day
-
-    def set_side(self, side):
-        self.side = side
-
-    def set_transact_time(self, transact_time):
-        self.transaction_time = transact_time
-
-    def set_order_qty(self, order_qty):
-        self.order_quantity = order_qty
-
-    def set_ord_type(self, ord_type):
-        self.order_type = ord_type
-
-    def set_price(self, price):
-        self.price
-
-    def set_stop_px(self, stop_px):
-        self.stop_prices = stop_px
-
-    def set_sender_comp_id(self, sender_comp_id):
-        self.sender_company_id = sender_comp_id
-
-    def set_sending_time(self, sending_time):
-        self.sending_time = sending_time
-
-    def set_on_behalf_of_comp_id(self, on_behalf_of_comp_id):
-        self.on_behalf_of_comp_id = on_behalf_of_comp_id
-
-    def set_sender_sub_id(self, sender_sub_id):
-        self.sender_sub_id = sender_sub_id
-
-
-class ExecutionReport(object):
-    """Constructor
-    Args:
-        order_id (string): order id
-        client_order_id (string): client order id
-        execution_id (string): execution id
-        execution_transaction_type (char): execution transaction type
-        execution_type (char): execution type
-        order_status (char):
-        symbol (String): ticker symbol of the stock
-        side (char):
-        left_quantity (float): amount of shares open for further execution
-        cumulative_quantity (float): total number of shares filled
-        average_price (float): calculated average price of all fills on this order
-        price (float):
-    """
-
-    def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type, order_status, symbol, side, left_quantity
-                 , cumulative_quantity, average_price, price, receiver_comp_id=None):
-        self.order_id = order_id
-        self.client_order_id = client_order_id
-        self.execution_id = execution_id
-        self.execution_transaction_type = execution_transaction_type
-        self.execution_type = execution_type
-        self.order_status = order_status
-        self.symbol = symbol
-        self.side = side
-        self.left_quantity = left_quantity
-        self.cumulative_quantity = cumulative_quantity
-        self.average_price = average_price
-        self.price = price
-        self.receiver_comp_id = receiver_comp_id
-
-    @classmethod
-    def from_order(cls, order, execution_transaction_type, execution_type, order_status, left_quantity, cumulative_quantity, average_price):
-        """
-        Args:
-            order (TradingClass.Order)
-            execution_transaction_type (char)
-            execution_type (int)
-            order_status (int)
-            left_quantity (float): amount of shares open for further execution
-            cumulative_quantity (float): total number of shares filled
-            average_price (float): calculated average price of all fills on this order
-            stop_price (float):
-        """
-        order_id = order.order_id
-        client_order_id = order.client_order_id
-        execution_id = None
-        #execution_transaction_type
-        #str(execution_type)
-        #str(order_status)
-        symbol = order.stock_ticker
-        side = order.side
-        #left_quantity
-        #cumulative_quantity
-        #average_price
-        price = order.price
-        execution_report = cls(order_id, client_order_id, execution_id, execution_transaction_type, str(execution_type), str(order_status), symbol, side, left_quantity, cumulative_quantity, average_price, price)
-        return execution_report
-
-    def get_order_id(self):
-        return self.order_id
-
-    def get_cl_ord_id(self):
-        return self.client_order_id
-
-    "return execution id"
-
-    def get_exec_id(self):
-        return self.execution_id
-
-    "return execution transaction type"
-
-    def get_exec_trans_type(self):
-        return self.execution_transaction_type
-
-    "return execution type"
-
-    def get_exec_type(self):
-        return self.execution_type
-
-    def get_ord_status(self):
-        return self.order_status
-
-    "return symbol"
-
-    def get_symbol(self):
-        return self.symbol
-
-    "return side buy/sell"
-
-    def get_side(self):
-        return self.side
-
-    "return quantity leaves to be fulfiled"
-
-    def get_leaves_qty(self):
-        return self.left_quantity
-
-    "return cumulative quantity"
-
-    def get_cum_qty(self):
-        return self.cumulative_quantity
-
-    "return average price"
-
-    def get_avg_px(self):
-        return self.average_price
-
-    "return price"
-
-    def get_price(self):
-        return self.price
-
-    "return stop price"
-
-    def get_stop_px(self):
-        return self.stop_price
-
-    def set_order_id(self):
-        return self.order_id
-
-    def set_cl_ord_id(self, cl_ord_id):
-        self.client_order_id = cl_ord_id
-
-    "set execution id"
-
-    def set_exec_id(self, exec_id):
-        self.execution_id = exec_id
-
-    "set execution transaction type"
-
-    def set_exec_trans_type(self, exec_trans_type):
-        self.execution_transaction_type = exec_trans_type
-
-    "set execution type"
-
-    def set_exec_type(self, exec_type):
-        self.execution_type = exec_type
-
-    def set_ord_status(self, ord_status):
-        self.order_status = ord_status
-
-    "set symbol"
-
-    def set_symbol(self, symbol):
-        self.symbol = symbol
-
-    "set side buy/sell"
-
-    def set_side(self, side):
-        self.side = side
-
-    "set quantity leaves to be fulfiled"
-
-    def set_leaves_qty(self, leaves_qty):
-        self.left_quantity = leaves_qty
-
-    "set cumulative quantity"
-
-    def set_cum_qty(self, cum_qty):
-        self.cumulative_quantity = cum_qty
-
-    "set average price"
-
-    def set_avg_px(self, avg_px):
-        self.average_price = avg_px
-
-    "set price"
-
-    def set_price(self, price):
-        self.price = price
-
-    "set stop price"
-
-    def set_stop_px(self, stop_px):
-        self.stop_price = stop_px
-
 
 class FIXYearMonth(object):
 
@@ -734,6 +284,471 @@ class FIXDateTimeUTC(object):
         self.date_time = date_time
 
 
+
+class MarketDataRequest(object):
+    """Constructor of class MarketDataRequest:
+    Args:
+        md_req_id (string): market data request ID
+        subscription_request_type : Type of subscription of market data request (char)
+        market_depth : market depth of market data request (int)
+        no_md_entry_types (int) : number of market data entry requested
+        md_entry_type_list (list of int): market data entries
+        no_related_sym : number of symbols requested (int)
+        symbol_list : list of ticker symbol (list of string)
+    """
+
+    def __init__(self, md_req_id, subscription_request_type, market_depth, no_md_entry_types, md_entry_type_list,
+                 no_related_sym, symbol_list):
+        self.md_req_id = md_req_id
+        self.subscription_request_type = subscription_request_type
+        self.market_depth = market_depth
+        self.no_md_entry_types = no_md_entry_types
+        self.md_entry_type_list = md_entry_type_list
+        self.no_related_sym = no_related_sym
+        self.symbol_list = symbol_list
+
+    @classmethod
+    def from_fix_message(cls, fix_message):
+        """Constructor from a quickfix.Message"""
+        message_fields = [fix.MDReqID(), fix.SubscriptionRequestType(), fix.MarketDepth(), fix.NoMDEntryTypes(),
+                          fix.NoRelatedSym()]
+        market_data_required_id, subscription_request_type, market_depth, no_market_data_entry_types, no_related_symbols = get_values_from_fix_message_fields(
+            fix_message, message_fields)
+
+        market_data_entry_types = get_fix_group_field(fix_message, fix42.MarketDataRequest().NoMDEntryTypes(),
+                                                      fix.MDEntryType(), no_market_data_entry_types,
+                                                      transform_group_element=int)
+        related_symbols = get_fix_group_field(fix_message, fix42.MarketDataRequest().NoRelatedSym(), fix.Symbol(),
+                                              no_related_symbols)
+
+        market_data_request = cls(market_data_required_id, subscription_request_type, market_depth,
+                                  no_market_data_entry_types, market_data_entry_types, no_related_symbols,
+                                  related_symbols)
+        return market_data_request
+
+
+def get_values_from_fix_message_fields(fix_message, message_field_types):
+    """Gets the values of the message fields in the message
+    Args:
+        fix_message (quickfix.Message)
+        message_field_types (list of quickfix field types)
+    Returns:
+        values (list of different types)"""
+    values = []
+    for i in range(len(message_field_types)):
+        fix_field = message_field_types[i]
+        fix_message.getField(fix_field)
+        values[i] = fix_field.getValue()
+    return values
+
+
+def get_fix_group_field(fix_message, fix_group, fix_field_type, no_group_elements,
+                        transform_group_element=None):
+    """
+    Args:
+        fix_message (quickfix.Message):
+        fix_group (FIX::Group *)
+        fix_field_type (quickfix field type)
+        no_group_elements (int)
+        transform_group_element (function): This function is applied on each group entry after the value is
+            retrieved
+    Returns:
+        group_elements (list of different types): list of group elements
+    """
+    group_elements = []
+    for i in range(no_group_elements):
+        fix_message.getGroup(i + 1, fix_group)
+        fix_group.getField(fix_field_type)
+        group_element = fix_field_type.getValue() if transform_group_element is None else transform_group_element(
+            fix_field_type.getValue())
+        group_elements.append(group_element)
+    return group_elements
+
+
+class MarketDataResponse(object):
+    """Constructor of class MarketDataResponse:
+        @Parameter:
+            md_req_id : market data response ID related to market data request ID (string)
+            no_md_entry_types = no_md_entry_types (int)
+            symbol = symbol (string)
+            md_entry_type_list = md entry type list (list of int)
+            md_entry_px_list = md entry price list (list of float)
+            md_entry_size_list = md entry size list (list of float)
+            md_entry_date_list = md entry date list (list of DateFix Object=> datetime UTC Date YYYYMMDD)
+            md_entry_time_list = md entry time list (list of TimeFix Object=> datetime UTC Time HH:MM:SS)
+    """
+
+    def __init__(self, md_req_id, no_md_entry_types, symbol, md_entry_type_list, md_entry_px_list,
+                 md_entry_size_list, md_entry_date_list, md_entry_time_list, md_total_volume_traded=None):
+        self.md_req_id = md_req_id
+        self.no_md_entry_types = no_md_entry_types
+        self.symbol = symbol
+        self.md_entry_type_list = md_entry_type_list
+        self.md_entry_px_list = md_entry_px_list
+        self.md_entry_size_list = md_entry_size_list
+        self.md_entry_date_list = md_entry_date_list
+        self.md_entry_time_list = md_entry_time_list
+        self.md_total_volume_traded = md_total_volume_traded
+
+
+class NewSingleOrder(object):
+    """Constructor of class FIXOrder:
+        @Parameter:
+        client_order_id (string): client order id
+        handling_instruction (char): handling instruction
+        execution_instruction (string): execution instruction
+        symbol (String): symbol of a stock
+        maturity_month_year (FIXYearMonth object): the month when the order will mature
+        maturity_day (int): maturity day
+        side (char): type of order
+        transaction_time (FIXDateTimeUTC object): transaction time
+        order_quantity (float): order quantity
+        order_type (char): order type
+        price (float): price
+        stop_prices (float): stop price
+    """
+
+    def __init__(self, client_order_id, handling_instruction, execution_instruction, symbol, maturity_month_year,
+                 maturity_day, side, transaction_time, order_quantity, order_type, price, stop_prices,
+                 sender_company_id, sending_time,
+                 on_behalf_of_comp_id, sender_sub_id):
+        self.client_order_id = client_order_id
+        self.handling_instruction = handling_instruction
+        self.execution_instruction = execution_instruction
+        self.symbol = symbol
+        self.maturity_month_year = maturity_month_year
+        self.maturity_day = maturity_day
+        self.side = side
+        self.transaction_time = transaction_time
+        self.order_quantity = order_quantity
+        self.order_type = order_type
+        self.price = price
+        self.stop_prices = stop_prices
+        self.sender_company_id = sender_company_id
+        self.sending_time = sending_time
+        self.on_behalf_of_comp_id = on_behalf_of_comp_id
+        self.sender_sub_id = sender_sub_id
+
+    @classmethod
+    def create_dummy_new_single_order(cls, client_order_id="client", handling_instruction="1", execution_instruction="1",
+                                     symbol="TSLA", maturity_month_year=FIXYearMonth.from_year_month(2000, 1), maturity_day=2, side=OrderSideType.BUY,
+                                     transaction_time=FIXDateTimeUTC.from_date_time_stamp_string("20000101-10:00:00"), order_quantity=10., order_type=OrderType.LIMIT, price=100.,
+                                     stop_prices=None, sender_company_id=None, sending_time=None,
+                                     on_behalf_of_company_id=None, sender_sub_id=None):
+        """For testing"""
+        dummy_new_single_order = cls(client_order_id, handling_instruction, execution_instruction,
+                                     symbol, maturity_month_year, maturity_day, side,
+                                     transaction_time, order_quantity, order_type, price,
+                                     stop_prices, sender_company_id, sending_time,
+                                     on_behalf_of_company_id, sender_sub_id)
+        return dummy_new_single_order
+
+    @classmethod
+    def from_fix_message(cls, fix_message):
+        """Constructor from a quickfix.Message"""
+        #TODO
+        pass
+
+    def get_cl_ord_id(self):
+        return self.client_order_id
+
+    def get_handl_inst(self):
+        return self.handling_instruction
+
+    def get_exec_inst(self):
+        return self.execution_instruction
+
+    def get_symbol(self):
+        return self.symbol
+
+    def get_maturity_month_year(self):
+        return self.maturity_month_year
+
+    def get_maturity_day(self):
+        return self.maturity_day
+
+    def get_side(self):
+        return self.side
+
+    def get_transact_time(self):
+        return self.transaction_time
+
+    def get_order_qty(self):
+        return self.order_quantity
+
+    def get_ord_type(self):
+        return self.order_type
+
+    def get_price(self):
+        return self.price
+
+    def get_stop_px(self):
+        return self.stop_prices
+
+    def get_sender_comp_id(self):
+        return self.sender_company_id
+
+    def get_sending_time(self):
+        return self.sending_time
+
+    def get_on_behalf_of_comp_id(self):
+        return self.on_behalf_of_comp_id
+
+    def get_sender_sub_id(self):
+        return self.sender_sub_id
+
+    def set_cl_ord_id(self, cl_ord_id):
+        self.client_order_id = cl_ord_id
+
+    def set_handl_inst(self, handl_inst):
+        self.handling_instruction = handl_inst
+
+    def set_exec_inst(self, exec_inst):
+        self.execution_instruction = exec_inst
+
+    def set_symbol(self, symbol):
+        self.symbol = symbol
+
+    def set_maturity_month_year(self, maturity_month_year):
+        self.maturity_month_year = maturity_month_year
+
+    def set_maturity_day(self, maturity_day):
+        self.maturity_day = maturity_day
+
+    def set_side(self, side):
+        self.side = side
+
+    def set_transact_time(self, transact_time):
+        self.transaction_time = transact_time
+
+    def set_order_qty(self, order_qty):
+        self.order_quantity = order_qty
+
+    def set_ord_type(self, ord_type):
+        self.order_type = ord_type
+
+    def set_price(self, price):
+        self.price
+
+    def set_stop_px(self, stop_px):
+        self.stop_prices = stop_px
+
+    def set_sender_comp_id(self, sender_comp_id):
+        self.sender_company_id = sender_comp_id
+
+    def set_sending_time(self, sending_time):
+        self.sending_time = sending_time
+
+    def set_on_behalf_of_comp_id(self, on_behalf_of_comp_id):
+        self.on_behalf_of_comp_id = on_behalf_of_comp_id
+
+    def set_sender_sub_id(self, sender_sub_id):
+        self.sender_sub_id = sender_sub_id
+
+
+class ExecutionReport(object):
+    """Constructor
+    Args:
+        order_id (string): order id
+        client_order_id (string): client order id
+        execution_id (string): execution id
+        execution_transaction_type (char): execution transaction type
+        execution_type (char): execution type
+        order_status (char):
+        symbol (String): ticker symbol of the stock
+        side (char):
+        left_quantity (float): amount of shares open for further execution
+        cumulative_quantity (float): total number of shares filled
+        average_price (float): calculated average price of all fills on this order
+        price (float):
+    """
+
+    def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type, order_status, symbol, side, left_quantity
+                 , cumulative_quantity, average_price, price, receiver_comp_id=None):
+        self.order_id = order_id
+        self.client_order_id = client_order_id
+        self.execution_id = execution_id
+        self.execution_transaction_type = execution_transaction_type
+        self.execution_type = execution_type
+        self.order_status = order_status
+        self.symbol = symbol
+        self.side = side
+        self.left_quantity = left_quantity
+        self.cumulative_quantity = cumulative_quantity
+        self.average_price = average_price
+        self.price = price
+        self.receiver_comp_id = receiver_comp_id
+
+    @classmethod
+    def from_order(cls, order, execution_transaction_type, execution_type, order_status, left_quantity, cumulative_quantity, average_price):
+        """
+        Args:
+            order (TradingClass.Order)
+            execution_transaction_type (char)
+            execution_type (int)
+            order_status (int)
+            left_quantity (float): amount of shares open for further execution
+            cumulative_quantity (float): total number of shares filled
+            average_price (float): calculated average price of all fills on this order
+        """
+        order_id = order.order_id
+        client_order_id = order.client_order_id
+        execution_id = None
+        #execution_transaction_type
+        #str(execution_type)
+        #str(order_status)
+        symbol = order.stock_ticker
+        side = order.side
+        #left_quantity
+        #cumulative_quantity
+        #average_price
+        price = order.price
+        execution_report = cls(order_id, client_order_id, execution_id, execution_transaction_type, str(execution_type), str(order_status), symbol, side, left_quantity, cumulative_quantity, average_price, price)
+        return execution_report
+
+    def __eq__(self, other):
+
+        is_equal = (self.order_id == other.order_id and
+                 self.client_order_id == other.client_order_id and
+                 self.execution_id == other.execution_id and
+                 self.execution_transaction_type == other.execution_transaction_type and
+                 self.execution_type == other.execution_type and
+                 self.order_status == other.order_status and
+                 self.symbol == other.symbol and
+                 self.side == other.side and
+                 self.left_quantity == other.left_quantity and
+                 self.cumulative_quantity == other.cumulative_quantity and
+                 self.average_price == other.average_price and
+                 self.price == other.price and
+                 self.receiver_comp_id == other.receiver_comp_id)
+
+        return is_equal
+
+    def __ne__(self, other):
+        return  not self.__eq__(self, other)
+
+    #TODO clean getter setter
+    def get_order_id(self):
+        return self.order_id
+
+    def get_cl_ord_id(self):
+        return self.client_order_id
+
+    "return execution id"
+
+    def get_exec_id(self):
+        return self.execution_id
+
+    "return execution transaction type"
+
+    def get_exec_trans_type(self):
+        return self.execution_transaction_type
+
+    "return execution type"
+
+    def get_exec_type(self):
+        return self.execution_type
+
+    def get_ord_status(self):
+        return self.order_status
+
+    "return symbol"
+
+    def get_symbol(self):
+        return self.symbol
+
+    "return side buy/sell"
+
+    def get_side(self):
+        return self.side
+
+    "return quantity leaves to be fulfiled"
+
+    def get_leaves_qty(self):
+        return self.left_quantity
+
+    "return cumulative quantity"
+
+    def get_cum_qty(self):
+        return self.cumulative_quantity
+
+    "return average price"
+
+    def get_avg_px(self):
+        return self.average_price
+
+    "return price"
+
+    def get_price(self):
+        return self.price
+
+    "return stop price"
+
+    def get_stop_px(self):
+        return self.stop_price
+
+    def set_order_id(self):
+        return self.order_id
+
+    def set_cl_ord_id(self, cl_ord_id):
+        self.client_order_id = cl_ord_id
+
+    "set execution id"
+
+    def set_exec_id(self, exec_id):
+        self.execution_id = exec_id
+
+    "set execution transaction type"
+
+    def set_exec_trans_type(self, exec_trans_type):
+        self.execution_transaction_type = exec_trans_type
+
+    "set execution type"
+
+    def set_exec_type(self, exec_type):
+        self.execution_type = exec_type
+
+    def set_ord_status(self, ord_status):
+        self.order_status = ord_status
+
+    "set symbol"
+
+    def set_symbol(self, symbol):
+        self.symbol = symbol
+
+    "set side buy/sell"
+
+    def set_side(self, side):
+        self.side = side
+
+    "set quantity leaves to be fulfiled"
+
+    def set_leaves_qty(self, leaves_qty):
+        self.left_quantity = leaves_qty
+
+    "set cumulative quantity"
+
+    def set_cum_qty(self, cum_qty):
+        self.cumulative_quantity = cum_qty
+
+    "set average price"
+
+    def set_avg_px(self, avg_px):
+        self.average_price = avg_px
+
+    "set price"
+
+    def set_price(self, price):
+        self.price = price
+
+    "set stop price"
+
+    def set_stop_px(self, stop_px):
+        self.stop_price = stop_px
+
+
+
+
 class Order(object):
     """Constructor of class Order, it is designed after the Order table from the database
     Args:
@@ -817,7 +832,7 @@ class Order(object):
         return str(self.__dict__)
 
     def __eq__(self, other):
-        equal = (self.client_order_id == other.client_order_id and
+        is_equal = (self.client_order_id == other.client_order_id and
                  self.account_company_id == other.account_company_id and
                  self.received_date == other.received_date and
                  self.handling_instruction == other.handling_instruction and
@@ -831,7 +846,11 @@ class Order(object):
                  self.on_behalf_of_company_id == other.on_behalf_of_company_id and
                  self.sender_sub_id == other.sender_sub_id and
                  self.cash_order_quantity == other.cash_order_quantity)
-        return equal
+        return is_equal
+
+    def __ne__(self, other):
+        return  not self.__eq__(self, other)
+
 
     @property
     def order_id(self):
@@ -997,6 +1016,86 @@ class DatabaseStockInformation:
         self.day_high = day_high
         self.day_low = day_low
 
+class OrderExecution:
+
+    def __init__(self, execution_id, quantity, price, execution_time, buyer_client_order_id, buyer_company_id, buyer_received_date, seller_client_order_id, seller_company_id, seller_received_date):
+        """
+        Args:
+            execution_id (int)
+            quantity (float): quantity of the order execution
+            price (float): price of the order execution (the price on which both parties execute order)
+            execution_time (TradingClass.FIXDateTimeUTC): date and time of execution
+            buyer_client_order_id (string)
+            buyer_company_id (string)
+            buyer_received_date (TradingClass.FIXDate)
+            seller_client_order_id (string)
+            seller_company_id (string)
+            seller_received_date (string)
+        """
+        self.execution_id = execution_id
+        self.quantity = quantity
+        self.price = price
+        self.execution_time = execution_time
+        self.buyer_client_order_id = buyer_client_order_id
+        self.buyer_company_id = buyer_company_id
+        self.buyer_received_date = buyer_received_date
+        self.seller_client_order_id = seller_client_order_id
+        self.seller_company_id = seller_company_id
+        self.seller_received_date = seller_received_date
+
+    @classmethod
+    def from_buy_and_sell_order(cls, executed_quantity, executed_price, buy_order, sell_order, execution_time):
+        """
+        Args:
+            executed_quantity (float): quantity of the order execution
+            executed_price (float): the price on which both parties execute order
+            buy_order (TradingClass.Order):
+            sell_order (TradingClass.Order):
+            execution_time (TradingClass.FIXDateTimeUTC)
+        """
+        order_execution = cls(execution_id=0, quantity=executed_quantity, price=executed_price,
+                              execution_time=execution_time, buyer_client_order_id=buy_order.client_order_id,
+                              buyer_company_id=buy_order.account_company_id, buyer_received_date=buy_order.received_date,
+                              seller_client_order_id=sell_order.client_order_id,
+                              seller_company_id=sell_order.account_company_id,
+                              seller_received_date=sell_order.received_date)
+        return order_execution
+
+    @classmethod
+    def create_dummy_order_execution(cls, execution_id=0, quantity=100., price=50.,
+                           execution_time=FIXDateTimeUTC.from_date_time_stamp_string("20111111-11:11:11"),
+                           buyer_client_order_id="client",
+                           buyer_company_id="Client Firm",
+                           buyer_received_date=FIXDate.from_date_stamp_string("20111110"),
+                           seller_client_order_id="MS",
+                           seller_company_id="Morgan Stanely",
+                           seller_received_date=FIXDate.from_date_stamp_string("20111109")):
+        """
+        Args:
+            executed_quantity (float): quantity of the order execution
+            executed_price (float): the price on which both parties execute order
+            buy_order (TradingClass.Order):
+            sell_order (TradingClass.Order):
+            execution_time (TradingClass.FIXDateTimeUTC)
+        """
+        dummy_order_execution = cls(execution_id, quantity, price, execution_time, buyer_client_order_id, buyer_company_id, buyer_received_date, seller_client_order_id, seller_company_id, seller_received_date, msg_seq_num)
+        return dummy_order_execution
+
+    def __eq__(self, other):
+        is_equal = (self.execution_id == other.execution_id and
+                 self.quantity == other.quantity and
+                 self.price == other.price and
+                 self.execution_time == other.execution_time and
+                 self.buyer_client_order_id == other.buyer_client_order_id and
+                 self.buyer_company_id == other.buyer_company_id and
+                 self.buyer_received_date == other.buyer_received_date and
+                 self.seller_client_order_id == other.seller_client_order_id and
+                 self.seller_company_id == other.seller_company_id and
+                 self.seller_received_date == other.seller_received_date)
+        return is_equal
+
+    def __ne__(self, other):
+        return  not self.__eq__(self, other)
 
 ###########################
 ### GUI related classes ###

@@ -793,7 +793,7 @@ class ServerDatabaseHandler:
         Returns:
             order (list of TradingClass.Order): pending orders
         """
-
+        #TODO! check maturity date
         sql_command = ("select ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
                        "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
                        "CashOrderQuantity from `Order` where LastStatus=1 and Stock_Ticker='%s'") % (symbol)
