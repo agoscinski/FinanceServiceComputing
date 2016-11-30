@@ -570,10 +570,10 @@ class ServerLogic:
             execution_report (a tuple of TradingClass.ExecutionReport): The two execution reports resulting from the
              inserted order execution. One for buy side, one for sell side.
         """
-        cumulative_quantity, average_price = self.server_database_handler.fetch_cumulative_quantity_and_average_price_of_order(
+        cumulative_quantity, average_price = self.server_database_handler.fetch_cumulative_quantity_and_average_price_by_order_id(
             client_order_id, account_company_id, received_date)
-        order = self.server_database_handler.fetch_order_for_order_id(client_order_id, account_company_id,
-                                                                      received_date)
+        order = self.server_database_handler.fetch_order_by_order_id(client_order_id, account_company_id,
+                                                                     received_date)
         left_quantity = order.order_quantity - cumulative_quantity
         is_order_filled = left_quantity == 0.
 
@@ -804,7 +804,7 @@ class ServerDatabaseHandler:
 
         return None
 
-    def fetch_cumulative_quantity_and_average_price_of_order(self, client_order_id, account_company_id, received_date):
+    def fetch_cumulative_quantity_and_average_price_by_order_id(self, client_order_id, account_company_id, received_date):
         """Fetches the cumulative quantity and average price of the order with the order id (client_order_id,
          account_company_id, received_date).
 
@@ -819,7 +819,7 @@ class ServerDatabaseHandler:
         # TODO use execute_select_sql_command
         return 11.5, 33.33
 
-    def fetch_order_for_order_id(self, client_order_id, account_company_id, received_date):
+    def fetch_order_by_order_id(self, client_order_id, account_company_id, received_date):
         """Fetches the order data of the order with the order id (client_order_id, account_company_id, received_date)
          and packs it into an order object.
 
