@@ -229,37 +229,6 @@ class ServerFIXHandler(TradingClass.FIXHandler):
         return
 
 
-
-def transform_fix_order_to_order(fix_order):
-    """Process an order request from the FIX Handler
-
-    Args:
-        fix_order (TradingClass.NewSingleOrder): NewSingleOrder Object from fix handler
-
-    Returns:
-        order (TradingClass.Order): The order object
-    """
-    # Subscribe means will be sent periodically, so for now we use snapshot
-
-    account_company_id = fix_order.get_sender_comp_id()
-    received_time = FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
-    received_time.set_date_time_now()
-    last_status = 0
-    msg_seq_num = 0
-    on_behalf_of_comp_id = fix_order.get_on_behalf_of_comp_id()
-    sender_sub_id = fix_order.get_sender_sub_id()
-    cash_order_quantity = None
-
-    order = TradingClass.Order(fix_order.get_cl_ord_id(), account_company_id, received_time,
-                               fix_order.get_handl_inst(),
-                               fix_order.get_symbol(), fix_order.get_side(),
-                               fix_order.get_ord_type(), fix_order.get_order_qty(),
-                               fix_order.get_price(), last_status, msg_seq_num, on_behalf_of_comp_id,
-                               sender_sub_id,
-                               cash_order_quantity)
-    return order
-
-
 class ServerLogic:
     def __init__(self, server_config_file_name, server_database_handler=None):
         self.server_fix_handler = ServerFIXHandler(self, server_config_file_name)

@@ -444,7 +444,7 @@ class NewSingleOrder(object):
     """
 
     def __init__(self, client_order_id, handling_instruction, execution_instruction, symbol, maturity_month_year,
-                 maturity_day, side, transaction_time, order_quantity, order_type, price, stop_prices,
+                 maturity_day, side, transaction_time, order_quantity, order_type, price, stop_price,
                  sender_company_id, sending_time,
                  on_behalf_of_comp_id, sender_sub_id):
         self.client_order_id = client_order_id
@@ -458,7 +458,7 @@ class NewSingleOrder(object):
         self.order_quantity = order_quantity
         self.order_type = order_type
         self.price = price
-        self.stop_prices = stop_prices
+        self.stop_price = stop_price
         self.sender_company_id = sender_company_id
         self.sending_time = sending_time
         self.on_behalf_of_comp_id = on_behalf_of_comp_id
@@ -486,24 +486,24 @@ class NewSingleOrder(object):
         Returns:
             NewSingleOrder
         """
-        cl_ord_id = FIXHandler.get_field_value(fix.ClOrdID(), fix_message)
-        handl_inst = FIXHandler.get_field_value(fix.HandlInst(), fix_message)
-        exec_inst = FIXHandler.get_field_value(fix.ExecInst(), fix_message)
+        client_order_id = FIXHandler.get_field_value(fix.ClOrdID(), fix_message)
+        handling_instruction = FIXHandler.get_field_value(fix.HandlInst(), fix_message)
+        execution_instruction = FIXHandler.get_field_value(fix.ExecInst(), fix_message)
         symbol = FIXHandler.get_field_value(fix.Symbol(), fix_message)
         maturity_month_year = FIXHandler.get_field_value(fix.MaturityMonthYear(), fix_message)
         maturity_day = FIXHandler.get_field_value(fix.MaturityDay(), fix_message)
         side = FIXHandler.get_field_value(fix.Side(), fix_message)
         transact_time = FIXHandler.get_field_string(fix.TransactTime(), fix_message)
-        order_qty = FIXHandler.get_field_value(fix.OrderQty(), fix_message)
-        ord_type = FIXHandler.get_field_value(fix.OrdType(), fix_message)
+        order_quantity = FIXHandler.get_field_value(fix.OrderQty(), fix_message)
+        order_type = FIXHandler.get_field_value(fix.OrdType(), fix_message)
         price = FIXHandler.get_field_value(fix.Price(), fix_message)
-        stop_px = FIXHandler.get_field_value(fix.StopPx(), fix_message)
-        sender_comp_id = FIXHandler.get_header_field_value(fix.SenderCompID(), fix_message)
+        stop_price = FIXHandler.get_field_value(fix.StopPx(), fix_message)
+        sender_company_id = FIXHandler.get_header_field_value(fix.SenderCompID(), fix_message)
         sending_time = FIXHandler.get_header_field_string(fix.SendingTime(), fix_message)
         on_behalf_of_comp_id = FIXHandler.get_header_field_value(fix.OnBehalfOfCompID(), fix_message)
         sender_sub_id = FIXHandler.get_header_field_value(fix.SenderSubID(), fix_message)
-        return cls(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side,
-                                   transact_time, order_qty, ord_type, price, stop_px, sender_comp_id,
+        return cls(client_order_id, handling_instruction, execution_instruction, symbol, maturity_month_year, maturity_day, side,
+                                   transact_time, order_quantity, order_type, price, stop_price, sender_company_id,
                                    sending_time, on_behalf_of_comp_id, sender_sub_id)
 
     def get_cl_ord_id(self):
@@ -540,7 +540,7 @@ class NewSingleOrder(object):
         return self.price
 
     def get_stop_px(self):
-        return self.stop_prices
+        return self.stop_price
 
     def get_sender_comp_id(self):
         return self.sender_company_id
@@ -588,7 +588,7 @@ class NewSingleOrder(object):
         self.price
 
     def set_stop_px(self, stop_px):
-        self.stop_prices = stop_px
+        self.stop_price = stop_px
 
     def set_sender_comp_id(self, sender_comp_id):
         self.sender_company_id = sender_comp_id
