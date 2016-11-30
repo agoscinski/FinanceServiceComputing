@@ -15,7 +15,6 @@ from TradingClass import OrderCancelRequest
 from TradingClass import Order
 from TradingClass import OrderCancelReject
 from TradingClass import OrderCancelExecution
-from TradingClass import OrderExecution
 from TradingClass import FIXDateTimeUTC
 
 
@@ -432,7 +431,7 @@ class ServerLogic:
         avg_px=0
 
         #Encapsulate result of processing into execution report
-        reject_order_execution= OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status
+        reject_order_execution = TradingClass.ExecutionReport(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status
             , symbol, side, leaves_qty, cum_qty, avg_px, price, stop_px, receiver_comp_id)
         self.server_fix_handler.send_reject_order_execution_respond(reject_order_execution)
 
@@ -521,6 +520,7 @@ class ServerLogic:
         Args:
             new_order (TradingClass.Order):
             order_status (TradingClass.LastStatus):
+
         Returns:
             execution_report (TradingClass.ExecutionReport)
         """
@@ -565,6 +565,7 @@ class ServerLogic:
             account_company_id (string: second part of order id
             received_date (TradingClass.FIXDate): third part of order id
             order_execution (TradingClass.OrderExecution): The order execution to be inserted
+
         Returns:
             execution_report (a tuple of TradingClass.ExecutionReport): The two execution reports resulting from the
              inserted order execution. One for buy side, one for sell side.
