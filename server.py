@@ -800,7 +800,7 @@ class ServerDatabaseHandler:
             order_execution_id (int): The ID of the order execution when inserted
 
         """
-        # TODO use the insert_order function for this
+        # TODO use the execute_responsive_insert_sql_command function for this, this function is similar to insert_order
 
         return None
 
