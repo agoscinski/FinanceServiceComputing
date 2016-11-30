@@ -304,7 +304,7 @@ class ServerLogic:
         self.server_fix_handler = ServerFIXHandler(self, server_config_file_name)
         self.server_database_handler = ServerDatabaseHandler() if server_database_handler == None else server_database_handler
         self.market_simulation_handler = MarketSimulationHandler()
-        self.initialize_new_database = True
+        self.initialize_new_database = False
 
     def start_server(self):
         if self.initialize_new_database:
@@ -794,7 +794,17 @@ class ServerDatabaseHandler:
         """
         # TODO use the execute_responsive_insert_sql_command function for this, this function is similar to insert_order
 
-        return None
+        command = (
+            "INSERT INTO OrderExecution(OrderExecutionQuantity, OrderExecutionPrice, ExecutionTime, Order_BuyClientOrderID,"
+            "Order_BuyCompanyID, Order_BuyReceivedDate, Order_SellClientOrderID, Order_SellCompanyID, Order_SellReceivedDate)"
+            " VALUES('%s','%s','%s', '%s','%s','%s', '%s','%s','%s')"
+            % (str(order_execution.quantity), str(order_execution.price), str(order_execution.execution_time),
+               order_execution.buyer_client_order_id,
+               order_execution.buyer_company_id, str(order_execution.buyer_received_date),
+               order_execution.seller_client_order_id, order_execution.seller_company_id,
+               order_execution.seller_received_date))
+        order_execution_id = self.execute_responsive_insert_sql_command(command)
+        return order_execution_id
 
     def fetch_cumulative_quantity_and_average_price_by_order_id(self, client_order_id, account_company_id,
                                                                 received_date):
@@ -815,7 +825,7 @@ class ServerDatabaseHandler:
 
         sql_command_result = self.execute_select_sql_command(sql_command)
         if len(sql_command_result) < 1: return None
-        cumulative_quantity, average_price =  float(sql_command_result[0][0]), float(sql_command_result[0][1])
+        cumulative_quantity, average_price = float(sql_command_result[0][0]), float(sql_command_result[0][1])
         return cumulative_quantity, average_price
 
     def fetch_order_by_order_id(self, client_order_id, account_company_id, received_date):
@@ -829,8 +839,10 @@ class ServerDatabaseHandler:
         Returns:
             order quantity (TradingClass.Order): the order object
         """
+        command = "select * from Order where ClientOrderID=" + client_order_id + " and Account_CompanyID=" + account_company_id + " and ReceivedDate=" + received_date
+        print command
         # TODO use execute_select_sql_command
-        return TradingClass.Order.create_dummy_order()
+        # return TradingClass.Order.create_dummy_order()
 
     def fetch_latest_order_by_client_information(self, client_order_id, account_company_id):
         """Fetches the order data of the latest order with the client information (client_order_id, account_company_id)
@@ -963,19 +975,19 @@ class ServerDatabaseHandler:
             pending_orders (list of TradingClass.Order): pending orders
         """
         sql_command = ("select ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
-                       "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
-                       "CashOrderQuantity, MaturityDate from `Order` where LastStatus=1 and Stock_Ticker='%s'") % (
+                       "Side, MaturityDate, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
+                       "CashOrderQuantity from `Order` where LastStatus=1 and Stock_Ticker='%s'") % (
                           symbol)
 
-        pending_orders_arguments_as_list = self.execute_select_sql_command(sql_command) # list of tuples
+        pending_orders_arguments_as_list = self.execute_select_sql_command(sql_command)  # list of tuples
         pending_orders = []
         for pending_order_arguments in pending_orders_arguments_as_list:
             pending_order_arguments_as_list = list(pending_order_arguments)  # ClientOrderID
             pending_order_arguments_as_list[2] = TradingClass.FIXDate(pending_order_arguments[2])  # ReceivedDate
-            pending_order_arguments_as_list[7] = float(pending_order_arguments_as_list[7])  # OrderQuantity
-            pending_order_arguments_as_list[8] = float(pending_order_arguments_as_list[8])  # Price
-            pending_order_arguments_as_list[9] = int(pending_order_arguments_as_list[9])  # LastStatus
-            pending_order_arguments_as_list[14] = TradingClass.FIXDate(pending_order_arguments[14])  # MaturityDate
+            pending_order_arguments_as_list[6] = TradingClass.FIXDate(pending_order_arguments[6])  # MaturityDate
+            pending_order_arguments_as_list[8] = float(pending_order_arguments_as_list[8])  # OrderQuantity
+            pending_order_arguments_as_list[9] = float(pending_order_arguments_as_list[9])  # Price
+            pending_order_arguments_as_list[10] = int(pending_order_arguments_as_list[10])  # LastStatus
             order = Order(*pending_order_arguments_as_list)
             pending_orders.append(order)
         return pending_orders

@@ -1,15 +1,14 @@
 import datetime
 import quickfix as fix
 import quickfix42 as fix42
-from enum import Enum
 
 
-#TODO move these enums to FIXHandler
+# TODO move these enums to FIXHandler
 #######################
 ## FIX related Enums ##
 #######################
 
-class MarketDataEntryType(Enum):
+class MarketDataEntryType:
     OFFER = 0
     BID = 1
     CURRENT_PRICE = 2
@@ -19,21 +18,23 @@ class MarketDataEntryType(Enum):
     DAY_LOW = 8
 
 
-class OrderSideType(Enum):
+class OrderSideType:
     BUY = fix.Side_BUY
     SELL = fix.Side_SELL
 
-class OrderType(Enum):
-    LIMIT =  fix.TriggerOrderType_LIMIT
-    MARKET = fix.TriggerOrderType_MARKET
 
-class LastStatus(Enum):
+class OrderType:
+    MARKET = fix.TriggerOrderType_MARKET
+    LIMIT = fix.TriggerOrderType_LIMIT
+
+class LastStatus:
     DONE = 0
     PENDING = 1
     CANCELED = 2
     EXPIRED = 3
 
-class OrderStatus(Enum):
+
+class OrderStatus:
     NEW = 2
     REPLACED = 3
     PARTIALLY_FILLED = 4
@@ -44,14 +45,15 @@ class OrderStatus(Enum):
     PENDING_CANCEL = 12
 
 
-class ExecutionType(Enum):
+class ExecutionType:
     NEW = 0
     PARTIAL_FILL = 1
     FILL = 2
     CANCELED = 4
     REJECTED = 8
 
-class ExecutionTransactionType(Enum):
+
+class ExecutionTransactionType:
     NEW = '0'
     PARTIAL_FILL = '1'
     FILL = '2'
@@ -59,6 +61,7 @@ class ExecutionTransactionType(Enum):
     REPLACE = '5'
     REJECTED = '8'
     EXPIRED = 'C'
+
 
 # TODO replace with MarketDataEntryType
 class MDEntryType:
@@ -68,12 +71,23 @@ class MDEntryType:
     SESSION_HIGH = '7'
     SESSION_LOW = '8'
 
-#TODO create DatabaseHandler and move these enums to DatabaseHandler
+
+# TODO create DatabaseHandler and move these enums to DatabaseHandler
 ############################
 ## Database related Enums ##
 ############################
 
-class LastStatus(Enum):
+class DatabaseOrderType:
+    MARKET = 1
+    LIMIT = 2
+
+
+class OrderSide:
+    BUY = 1
+    SELL = 2
+
+
+class LastStatus:
     DONE = 0
     PENDING = 1
     CANCELED = 2
@@ -85,7 +99,6 @@ class LastStatus(Enum):
 ##################
 
 class FIXYearMonth(object):
-
     def __init__(self, date_object):
         self.date = date_object
 
@@ -192,9 +205,15 @@ class FIXDate(object):
         date_object = datetime.date(year, month, day)
         return cls(date_object)
 
+    def __eq__(self, other):
+        return self.date.year == other.date.year and self.date.month == other.date.month and self.date.day == other.date.day
+
+
+    def __ne__(self, other):
+        return not __eq__(self,other)
+
     def __str__(self):
         return self.date.strftime("%Y%m%d")
-
 
     @property
     def mysql_date_stamp_string(self):
@@ -228,7 +247,7 @@ class FIXDate(object):
     def day(self, day):
         self.date.day = day
 
-    #TODO remove
+    # TODO remove
     def set_date_from_year_month_day(self, year, month, date):
         self.date = datetime.date(year, month, date)
 
@@ -250,14 +269,14 @@ class FIXTime(object):
     def __init__(self, hour, minute, second):
         self.time = datetime.time(hour, minute, second, 0)
 
-    #TODO remove
+    # TODO remove
     def get_time(self):
         return self.time
 
     def __str__(self):
         return self.time.strftime("%H:%M:%S")
 
-    #TODO remove
+    # TODO remove
     def set_time(self, hour, minute, second):
         self.time = datetime.time(hour, minute, second, 0)
 
@@ -269,7 +288,6 @@ class FIXTime(object):
 
 
 class FIXDateTimeUTC(object):
-
     def __init__(self, datetime_object):
         """Constructor of FIXDateTimeUTC from
         Args:
@@ -327,6 +345,7 @@ class FIXDateTimeUTC(object):
     def set_date_time_value(self, date_time):
         self.date_time = date_time
 
+
 ###################################
 ## Server/Client related classes ##
 ###################################
@@ -363,6 +382,7 @@ class FIXHandler:
             return fix_object.getString()
         else:
             return None
+
 
 #################################
 ## FIX message related classes ##
@@ -409,7 +429,8 @@ class MarketDataRequest(object):
                                   related_symbols)
         return market_data_request
 
-#TODO Move this functions to FIXHandler
+
+# TODO Move this functions to FIXHandler
 def get_values_from_fix_message_fields(fix_message, message_field_types):
     """Gets the values of the message fields in the message
     Args:
@@ -443,7 +464,7 @@ def get_fix_group_field(fix_message, fix_group, fix_field_type, no_group_element
         fix_message.getGroup(i + 1, fix_group)
         fix_group.getField(fix_field_type)
         group_element = fix_field_type.getValue() if transform_group_element is None else transform_group_element(
-            fix_field_type.getValue() )
+            fix_field_type.getValue())
         group_elements.append(group_element)
     return group_elements
 
@@ -473,6 +494,7 @@ class MarketDataResponse(object):
         self.md_entry_time_list = md_entry_time_list
         self.md_total_volume_traded = md_total_volume_traded
 
+
 class OrderCancelRequest(object):
     """Constructor of class OrderCancelRequest:
         @Parameter:
@@ -487,8 +509,9 @@ class OrderCancelRequest(object):
         on_behalf_of_comp_id = company on behalf of sender company id (String)
         sender_sub_id = identifier created by sender_comp_id (String)
     """
-    def __init__(self, orig_cl_ord_id, cl_ord_id, symbol, side, transact_time,  order_qty, sender_comp_id = None,
-                 sending_time = None,on_behalf_of_comp_id = None, sender_sub_id = None):
+
+    def __init__(self, orig_cl_ord_id, cl_ord_id, symbol, side, transact_time, order_qty, sender_comp_id=None,
+                 sending_time=None, on_behalf_of_comp_id=None, sender_sub_id=None):
         self.orig_cl_ord_id = orig_cl_ord_id
         self.cl_ord_id = cl_ord_id
         self.symbol = symbol
@@ -497,7 +520,7 @@ class OrderCancelRequest(object):
         self.order_qty = order_qty
         self.sender_comp_id = sender_comp_id
         if sending_time is not None:
-           self.sending_time = sending_time
+            self.sending_time = sending_time
         if sender_comp_id is not None:
             self.sender_comp_id = sender_comp_id
         if on_behalf_of_comp_id is not None:
@@ -517,14 +540,15 @@ class OrderCancelReject(object):
         receiver_comp_id= receiver company ID (String)
 
     """
-    def __init__(self, orig_cl_ord_id, cl_ord_id, order_id,ord_status, cxl_rej_response_to, receiver_comp_id = None,
-                 cxl_rej_reason = None):
+
+    def __init__(self, orig_cl_ord_id, cl_ord_id, order_id, ord_status, cxl_rej_response_to, receiver_comp_id=None,
+                 cxl_rej_reason=None):
         self.orig_cl_ord_id = orig_cl_ord_id
         self.cl_ord_id = cl_ord_id
         self.order_id = order_id
         self.ord_status = ord_status
         self.cxl_rej_response_to = cxl_rej_response_to
-        #TODO Husein ? why this ifs
+        # TODO Husein ? why this ifs
         if receiver_comp_id is not None:
             self.sender_comp_id = receiver_comp_id
         else:
@@ -533,6 +557,7 @@ class OrderCancelReject(object):
             self.cxl_rej_reason = cxl_rej_reason
         else:
             self.cxl_rej_reason = None
+
 
 class NewSingleOrder(object):
     """Constructor of class NewSingleOrder:
@@ -572,11 +597,14 @@ class NewSingleOrder(object):
         self.sender_sub_id = sender_sub_id
 
     @classmethod
-    def create_dummy_new_single_order(cls, client_order_id="client", handling_instruction="1", execution_instruction="1",
-                                     symbol="TSLA", maturity_month_year=FIXYearMonth.from_year_month(2000, 1), maturity_day=2, side=OrderSideType.BUY,
-                                     transaction_time=FIXDateTimeUTC.from_date_time_stamp_string("20000101-10:00:00"), order_quantity=10., order_type=OrderType.LIMIT, price=100.,
-                                     stop_prices=None, sender_company_id=None, sending_time=None,
-                                     on_behalf_of_company_id=None, sender_sub_id=None):
+    def create_dummy_new_single_order(cls, client_order_id="client", handling_instruction="1",
+                                      execution_instruction="1",
+                                      symbol="TSLA", maturity_month_year=FIXYearMonth.from_year_month(2000, 1),
+                                      maturity_day=2, side=OrderSideType.BUY,
+                                      transaction_time=FIXDateTimeUTC.from_date_time_stamp_string("20000101-10:00:00"),
+                                      order_quantity=10., order_type=OrderType.LIMIT, price=100.,
+                                      stop_prices=None, sender_company_id=None, sending_time=None,
+                                      on_behalf_of_company_id=None, sender_sub_id=None):
         """For testing"""
         dummy_new_single_order = cls(client_order_id, handling_instruction, execution_instruction,
                                      symbol, maturity_month_year, maturity_day, side,
@@ -609,9 +637,10 @@ class NewSingleOrder(object):
         sending_time = FIXHandler.get_header_field_string(fix.SendingTime(), fix_message)
         on_behalf_of_comp_id = FIXHandler.get_header_field_value(fix.OnBehalfOfCompID(), fix_message)
         sender_sub_id = FIXHandler.get_header_field_value(fix.SenderSubID(), fix_message)
-        return cls(client_order_id, handling_instruction, execution_instruction, symbol, maturity_month_year, maturity_day, side,
-                                   transact_time, order_quantity, order_type, price, stop_price, sender_company_id,
-                                   sending_time, on_behalf_of_comp_id, sender_sub_id)
+        return cls(client_order_id, handling_instruction, execution_instruction, symbol, maturity_month_year,
+                   maturity_day, side,
+                   transact_time, order_quantity, order_type, price, stop_price, sender_company_id,
+                   sending_time, on_behalf_of_comp_id, sender_sub_id)
 
 
 class ExecutionReport(object):
@@ -631,7 +660,8 @@ class ExecutionReport(object):
         price (float):
     """
 
-    def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type, order_status, symbol, side, left_quantity
+    def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type,
+                 order_status, symbol, side, left_quantity
                  , cumulative_quantity, average_price, price, receiver_comp_id=None):
         self.order_id = order_id
         self.client_order_id = client_order_id
@@ -648,7 +678,8 @@ class ExecutionReport(object):
         self.receiver_comp_id = receiver_comp_id
 
     @classmethod
-    def from_order(cls, order, execution_transaction_type, execution_type, order_status, left_quantity, cumulative_quantity, average_price):
+    def from_order(cls, order, execution_transaction_type, execution_type, order_status, left_quantity,
+                   cumulative_quantity, average_price):
         """
         Args:
             order (TradingClass.Order)
@@ -662,25 +693,27 @@ class ExecutionReport(object):
         order_id = order.order_id
         client_order_id = order.client_order_id
         execution_id = None
-        #execution_transaction_type
-        #str(execution_type)
-        #str(order_status)
+        # execution_transaction_type
+        # str(execution_type)
+        # str(order_status)
         symbol = order.stock_ticker
         side = order.side
-        #left_quantity
-        #cumulative_quantity
-        #average_price
+        # left_quantity
+        # cumulative_quantity
+        # average_price
         price = order.price
-        execution_report = cls(order_id, client_order_id, execution_id, execution_transaction_type, str(execution_type), str(order_status), symbol, side, left_quantity, cumulative_quantity, average_price, price)
+        execution_report = cls(order_id, client_order_id, execution_id, execution_transaction_type, str(execution_type),
+                               str(order_status), symbol, side, left_quantity, cumulative_quantity, average_price,
+                               price)
         return execution_report
-
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__
         return False
+
     def __ne__(self, other):
-        return  not self.__eq__(self, other)
+        return not self.__eq__(self, other)
 
     def create_fix_message(self):
         """Creates from an execution report a fix message"""
@@ -710,11 +743,11 @@ class Order(object):
         client_order_id (string): The order ID from the client side
         account_company_id (string): account company id related to the order
         received_date (FIXDate object): received_date
-        handling_instruction (char): handling instruction
+        handling_instruction (int): handling instruction
         stock_ticker (string): ticker symbol of the stock referring in the order
         side (int): type of order
         maturity_date (FIXDate object): the date when order will mature
-        order_type (char): the type of order, see fix.Side_ for different types
+        order_type (int): the type of order, see Side for different types
         order_quantity (float): order quantity
         price (float): price of the stock
         last_status (LastStatus): last status
@@ -725,7 +758,8 @@ class Order(object):
         msg_seq_num (int)
     """
 
-    def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side, maturity_date,
+    def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
+                 maturity_date,
                  order_type, order_quantity, price, last_status, msg_seq_num=None, on_behalf_of_company_id=None,
                  sender_sub_id=None, cash_order_quantity=None):
         self.client_order_id = client_order_id
@@ -745,8 +779,10 @@ class Order(object):
         self.cash_order_quantity = cash_order_quantity
 
     @classmethod
-    def create_dummy_order(cls, client_order_id="20161120-001", account_company_id="client", received_date=FIXDate.from_fix_date_stamp_string("20161120"), handling_instruction="1",
-                           stock_ticker="TSLA", side="1", maturity_date=FIXDate.from_fix_date_stamp_string("20161125"), order_type="1", order_quantity=100.00, price=10.00,
+    def create_dummy_order(cls, client_order_id="20161120-001", account_company_id="client",
+                           received_date=FIXDate.from_fix_date_stamp_string("20161120"), handling_instruction=1,
+                           stock_ticker="TSLA", side=1, maturity_date=FIXDate.from_fix_date_stamp_string("20161125"),
+                           order_type=1, order_quantity=100.00, price=10.00,
                            last_status=0, msg_seq_num=0):
         """For testing"""
         dummy_order = cls(client_order_id=client_order_id, account_company_id=account_company_id,
@@ -770,7 +806,9 @@ class Order(object):
         handling_instruction = new_single_order.handling_instruction
         stock_ticker = new_single_order.symbol
         side = new_single_order.side
-        maturity_date = FIXDate.from_year_month_day(new_single_order.maturity_month_year.year, new_single_order.maturity_month_year.month, new_single_order.maturity_day)
+        maturity_date = FIXDate.from_year_month_day(new_single_order.maturity_month_year.year,
+                                                    new_single_order.maturity_month_year.month,
+                                                    new_single_order.maturity_day)
         order_type = new_single_order.order_type
         order_quantity = new_single_order.order_quantity
         price = new_single_order.price
@@ -794,7 +832,7 @@ class Order(object):
         return False
 
     def __ne__(self, other):
-        return  not self.__eq__(self, other)
+        return not self.__eq__(self, other)
 
     @property
     def order_id(self):
@@ -818,9 +856,10 @@ class Order(object):
         """
         return client_order_id + "_" + account_company_id + "_" + str(received_date)
 
-#TODO Husein merge ExecutionReport
+
+# TODO Husein merge ExecutionReport
 class OrderCancelExecution(object):
-        """Constructor
+    """Constructor
         @Parameter:
             order_id = order id (String)
             cl_ord_id = client order id (String)
@@ -836,26 +875,28 @@ class OrderCancelExecution(object):
             price = price (float)
             stop_px = stop price (float)
         """
-        def __init__(self, order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol, side,
-                         leaves_qty, cum_qty, avg_px, price, stop_px, receiver_comp_id=None, orig_cl_ord_id=None):
-            self.order_id = order_id
-            self.cl_ord_id = cl_ord_id
-            self.exec_id = exec_id
-            self.exec_trans_type = exec_trans_type
-            self.exec_type = exec_type
-            self.ord_status = ord_status
-            self.symbol = symbol
-            self.side = side
-            self.leaves_qty = leaves_qty
-            self.cum_qty = cum_qty
-            self.avg_px = avg_px
-            self.price = price
-            self.stop_px = stop_px
-            self.receiver_comp_id = receiver_comp_id
-            if orig_cl_ord_id is not None:
-                self.orig_cl_ord_id = orig_cl_ord_id
-            else:
-                self.orig_cl_ord_id = None
+
+    def __init__(self, order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol, side,
+                 leaves_qty, cum_qty, avg_px, price, stop_px, receiver_comp_id=None, orig_cl_ord_id=None):
+        self.order_id = order_id
+        self.cl_ord_id = cl_ord_id
+        self.exec_id = exec_id
+        self.exec_trans_type = exec_trans_type
+        self.exec_type = exec_type
+        self.ord_status = ord_status
+        self.symbol = symbol
+        self.side = side
+        self.leaves_qty = leaves_qty
+        self.cum_qty = cum_qty
+        self.avg_px = avg_px
+        self.price = price
+        self.stop_px = stop_px
+        self.receiver_comp_id = receiver_comp_id
+        if orig_cl_ord_id is not None:
+            self.orig_cl_ord_id = orig_cl_ord_id
+        else:
+            self.orig_cl_ord_id = None
+
 
 ################################
 ### Database related classes ###
@@ -873,8 +914,8 @@ class DatabaseStockInformation:
         self.day_high = day_high
         self.day_low = day_low
 
-class OrderExecution:
 
+class OrderExecution:
     def __init__(self, execution_id, quantity, price, execution_time, buyer_client_order_id,
                  buyer_company_id, buyer_received_date, seller_client_order_id, seller_company_id,
                  seller_received_date):
@@ -971,6 +1012,7 @@ class OrderExecution:
         """
         return Order.create_order_id(self.seller_client_order_id, self.seller_company_id,
                                      self.seller_received_date)
+
 
 class OrderCancel(object):
     """Constructor of class OrderCancel, it is designed after the OrderCancel table from the database

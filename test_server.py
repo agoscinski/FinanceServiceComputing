@@ -55,19 +55,18 @@ class TestServerDatabaseHandler:
         order_list = fsc_server_database_handler.fetch_pending_orders_for_stock_ticker(symbol)
         goldman_sachs_order = TradingClass.Order(client_order_id='0', account_company_id='GS',
                                                  received_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
-                                                     '2016-11-09'), handling_instruction='1',
+                                                     '2016-11-09'), handling_instruction=1,
                                                  maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
-                                                     '2016-11-15'), stock_ticker='TSLA', side='1', order_type='2',
-                                                 order_quantity='1000', price='10000', last_status='1')
+                                                     '2016-11-15'), stock_ticker='TSLA', side=TradingClass.OrderSide.BUY, order_type=TradingClass.DatabaseOrderType.LIMIT,
+                                                 order_quantity=10000., price=1000., last_status=TradingClass.LastStatus.PENDING)
         morgan_stanley_order = TradingClass.Order(client_order_id='0', account_company_id='MS',
                                                   received_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
-                                                      '2016-11-08'), handling_instruction='1',
+                                                      '2016-11-09'), handling_instruction=1,
                                                   maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
-                                                      '2016-11-11'), stock_ticker='TSLA', side='2', order_type='2',
-                                                  order_quantity='200', price='1005', last_status='1')
-        order_list.__contains__(goldman_sachs_order)
-        order_list.__contains__(morgan_stanley_order)
-        assert order_list
+                                                      '2016-11-20'), stock_ticker='TSLA', side=TradingClass.OrderSide.SELL, order_type=TradingClass.DatabaseOrderType.LIMIT,
+                                                  order_quantity=2000., price=1010., last_status=TradingClass.LastStatus.PENDING)
+        assert order_list.__contains__(goldman_sachs_order)
+        assert order_list.__contains__(morgan_stanley_order)
 
     def test_fetch_cumulative_quantity_and_average_price_by_order_id(self):
         client_order_id, account_company_id, received_date = '0', 'GS', TradingClass.FIXDate.from_mysql_date_stamp_string(
@@ -80,7 +79,6 @@ class TestServerDatabaseHandler:
         assert asserted_average_price == average_price
 
     # do inserts here so they do not interfere with logical tests
-
     def test_execute_responsive_insert_sql_command(self):
         insert_sql = "INSERT INTO OrderExecution(OrderExecutionQuantity, OrderExecutionPrice, ExecutionTime," \
                      " Order_BuyClientOrderID, Order_BuyCompanyID, Order_BuyReceivedDate, Order_SellClientOrderID," \
@@ -88,6 +86,10 @@ class TestServerDatabaseHandler:
                      "'2016-11-09', '1','MS','2016-11-08')"
         execution_id = fsc_server_database_handler.execute_responsive_insert_sql_command(insert_sql)
         assert execution_id == 3
+
+    def test_insert_order_execution(self):
+        order_execution = TradingClass.OrderExecution.create_dummy_order_execution(execution_id=None)
+        assert fsc_server_database_handler.insert_order_execution(order_execution) == 4
 
     def test_insert_order(self):
         dummy_order = TradingClass.Order.create_dummy_order(msg_seq_num=0)
