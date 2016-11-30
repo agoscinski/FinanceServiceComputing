@@ -214,7 +214,7 @@ class ServerFIXHandler(TradingClass.FIXHandler):
         return
 
     def handle_order_cancel_request(self, message):
-        orig_cl_ord_id= TradingClass.FIXHandler.get_field_value(fix.OrigClOrdID(), message)
+        orig_cl_ord_id = TradingClass.FIXHandler.get_field_value(fix.OrigClOrdID(), message)
         cl_ord_id = TradingClass.FIXHandler.get_field_value(fix.ClOrdID(), message)
         symbol = TradingClass.FIXHandler.get_field_value(fix.Symbol(), message)
         side = TradingClass.FIXHandler.get_field_value(fix.Side(), message)
@@ -226,11 +226,10 @@ class ServerFIXHandler(TradingClass.FIXHandler):
         sender_sub_id = TradingClass.FIXHandler.get_header_field_value(fix.SenderSubID(), message)
 
         # Create NewSingleOrder Object to be sent to server logic
-        order_cancel_request = OrderCancelRequest (orig_cl_ord_id, cl_ord_id, symbol, side, transact_time, order_qty,
-                                                   sender_comp_id, sending_time, on_behalf_of_comp_id, sender_sub_id)
+        order_cancel_request = OrderCancelRequest(orig_cl_ord_id, cl_ord_id, symbol, side, transact_time, order_qty,
+                                                  sender_comp_id, sending_time, on_behalf_of_comp_id, sender_sub_id)
 
         self.server_logic.process_order_cancel_request(order_cancel_request)
-
 
     def send_execution_report_respond(self, execution_report):
         """Sends an execution report respond
@@ -257,7 +256,6 @@ class ServerFIXHandler(TradingClass.FIXHandler):
         fix_message = execution_report.create_fix_message()
         fix.Session.sendToTarget(fix_message, self.fix_application.sessionID)
         return
-
 
     def send_order_cancel_execution_respond(self, order_cancel_execution):
         message = fix.Message()
@@ -299,7 +297,6 @@ class ServerFIXHandler(TradingClass.FIXHandler):
 
         fix.Session.sendToTarget(message, self.fix_application.sessionID)
         return
-
 
 
 class ServerLogic:
@@ -377,7 +374,6 @@ class ServerLogic:
 
         pass
 
-
     def process_order_request(self, requested_fix_order):
         """Process an order request from the FIX Handler
 
@@ -394,7 +390,6 @@ class ServerLogic:
             self.process_valid_order_request(requested_order)
         else:
             self.process_invalid_order_request(requested_order)
-
 
     def process_valid_order_request(self, requested_order):
         """
@@ -415,24 +410,26 @@ class ServerLogic:
         return None
 
     def process_invalid_order_request(self, requested_order):
-        order_id= str(self.server_fix_handler.fix_application.gen_order_id())
-        exec_id=str(self.server_fix_handler.fix_application.gen_exec_id())
-        cl_ord_id=requested_order.client_order_id
-        receiver_comp_id=requested_order.account_company_id
-        exec_trans_type='0'
-        exec_type='8'
-        ord_status='8'
-        symbol=requested_order.stock_ticker
-        side=requested_order.side
-        price=requested_order.price
-        stop_px=None
-        leaves_qty=0
-        cum_qty=0
-        avg_px=0
+        order_id = str(self.server_fix_handler.fix_application.gen_order_id())
+        exec_id = str(self.server_fix_handler.fix_application.gen_exec_id())
+        cl_ord_id = requested_order.client_order_id
+        receiver_comp_id = requested_order.account_company_id
+        exec_trans_type = '0'
+        exec_type = '8'
+        ord_status = '8'
+        symbol = requested_order.stock_ticker
+        side = requested_order.side
+        price = requested_order.price
+        stop_px = None
+        leaves_qty = 0
+        cum_qty = 0
+        avg_px = 0
 
-        #Encapsulate result of processing into execution report
-        reject_order_execution = TradingClass.ExecutionReport(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status
-            , symbol, side, leaves_qty, cum_qty, avg_px, price, stop_px, receiver_comp_id)
+        # Encapsulate result of processing into execution report
+        reject_order_execution = TradingClass.ExecutionReport(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type,
+                                                              ord_status
+                                                              , symbol, side, leaves_qty, cum_qty, avg_px, price,
+                                                              stop_px, receiver_comp_id)
         self.server_fix_handler.send_reject_order_execution_respond(reject_order_execution)
 
     def check_if_order_is_valid(self, requested_order):
@@ -440,25 +437,24 @@ class ServerLogic:
         stock_information = self.server_database_handler.fetch_stock_information(requested_order.stock_ticker)
         current_price = stock_information.current_price
 
-        price_difference = requested_order.price-current_price
-        traded_value_difference = requested_order.price*requested_order.order_quantity-stock_total_volume*current_price
+        price_difference = requested_order.price - current_price
+        traded_value_difference = requested_order.price * requested_order.order_quantity - stock_total_volume * current_price
 
         is_valid = (0.1 >= price_difference >= -0.1 and 0.2 >= traded_value_difference >= -0.2)
         return is_valid
 
     def process_invalid_order_cancel_request(self, requested_order_cancel):
 
-        order_id= str(self.server_fix_handler.fix_application.gen_order_id())
-        cl_ord_id=requested_order_cancel.order_cancel_id
-        orig_cl_ord_id=requested_order_cancel.client_order_id
-        receiver_comp_id=requested_order_cancel.account_company_id
-        ord_status='8'
-        cxl_rej_response_to='1'
-        cxl_rej_reason=None
-        order_cancel_reject= OrderCancelReject(orig_cl_ord_id, cl_ord_id, order_id, ord_status, cxl_rej_response_to,
-                                               receiver_comp_id, cxl_rej_reason)
+        order_id = str(self.server_fix_handler.fix_application.gen_order_id())
+        cl_ord_id = requested_order_cancel.order_cancel_id
+        orig_cl_ord_id = requested_order_cancel.client_order_id
+        receiver_comp_id = requested_order_cancel.account_company_id
+        ord_status = '8'
+        cxl_rej_response_to = '1'
+        cxl_rej_reason = None
+        order_cancel_reject = OrderCancelReject(orig_cl_ord_id, cl_ord_id, order_id, ord_status, cxl_rej_response_to,
+                                                receiver_comp_id, cxl_rej_reason)
         self.server_fix_handler.send_order_cancel_reject_respond(order_cancel_reject)
-
 
     def process_order_cancel_request(self, order_cancel_request):
         requested_order_cancel = TradingClass.OrderCancel.from_order_cancel_request(order_cancel_request)
@@ -469,7 +465,6 @@ class ServerLogic:
         else:
             self.process_invalid_order_cancel_request(requested_order_cancel)
 
-
     def check_if_order_cancel_is_valid(self, requested_order_cancel):
         # TODO check order to be cancelled is in database
         # order = self.server_database_handler.fetch_order_by_id(requested_order_cancel.client_order_id,
@@ -479,7 +474,6 @@ class ServerLogic:
             return True
         else:
             return False
-
 
     def process_valid_order_cancel_request(self, requested_order_cancel):
         # TODO Insert update order cancel, order and ordercancel success
@@ -510,7 +504,8 @@ class ServerLogic:
         avg_px = 0
 
         # TODO provide orig_cl_ord_id mandatory in execution report for cancel
-        order_cancel_execution = OrderCancelExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status
+        order_cancel_execution = OrderCancelExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type,
+                                                      ord_status
                                                       , symbol, side, leaves_qty, cum_qty, avg_px, price, stop_px,
                                                       receiver_comp_id, orig_cl_ord_id)
         self.server_fix_handler.send_order_cancel_execution_respond(order_cancel_execution)
@@ -597,9 +592,6 @@ class ServerLogic:
                                                         cumulative_quantity=cumulative_quantity,
                                                         average_price=average_price)
         return execution_report
-
-
-
 
     def pack_into_fix_market_data_response(self, market_data_required_id, market_data_entry_types, symbol,
                                            pending_stock_orders, stock_information):
@@ -804,7 +796,8 @@ class ServerDatabaseHandler:
 
         return None
 
-    def fetch_cumulative_quantity_and_average_price_by_order_id(self, client_order_id, account_company_id, received_date):
+    def fetch_cumulative_quantity_and_average_price_by_order_id(self, client_order_id, account_company_id,
+                                                                received_date):
         """Fetches the cumulative quantity and average price of the order with the order id (client_order_id,
          account_company_id, received_date).
 
@@ -833,7 +826,6 @@ class ServerDatabaseHandler:
         # TODO use execute_select_sql_command
         return TradingClass.Order.create_dummy_order()
 
-
     def fetch_latest_order_by_client_information(self, client_order_id, account_company_id):
         """Fetches the order data of the latest order with the client information (client_order_id, account_company_id)
          and packs it into an order object.
@@ -848,8 +840,8 @@ class ServerDatabaseHandler:
                        "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
                        "CashOrderQuantity from `Order` where LastStatus=1 and ClientOrderID='%s' "
                        "and Account_CompanyID='%s'") % (client_order_id, account_company_id)
-        #TODO Husein not finished yet
-        order_arguments_rows = self.execute_responsive_sql_command(sql_command)
+        # TODO Husein not finished yet
+        order_arguments_rows = self.execute_select_sql_command(sql_command)
         order_list = []
         for order_arguments_row in order_arguments_rows:
             received_time = TradingClass.FIXDate(order_arguments_row[2])
@@ -861,7 +853,6 @@ class ServerDatabaseHandler:
             order = TradingClass.Order(*order_arguments_row_list)
             order_list.append(order)
         return order_list
-
 
     def insert_order(self, order):
         """Inserts a TradingClass.Order into the database
@@ -941,19 +932,19 @@ class ServerDatabaseHandler:
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 
     def insert_order_cancel(self, requested_order_cancel):
-        #TODO Husein figure out who does it
-        sql_command =""
+        # TODO Husein figure out who does it
+        sql_command = ""
         self.execute_nonresponsive_sql_command(sql_command)
 
     def update_order_status(self, client_order_id, account_company_id, order_status):
-        #TODO Husein figure out who does it
+        # TODO Husein figure out who does it
         sql_command = ""
         self.execute_nonresponsive_sql_command(sql_command)
 
     def update_order_cancel_success(self, client_order_id, account_company_id, order_cancel_status, cumulative_quantity,
                                     executed_time):
-        #TODO Husein figure out who does it
-        sql_command =""
+        # TODO Husein figure out who does it
+        sql_command = ""
         self.execute_nonresponsive_sql_command(sql_command)
 
     def fetch_pending_orders_for_stock_ticker(self, symbol):
@@ -961,49 +952,27 @@ class ServerDatabaseHandler:
 
         Args:
             symbol (string): The ticker symbol for which orders are fetched
+
         Returns:
             order (list of TradingClass.Order): pending orders
         """
 
-        sql_command = ("select ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
+        sql_command = ("select ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
                        "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
-                       "CashOrderQuantity from `Order` where LastStatus=1 and Stock_Ticker='%s'") % (symbol)
+                       "CashOrderQuantity, MaturityDate from `Order` where LastStatus=1 and Stock_Ticker='%s'") % (
+                      symbol)
 
-        pending_order_arguments_rows = self.execute_responsive_sql_command(sql_command)
+        pending_order_arguments_rows = self.execute_select_sql_command(sql_command)
         pending_order_list = []
         for pending_order_arguments_row in pending_order_arguments_rows:
-            received_time = TradingClass.FIXDate(pending_order_arguments_row[2])
-            pending_order_arguments_row_list = list(pending_order_arguments_row)
-            pending_order_arguments_row_list[2] = received_time
-            pending_order_arguments_row_list[7] = int(pending_order_arguments_row_list[7])
-            pending_order_arguments_row_list[8] = int(pending_order_arguments_row_list[8])
-            pending_order_arguments_row_list[9] = int(pending_order_arguments_row_list[9])
-            order = Order(*pending_order_arguments_row_list)
-            pending_order_list.append(order)
-        return pending_order_list
-
-    def fetch_pending_orders_for_stock_ticker(self, symbol):
-        """Fetches all orders from the database with status not finisheddern
-
-        Args:
-            ticker_symbol (string): The ticker symbol for which orders are fetched
-        Returns:
-            order (list of TradingClass.Order): pending orders
-        """
-
-        sql_command = ("select ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
-                       "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
-                       "CashOrderQuantity from `Order` where LastStatus=1 and Stock_Ticker='%s'") % (symbol)
-
-        pending_order_arguments_rows = self.execute_responsive_sql_command(sql_command)
-        pending_order_list = []
-        for pending_order_arguments_row in pending_order_arguments_rows:
-            received_time = TradingClass.FIXDate(pending_order_arguments_row[2])
-            pending_order_arguments_row_list = list(pending_order_arguments_row)
-            pending_order_arguments_row_list[2] = received_time
-            pending_order_arguments_row_list[7] = int(pending_order_arguments_row_list[7])
-            pending_order_arguments_row_list[8] = int(pending_order_arguments_row_list[8])
-            pending_order_arguments_row_list[9] = int(pending_order_arguments_row_list[9])
+            pending_order_arguments_row_list = list(pending_order_arguments_row)  # ClientOrderID
+            pending_order_arguments_row_list[2] = TradingClass.FIXDate.from_mysql_date_stamp_string(
+                pending_order_arguments_row[2])  # ReceivedDate
+            pending_order_arguments_row_list[7] = float(pending_order_arguments_row_list[7])  # OrderQuantity
+            pending_order_arguments_row_list[8] = float(pending_order_arguments_row_list[8])  # Price
+            pending_order_arguments_row_list[9] = int(pending_order_arguments_row_list[9])  # LastStatus
+            pending_order_arguments_row_list[14] = TradingClass.FIXDate.from_mysql_date_stamp_string(
+                pending_order_arguments_row[14])  # MaturityDate
             order = Order(*pending_order_arguments_row_list)
             pending_order_list.append(order)
         return pending_order_list
@@ -1034,7 +1003,7 @@ class ServerDatabaseHandler:
             "SELECT CurrentPrice.CurrentPrice, PendingOrderCurrentQuantity.CurrentQuantity "
             "FROM PendingOrderCurrentQuantity INNER JOIN CurrentPrice "
             "ON PendingOrderCurrentQuantity.Ticker = CurrentPrice.Stock_Ticker")
-        order_arguments_rows = self.execute_responsive_sql_command(sql_command)
+        order_arguments_rows = self.execute_select_sql_command(sql_command)
         order_arguments_row_list = list(order_arguments_rows[0])
         order_arguments_row_list[0] = int(order_arguments_row_list[0])
         order_arguments_row_list[1] = int(order_arguments_row_list[1])
@@ -1050,7 +1019,7 @@ class ServerDatabaseHandler:
         Returns:
              Stock Total Volume (float)"""
         sql_command = ("SELECT TotalVolume FROM Stock where Ticker='%s'" % stock_ticker_symbol)
-        stock_arguments_rows = self.execute_responsive_sql_command(sql_command)
+        stock_arguments_rows = self.execute_select_sql_command(sql_command)
         stock_total_volume = stock_arguments_rows[0][0]
 
         return stock_total_volume
