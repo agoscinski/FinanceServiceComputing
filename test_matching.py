@@ -101,7 +101,7 @@ class TestMatchingAlgorithm:
                                                                   side=TradingClass.OrderSideType.SELL,
                                                                   order_type=TradingClass.OrderType.MARKET)
         trading_matrix_entry = 55.5
-        timestamp = TradingClass.FIXDateTimeUTC.from_date_time_stamp_string("20111111-11:11:11")
+        timestamp = TradingClass.FIXDateTimeUTC.from_date_fix_time_stamp_string("20111111-11:11:11")
         created_execution_order = matching_algorithm.create_order_execution_from_trading_matrix_entry(
             trading_matrix_entry=trading_matrix_entry,
             buy_order=buy_market_order,

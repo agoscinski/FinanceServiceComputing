@@ -87,6 +87,10 @@ class TestServerDatabaseHandler:
         execution_id = fsc_server_database_handler.execute_responsive_insert_sql_command(insert_sql)
         assert execution_id == 3
 
+    def test_fetch_order_by_order_id(self):
+        order_id = fsc_server_database_handler.fetch_order_by_order_id(0,'GS','2016-11-09')
+        assert order_id == 1
+
     def test_insert_order_execution(self):
         order_execution = TradingClass.OrderExecution.create_dummy_order_execution(execution_id=None)
         assert fsc_server_database_handler.insert_order_execution(order_execution) == 4

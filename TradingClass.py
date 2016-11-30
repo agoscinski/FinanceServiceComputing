@@ -27,6 +27,7 @@ class OrderType:
     MARKET = fix.TriggerOrderType_MARKET
     LIMIT = fix.TriggerOrderType_LIMIT
 
+
 class LastStatus:
     DONE = 0
     PENDING = 1
@@ -208,9 +209,8 @@ class FIXDate(object):
     def __eq__(self, other):
         return self.date.year == other.date.year and self.date.month == other.date.month and self.date.day == other.date.day
 
-
     def __ne__(self, other):
-        return not __eq__(self,other)
+        return not __eq__(self, other)
 
     def __str__(self):
         return self.date.strftime("%Y%m%d")
@@ -315,7 +315,7 @@ class FIXDateTimeUTC(object):
         return cls(current_time_datetime_object)
 
     @classmethod
-    def from_date_time_stamp_string(cls, date_time_stamp_string):
+    def from_date_fix_time_stamp_string(cls, date_time_stamp_string):
         """Constructor from date stamp strings
 
         Args:
@@ -328,6 +328,14 @@ class FIXDateTimeUTC(object):
 
     def __str__(self):
         return self.date_time.strftime("%Y%m%d-%H:%M:%S")
+
+    @property
+    def mysql_date_stamp_string(self):
+        return self.date.strftime("%Y-%m-%d %H:%M:%S")
+
+    @mysql_date_stamp_string.setter
+    def year(self, date_stamp_string):
+        self.date = datetime.datetime.strptime(date_stamp_string, "%Y-%m-%d %H:%M:%S").date()
 
     # TODO clean
     def get_date_time(self):
@@ -601,7 +609,7 @@ class NewSingleOrder(object):
                                       execution_instruction="1",
                                       symbol="TSLA", maturity_month_year=FIXYearMonth.from_year_month(2000, 1),
                                       maturity_day=2, side=OrderSideType.BUY,
-                                      transaction_time=FIXDateTimeUTC.from_date_time_stamp_string("20000101-10:00:00"),
+                                      transaction_time=FIXDateTimeUTC.from_date_fix_time_stamp_string("20000101-10:00:00"),
                                       order_quantity=10., order_type=OrderType.LIMIT, price=100.,
                                       stop_prices=None, sender_company_id=None, sending_time=None,
                                       on_behalf_of_company_id=None, sender_sub_id=None):
@@ -966,7 +974,7 @@ class OrderExecution:
 
     @classmethod
     def create_dummy_order_execution(cls, execution_id=0, quantity=100., price=50.,
-                                     execution_time=FIXDateTimeUTC.from_date_time_stamp_string(
+                                     execution_time=FIXDateTimeUTC.from_date_fix_time_stamp_string(
                                          "20111111-11:11:11"),
                                      buyer_client_order_id="client",
                                      buyer_company_id="Client Firm",
