@@ -54,3 +54,13 @@ class TestServerDatabaseHandler:
         dummy_order = TradingClass.Order.create_dummy_order()
         fsc_server_database_handler.insert_order(dummy_order)
 
+    def test_fetch_pending_orders_for_stock_ticker(self):
+        symbol = "TSLA"
+        order_list = fsc_server_database_handler.fetch_pending_orders_for_stock_ticker(symbol)
+        goldmann_sachs_order = TradingClass.Order(client_order_id='0',account_company_id='GS', received_date=TradingClass.FIXDate.from_mysql_date_stamp_string('2016-11-09'), handling_instruction='1',maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string('2016-11-15'),stock_ticker='TSLA', side='1',order_type='2',order_quantity='1000',price='10000', last_status='1')
+        morgan_stanley_order = TradingClass.Order(client_order_id='0',account_company_id='MS', received_date=TradingClass.FIXDate.from_mysql_date_stamp_string('2016-11-08'), handling_instruction='1',maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string('2016-11-11'),stock_ticker='TSLA', side='2',order_type='2',order_quantity='200',price='1005', last_status='1')
+        order_list.__contains__(goldmann_sachs_order)
+        order_list.__contains__(morgan_stanley_order)
+        assert order_list
+
+

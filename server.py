@@ -966,13 +966,11 @@ class ServerDatabaseHandler:
         pending_order_list = []
         for pending_order_arguments_row in pending_order_arguments_rows:
             pending_order_arguments_row_list = list(pending_order_arguments_row)  # ClientOrderID
-            pending_order_arguments_row_list[2] = TradingClass.FIXDate.from_mysql_date_stamp_string(
-                pending_order_arguments_row[2])  # ReceivedDate
+            pending_order_arguments_row_list[2] = TradingClass.FIXDate(pending_order_arguments_row[2])  # ReceivedDate
             pending_order_arguments_row_list[7] = float(pending_order_arguments_row_list[7])  # OrderQuantity
             pending_order_arguments_row_list[8] = float(pending_order_arguments_row_list[8])  # Price
             pending_order_arguments_row_list[9] = int(pending_order_arguments_row_list[9])  # LastStatus
-            pending_order_arguments_row_list[14] = TradingClass.FIXDate.from_mysql_date_stamp_string(
-                pending_order_arguments_row[14])  # MaturityDate
+            pending_order_arguments_row_list[14] = TradingClass.FIXDate(pending_order_arguments_row[14])  # MaturityDate
             order = Order(*pending_order_arguments_row_list)
             pending_order_list.append(order)
         return pending_order_list
