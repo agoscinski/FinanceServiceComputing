@@ -304,9 +304,9 @@ class ServerFIXHandler(TradingClass.FIXHandler):
 
 
 class ServerLogic:
-    def __init__(self, server_config_file_name):
+    def __init__(self, server_config_file_name, server_database_handler=None):
         self.server_fix_handler = ServerFIXHandler(self, server_config_file_name)
-        self.server_database_handler = ServerDatabaseHandler()
+        self.server_database_handler = ServerDatabaseHandler() if server_database_handler == None else server_database_handler
         self.market_simulation_handler = MarketSimulationHandler()
         self.initialize_new_database = True
 
@@ -902,6 +902,43 @@ class ServerDatabaseHandler:
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 
         return fetched_database_rows
+
+    def execute_nonresponsive_sql_command(self, sql_command):
+        """Used to execute commands CREATE, UPDATE, DELETE which returns nothing
+        Args:
+            sql_command (string): the sql command to be executed
+        Returns:
+            None
+        """
+        try:
+            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+                                         db=self.database_name, port=self.database_port)
+            cursor = connection.cursor()
+            cursor.execute(sql_command)
+            connection.commit()
+            connection.close()
+            return
+        except MySQLdb.Error, e:
+            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+
+    def execute_responsive_insert_sql_command(self, insert_sql_command):
+        """Used to execute commands INSERT which returns the produced ID from database server
+        Args:
+            insert_sql_command (string): the sql command to be executed
+        Returns:
+            id_of_inserted_row (ID type in database): the ID of the object inserted
+        """
+        try:
+            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+                                         db=self.database_name, port=self.database_port)
+            cursor = connection.cursor()
+            cursor.execute(insert_sql_command)
+            connection.commit()
+            id_of_inserted_row = connection.lastrowid()
+            connection.close()
+            return id_of_inserted_row
+        except MySQLdb.Error, e:
+            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 
     def insert_order_cancel(self, requested_order_cancel):
         #TODO Husein figure out who does it

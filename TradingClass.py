@@ -705,7 +705,7 @@ class Order(object):
         cash_order_quantity (float): amount of order requested
     """
 
-    def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
+    def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side, maturity_date,
                  order_type, order_quantity, price, last_status, msg_seq_num=None, on_behalf_of_company_id=None,
                  sender_sub_id=None, cash_order_quantity=None):
         self.client_order_id = client_order_id
@@ -714,6 +714,7 @@ class Order(object):
         self.handling_instruction = handling_instruction
         self.stock_ticker = stock_ticker
         self.side = side
+        self.maturity_date = maturity_date
         self.order_type = order_type
         self.order_quantity = order_quantity
         self.price = price
@@ -728,9 +729,10 @@ class Order(object):
                           stock_ticker="TSLA", side="1", maturity_date=FIXDate.from_date_stamp_string("20161125"), order_type="1", order_quantity=100.00, price=10.00,
                           last_status=0, msg_seq_num=0):
         """For testing"""
-        dummy_order = cls(client_order_id, account_company_id, received_date, handling_instruction,
-                          stock_ticker, side, maturity_date, order_type, order_quantity, price,
-                          last_status, msg_seq_num)
+        dummy_order = cls(client_order_id=client_order_id, account_company_id=account_company_id,
+                          received_date=received_date, handling_instruction=handling_instruction,
+                          stock_ticker=stock_ticker, side=side, maturity_date=maturity_date, order_type=order_type,
+                          order_quantity=order_quantity, price=price, last_status=last_status)
         return dummy_order
 
     @classmethod
