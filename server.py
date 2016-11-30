@@ -867,9 +867,8 @@ class ServerDatabaseHandler:
 
         Args:
             order (TradingClass.Order): The order to be inserted
-
         Returns:
-            order_id (string): the order id from the order inserted, if it is None, then insertion failed
+            None
         """
         command = (
             "INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
@@ -879,8 +878,8 @@ class ServerDatabaseHandler:
                order.handling_instruction, order.stock_ticker, str(order.side),
                str(order.maturity_date), order.order_type, str(order.order_quantity),
                str(order.price), str(order.last_status), str(order.msg_seq_num)))
-        order_id = self.execute_nonresponsive_sql_command(command)
-        return order_id
+        self.execute_nonresponsive_sql_command(command)
+        return
 
     def execute_select_sql_command(self, sql_command):
         """Used to execute SELECT commands which return a table
