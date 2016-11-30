@@ -833,8 +833,17 @@ class ServerDatabaseHandler:
         Returns:
             order quantity (TradingClass.Order): the order object
         """
-        command="select * from Order where ClientOrderID=" + client_order_id + " and Account_CompanyID="+ account_company_id + " and ReceivedDate=" + received_date
-        print command
+        command=("select * from Order where ClientOrderID="
+                    "'%s' and Account_CompanyID="
+                    "'%s' and ReceivedDate='%s'" %(client_order_id,account_company_id,received_date))
+        order_fetched=1
+        order_rows = self.execute_select_sql_command(command)
+        for order_row in order_rows:
+            order_fetched = Order(order_row[0], order_row[1], order_row[2], order_row[3], order_row[4], order_row[5], order_row[6],
+                         order_row[7], order_row[8], order_row[10], order_row[11])
+
+
+        return str(order_fetched)
         # TODO use execute_select_sql_command
         #return TradingClass.Order.create_dummy_order()
 
