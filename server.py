@@ -304,7 +304,7 @@ class ServerLogic:
         self.server_fix_handler = ServerFIXHandler(self, server_config_file_name)
         self.server_database_handler = ServerDatabaseHandler() if server_database_handler == None else server_database_handler
         self.market_simulation_handler = MarketSimulationHandler()
-        self.initialize_new_database = True
+        self.initialize_new_database = False
 
     def start_server(self):
         if self.initialize_new_database:
@@ -794,7 +794,17 @@ class ServerDatabaseHandler:
         """
         # TODO use the execute_responsive_insert_sql_command function for this, this function is similar to insert_order
 
-        return None
+        command = (
+            "INSERT INTO OrderExecution(OrderExecutionQuantity, OrderExecutionPrice, ExecutionTime, Order_BuyClientOrderID,"
+            "Order_BuyCompanyID, Order_BuyReceivedDate, Order_SellClientOrderID, Order_SellCompanyID, Order_SellReceivedDate)"
+            " VALUES('%s','%s','%s', '%s','%s','%s', '%s','%s','%s')"
+            %(str(order_execution.quantity),str(order_execution.price),str(order_execution.execution_time),order_execution.buyer_client_order_id,
+                order_execution.buyer_company_id,str(order_execution.buyer_received_date),order_execution.seller_client_order_id,order_execution.seller_company_id,
+                order_execution.seller_received_date))
+        order_execution_id = self.execute_responsive_insert_sql_command(command)
+        return order_execution_id
+
+
 
     def fetch_cumulative_quantity_and_average_price_by_order_id(self, client_order_id, account_company_id,
                                                                 received_date):
@@ -823,8 +833,10 @@ class ServerDatabaseHandler:
         Returns:
             order quantity (TradingClass.Order): the order object
         """
+        command="select * from Order where ClientOrderID=" + client_order_id + " and Account_CompanyID="+ account_company_id + " and ReceivedDate=" + received_date
+        print command
         # TODO use execute_select_sql_command
-        return TradingClass.Order.create_dummy_order()
+        #return TradingClass.Order.create_dummy_order()
 
     def fetch_latest_order_by_client_information(self, client_order_id, account_company_id):
         """Fetches the order data of the latest order with the client information (client_order_id, account_company_id)
@@ -925,7 +937,7 @@ class ServerDatabaseHandler:
             cursor = connection.cursor()
             cursor.execute(insert_sql_command)
             connection.commit()
-            id_of_inserted_row = connection.lastrowid()
+            id_of_inserted_row = cursor.lastrowid
             connection.close()
             return id_of_inserted_row
         except MySQLdb.Error, e:

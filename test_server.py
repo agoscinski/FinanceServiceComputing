@@ -62,5 +62,6 @@ class TestServerDatabaseHandler:
         order_list.__contains__(goldmann_sachs_order)
         order_list.__contains__(morgan_stanley_order)
         assert order_list
-
-
+    def test_insert_order_execution(self):
+        order_execution=TradingClass.OrderExecution.create_dummy_order_execution(execution_id=None)
+        assert fsc_server_database_handler.insert_order_execution(order_execution) == 3
