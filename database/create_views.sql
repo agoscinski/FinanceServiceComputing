@@ -52,7 +52,7 @@ WHERE LastExecutedTradeTime.LastExecutedTradeTime = order_execution.ExecutionTim
 
 
 CREATE VIEW `OrderCumulativeQuantityAndAveragePrice` AS
-SELECT `Order`.ClientOrderID, `Order`.Account_CompanyID, `Order`.ReceivedDate, IFNULL(grouped_order_execution.CumulativeQuantity,0), IFNULL(grouped_order_execution.AveragePrice,0)
+SELECT `Order`.ClientOrderID, `Order`.Account_CompanyID, `Order`.ReceivedDate, IFNULL(grouped_order_execution.CumulativeQuantity,0) AS CumulativeQuantity, IFNULL(grouped_order_execution.AveragePrice,0) AS AveragePrice
 FROM
 	((SELECT Order_BuyClientOrderID AS ClientOrderID, Order_BuyCompanyID AS CompanyID, Order_BuyReceivedDate AS ReceivedDate, SUM(OrderExecutionQuantity) AS CumulativeQuantity, AVG(OrderExecutionPrice) AS AveragePrice
 	FROM OrderExecution
