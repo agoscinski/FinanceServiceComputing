@@ -64,5 +64,3 @@ FROM
 RIGHT OUTER JOIN
 	`Order`
 ON `Order`.ClientOrderID = grouped_order_execution.ClientOrderID AND `Order`.Account_CompanyID = grouped_order_execution.CompanyID AND `Order`.ReceivedDate = grouped_order_execution.ReceivedDate;
--- merge for buy and sell
--- join with order
