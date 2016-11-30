@@ -12,7 +12,7 @@ fsc_server_logic = server.ServerLogic(server_config_file_name, fsc_server_databa
 
 def setup_module(module):
     """ setup any state specific to the execution of the given module."""
-    fsc_server_database_handler.init_database()
+    #fsc_server_database_handler.init_database()
 
 
 
@@ -20,7 +20,7 @@ def teardown_module(module):
     """ teardown any state that was previously setup with a setup_module
     method.
     """
-    fsc_server_database_handler.teardown_database()
+    #fsc_server_database_handler.teardown_database()
 
 class TestServerLogic:
 
@@ -50,17 +50,45 @@ class TestServerDatabaseHandler:
         assert parsed_sql_commands[1] == asserted_sql_commands[1]
         assert parsed_sql_commands[2] == asserted_sql_commands[2]
 
-    def test_insert_order(self):
-        dummy_order = TradingClass.Order.create_dummy_order()
-        fsc_server_database_handler.insert_order(dummy_order)
-
     def test_fetch_pending_orders_for_stock_ticker(self):
         symbol = "TSLA"
         order_list = fsc_server_database_handler.fetch_pending_orders_for_stock_ticker(symbol)
-        goldmann_sachs_order = TradingClass.Order(client_order_id='0',account_company_id='GS', received_date=TradingClass.FIXDate.from_mysql_date_stamp_string('2016-11-09'), handling_instruction='1',maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string('2016-11-15'),stock_ticker='TSLA', side='1',order_type='2',order_quantity='1000',price='10000', last_status='1')
-        morgan_stanley_order = TradingClass.Order(client_order_id='0',account_company_id='MS', received_date=TradingClass.FIXDate.from_mysql_date_stamp_string('2016-11-08'), handling_instruction='1',maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string('2016-11-11'),stock_ticker='TSLA', side='2',order_type='2',order_quantity='200',price='1005', last_status='1')
-        order_list.__contains__(goldmann_sachs_order)
+        goldman_sachs_order = TradingClass.Order(client_order_id='0', account_company_id='GS',
+                                                 received_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-09'), handling_instruction='1',
+                                                 maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-15'), stock_ticker='TSLA', side='1', order_type='2',
+                                                 order_quantity='1000', price='10000', last_status='1')
+        morgan_stanley_order = TradingClass.Order(client_order_id='0', account_company_id='MS',
+                                                  received_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                      '2016-11-08'), handling_instruction='1',
+                                                  maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                      '2016-11-11'), stock_ticker='TSLA', side='2', order_type='2',
+                                                  order_quantity='200', price='1005', last_status='1')
+        order_list.__contains__(goldman_sachs_order)
         order_list.__contains__(morgan_stanley_order)
         assert order_list
 
+    def test_fetch_cumulative_quantity_and_average_price_by_order_id(self):
+        client_order_id, account_company_id, received_date = '0', 'GS', TradingClass.FIXDate.from_mysql_date_stamp_string(
+            '2016-11-09')
+        cumulative_quantity, average_price = fsc_server_database_handler.fetch_cumulative_quantity_and_average_price_by_order_id(
+            client_order_id, account_company_id, received_date)
+        asserted_cumulative_quantity = float(100+100)
+        asserted_average_price = (1100+550)/2.
+        assert asserted_cumulative_quantity == cumulative_quantity
+        assert asserted_average_price == average_price
 
+    # do inserts here so they do not interfere with logical tests
+
+    def test_execute_responsive_insert_sql_command(self):
+        insert_sql = "INSERT INTO OrderExecution(OrderExecutionQuantity, OrderExecutionPrice, ExecutionTime," \
+                     " Order_BuyClientOrderID, Order_BuyCompanyID, Order_BuyReceivedDate, Order_SellClientOrderID," \
+                     " Order_SellCompanyID, Order_SellReceivedDate) VALUES('100','550','2016-11-09 12:14:07', '0','GS'," \
+                     "'2016-11-09', '1','MS','2016-11-08')"
+        execution_id = fsc_server_database_handler.execute_responsive_insert_sql_command(insert_sql)
+        assert execution_id == 3
+
+    def test_insert_order(self):
+        dummy_order = TradingClass.Order.create_dummy_order(msg_seq_num=0)
+        fsc_server_database_handler.insert_order(dummy_order)

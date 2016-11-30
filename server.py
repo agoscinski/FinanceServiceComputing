@@ -806,11 +806,17 @@ class ServerDatabaseHandler:
             account_company_id (string: second part of order id
             received_date (TradingClass.FIXDate): third part of order id
         Returns:
-            cumulative quantity (float): total number of shares filled of an order with the given order id
-            average price (float): the average price of all filled shares
+            cumulative_quantity (float): total number of shares filled of an order with the given order id
+            average_price (float): the average price of all filled shares
         """
-        # TODO use execute_select_sql_command
-        return 11.5, 33.33
+        sql_command = ("select CumulativeQuantity, AveragePrice from `OrderCumulativeQuantityAndAveragePrice` "
+                       "where ClientOrderID='%s' and Account_CompanyID='%s' and ReceivedDate = '%s'") % (
+                          client_order_id, account_company_id, received_date.mysql_date_stamp_string)
+
+        sql_command_result = self.execute_select_sql_command(sql_command)
+        if len(sql_command_result) < 1: return None
+        cumulative_quantity, average_price =  float(sql_command_result[0][0]), float(sql_command_result[0][1])
+        return cumulative_quantity, average_price
 
     def fetch_order_by_order_id(self, client_order_id, account_company_id, received_date):
         """Fetches the order data of the order with the order id (client_order_id, account_company_id, received_date)
@@ -866,10 +872,10 @@ class ServerDatabaseHandler:
             "INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
             "Side, MaturityDate, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum) VALUES('%s','%s','%s','%s','%s','%s',"
             "'%s','%s','%s','%s','%s', '%s')"
-            % (order.client_order_id, order.account_company_id, str(order.received_date),
+            % (order.client_order_id, order.account_company_id, order.received_date.mysql_date_stamp_string,
                order.handling_instruction, order.stock_ticker, str(order.side),
                str(order.maturity_date), order.order_type, str(order.order_quantity),
-               str(order.price), str(order.last_status), str(order.msg_seq_num)))
+               str(order.price), str(order.last_status), str(msg_seq_num)))
         self.execute_nonresponsive_sql_command(command)
         return
 
@@ -925,7 +931,7 @@ class ServerDatabaseHandler:
             cursor = connection.cursor()
             cursor.execute(insert_sql_command)
             connection.commit()
-            id_of_inserted_row = connection.lastrowid()
+            id_of_inserted_row = cursor.lastrowid
             connection.close()
             return id_of_inserted_row
         except MySQLdb.Error, e:
@@ -954,26 +960,25 @@ class ServerDatabaseHandler:
             symbol (string): The ticker symbol for which orders are fetched
 
         Returns:
-            order (list of TradingClass.Order): pending orders
+            pending_orders (list of TradingClass.Order): pending orders
         """
-
         sql_command = ("select ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
                        "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
                        "CashOrderQuantity, MaturityDate from `Order` where LastStatus=1 and Stock_Ticker='%s'") % (
-                      symbol)
+                          symbol)
 
-        pending_order_arguments_rows = self.execute_select_sql_command(sql_command)
-        pending_order_list = []
-        for pending_order_arguments_row in pending_order_arguments_rows:
-            pending_order_arguments_row_list = list(pending_order_arguments_row)  # ClientOrderID
-            pending_order_arguments_row_list[2] = TradingClass.FIXDate(pending_order_arguments_row[2])  # ReceivedDate
-            pending_order_arguments_row_list[7] = float(pending_order_arguments_row_list[7])  # OrderQuantity
-            pending_order_arguments_row_list[8] = float(pending_order_arguments_row_list[8])  # Price
-            pending_order_arguments_row_list[9] = int(pending_order_arguments_row_list[9])  # LastStatus
-            pending_order_arguments_row_list[14] = TradingClass.FIXDate(pending_order_arguments_row[14])  # MaturityDate
-            order = Order(*pending_order_arguments_row_list)
-            pending_order_list.append(order)
-        return pending_order_list
+        pending_orders_arguments_as_list = self.execute_select_sql_command(sql_command) # list of tuples
+        pending_orders = []
+        for pending_order_arguments in pending_orders_arguments_as_list:
+            pending_order_arguments_as_list = list(pending_order_arguments)  # ClientOrderID
+            pending_order_arguments_as_list[2] = TradingClass.FIXDate(pending_order_arguments[2])  # ReceivedDate
+            pending_order_arguments_as_list[7] = float(pending_order_arguments_as_list[7])  # OrderQuantity
+            pending_order_arguments_as_list[8] = float(pending_order_arguments_as_list[8])  # Price
+            pending_order_arguments_as_list[9] = int(pending_order_arguments_as_list[9])  # LastStatus
+            pending_order_arguments_as_list[14] = TradingClass.FIXDate(pending_order_arguments[14])  # MaturityDate
+            order = Order(*pending_order_arguments_as_list)
+            pending_orders.append(order)
+        return pending_orders
 
     def delete_all_stock_data(self):
         command = "delete from Stock"

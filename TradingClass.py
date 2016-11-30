@@ -195,6 +195,15 @@ class FIXDate(object):
     def __str__(self):
         return self.date.strftime("%Y%m%d")
 
+
+    @property
+    def mysql_date_stamp_string(self):
+        return self.date.strftime("%Y-%m-%d")
+
+    @mysql_date_stamp_string.setter
+    def year(self, date_stamp_string):
+        self.date = datetime.datetime.strptime(date_stamp_string, "%Y-%m-%d").date()
+
     @property
     def year(self):
         return self.date.year
@@ -713,6 +722,7 @@ class Order(object):
         on_behalf_of_company_id (string): original sender who sends order
         sender_sub_id (string): sub identifier of sender
         cash_order_quantity (float): amount of order requested
+        msg_seq_num (int)
     """
 
     def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side, maturity_date,
@@ -742,7 +752,7 @@ class Order(object):
         dummy_order = cls(client_order_id=client_order_id, account_company_id=account_company_id,
                           received_date=received_date, handling_instruction=handling_instruction,
                           stock_ticker=stock_ticker, side=side, maturity_date=maturity_date, order_type=order_type,
-                          order_quantity=order_quantity, price=price, last_status=last_status)
+                          order_quantity=order_quantity, price=price, last_status=last_status, msg_seq_num=0)
         return dummy_order
 
     @classmethod
