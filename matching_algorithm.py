@@ -168,6 +168,7 @@ def create_order_execution_from_trading_matrix_entry(trading_matrix_entry, buy_o
     return execution_order
 
 
+#TODO two market orders should be matched on current market price, otherwise it only makes sense create exetreme high prices for market orders, to get higher value
 def determine_price_for_match(buy_order, sell_order):
     """Determines the price between a buy and sell order which has been matched
 
