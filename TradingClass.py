@@ -485,10 +485,9 @@ class OrderCancelRequest(object):
             self.sender_sub_id = sender_sub_id
 
 
-#TODO Husein what message does it represent?
 class OrderCancelReject(object):
-    """Constructor of class OrderCancelReject:
-        @Parameter:
+    """Constructor of class OrderCancelReject represents a quickfix order cancel reject (message type 9):
+    Args:
         orig_cl_ord_id=original client order id to be cancelled (String)
         cl_ord_id= cancellation client order id (String)
         order_id= Execution Order Cancel ID  (String)
@@ -667,7 +666,6 @@ class ExecutionReport(object):
         message = fix.Message()
         header = message.getHeader()
         header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
-        #header.setField(fix.MsgSeqNum(self.fix_application.exec_id)) TODO? important?
         header.setField(fix.SendingTime())
 
         message.setField(fix.OrderID(self.order_id))
@@ -798,71 +796,7 @@ class Order(object):
         """
         return client_order_id + "_" + account_company_id + "_" + str(received_date)
 
-#TODO Husein is this for database?
-class OrderCancel(object):
-        """Constructor of class OrderCancel, it is designed after the OrderCancel table from the database
-        Args:
-            orginal_client_order_id= The order ID from the client side to be cancelled
-            client_order_id (string): The cancelled order ID from the client side
-            account_company_id (string): account company id related to the order
-            stock_ticker (string): ticker symbol of the stock referring in the order
-            side = side (int)
-            order_quantity = order quantity (int)
-            last_status = last status (int)
-            msg_seq_num = message sequence number (int)
-            on_behalf_of_company_id = original sender who sends order (String)
-            sender_sub_id = sub identifier of sender (String)
-
-        """
-
-        def __init__(self, client_order_id, order_cancel_id, account_company_id, order_received_date, stock_ticker, side,
-                     order_quantity, last_status, received_time, msg_seq_num=None, on_behalf_of_company_id=None,
-                     sender_sub_id=None, cancel_quantity=None, execution_time=None):
-
-            self.client_order_id = client_order_id
-            self.order_cancel_id = order_cancel_id
-            self.account_company_id = account_company_id
-            self.order_received_date = order_received_date
-            self.stock_ticker = stock_ticker
-            self.side = side
-            self.order_quantity = order_quantity
-            self.last_status = last_status
-            self.received_time= received_time
-            self.msg_seq_num = msg_seq_num
-            self.on_behalf_of_company_id = on_behalf_of_company_id
-            self.sender_sub_id = sender_sub_id
-            self.cancel_quantity = cancel_quantity
-            self.execution_time = execution_time
-
-        @classmethod
-        def from_order_cancel_request(cls, order_cancel_request):
-            """Creates a order from a TradingClass.OrderCancelRequest
-            Args:
-                order_cancel_request (TradingClass.OrderCancelRequest):
-            Returns:
-                order_cancel (TradingClass.OrderCancel): The order cancel object
-            """
-
-            client_order_id = order_cancel_request.orig_cl_ord_id
-            order_cancel_id = order_cancel_request.cl_ord_id
-            account_company_id = order_cancel_request.sender_comp_id
-            order_received_date= None
-            received_time = FIXDateTimeUTC.create_for_current_time()
-            stock_ticker = order_cancel_request.symbol
-            side = order_cancel_request.side
-            order_quantity = order_cancel_request.order_qty
-            last_status = LastStatus.PENDING
-            message_sequence_number = None
-            on_behalf_of_company_id = None
-            sender_sub_id = None
-            cancel_quantity = None
-            execution_time = None
-            order_cancel = cls(client_order_id, order_cancel_id, account_company_id, order_received_date, stock_ticker,
-                        side, order_quantity, last_status, received_time, message_sequence_number,
-                               on_behalf_of_company_id, sender_sub_id, cancel_quantity, execution_time)
-            return order_cancel
-
-#TODO can we just use one ExecutionReport object and depending on the type, sending different messages?
+#TODO Husein merge ExecutionReport
 class OrderCancelExecution(object):
         """Constructor
         @Parameter:
@@ -1015,6 +949,69 @@ class OrderExecution:
         """
         return Order.create_order_id(self.seller_client_order_id, self.seller_company_id,
                                      self.seller_received_date)
+
+class OrderCancel(object):
+    """Constructor of class OrderCancel, it is designed after the OrderCancel table from the database
+    Args:
+        orginal_client_order_id= The order ID from the client side to be cancelled
+        client_order_id (string): The cancelled order ID from the client side
+        account_company_id (string): account company id related to the order
+        stock_ticker (string): ticker symbol of the stock referring in the order
+        side = side (int)
+        order_quantity = order quantity (int)
+        last_status = last status (int)
+        msg_seq_num = message sequence number (int)
+        on_behalf_of_company_id = original sender who sends order (String)
+        sender_sub_id = sub identifier of sender (String)
+
+    """
+
+    def __init__(self, client_order_id, order_cancel_id, account_company_id, order_received_date, stock_ticker,
+                 side,
+                 order_quantity, last_status, received_time, msg_seq_num=None, on_behalf_of_company_id=None,
+                 sender_sub_id=None, cancel_quantity=None, execution_time=None):
+        self.client_order_id = client_order_id
+        self.order_cancel_id = order_cancel_id
+        self.account_company_id = account_company_id
+        self.order_received_date = order_received_date
+        self.stock_ticker = stock_ticker
+        self.side = side
+        self.order_quantity = order_quantity
+        self.last_status = last_status
+        self.received_time = received_time
+        self.msg_seq_num = msg_seq_num
+        self.on_behalf_of_company_id = on_behalf_of_company_id
+        self.sender_sub_id = sender_sub_id
+        self.cancel_quantity = cancel_quantity
+        self.execution_time = execution_time
+
+    @classmethod
+    def from_order_cancel_request(cls, order_cancel_request):
+        """Creates a order from a TradingClass.OrderCancelRequest
+        Args:
+            order_cancel_request (TradingClass.OrderCancelRequest):
+        Returns:
+            order_cancel (TradingClass.OrderCancel): The order cancel object
+        """
+
+        client_order_id = order_cancel_request.orig_cl_ord_id
+        order_cancel_id = order_cancel_request.cl_ord_id
+        account_company_id = order_cancel_request.sender_comp_id
+        order_received_date = None
+        received_time = FIXDateTimeUTC.create_for_current_time()
+        stock_ticker = order_cancel_request.symbol
+        side = order_cancel_request.side
+        order_quantity = order_cancel_request.order_qty
+        last_status = LastStatus.PENDING
+        message_sequence_number = None
+        on_behalf_of_company_id = None
+        sender_sub_id = None
+        cancel_quantity = None
+        execution_time = None
+        order_cancel = cls(client_order_id, order_cancel_id, account_company_id, order_received_date, stock_ticker,
+                           side, order_quantity, last_status, received_time, message_sequence_number,
+                           on_behalf_of_company_id, sender_sub_id, cancel_quantity, execution_time)
+        return order_cancel
 
 
 ###########################
