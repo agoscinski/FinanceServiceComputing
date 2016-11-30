@@ -90,13 +90,13 @@ class TestMatchingAlgorithm:
     def test_create_order_execution_from_trading_matrix_entry(self):
         buy_market_order = TradingClass.Order.create_dummy_order(client_order_id="client",
                                                                  account_company_id="Client Firm", price=10.,
-                                                                 received_date=TradingClass.FIXDate.from_date_stamp_string(
+                                                                 received_date=TradingClass.FIXDate.from_fix_date_stamp_string(
                                                                      "20110805"), order_quantity=100.,
                                                                  side=TradingClass.OrderSideType.BUY,
                                                                  order_type=TradingClass.OrderType.MARKET)
         sell_market_order = TradingClass.Order.create_dummy_order(client_order_id="client",
                                                                   account_company_id="Client Firm", price=10.,
-                                                                  received_date=TradingClass.FIXDate.from_date_stamp_string(
+                                                                  received_date=TradingClass.FIXDate.from_fix_date_stamp_string(
                                                                       "20110804"), order_quantity=50.,
                                                                   side=TradingClass.OrderSideType.SELL,
                                                                   order_type=TradingClass.OrderType.MARKET)
@@ -107,7 +107,7 @@ class TestMatchingAlgorithm:
             buy_order=buy_market_order,
             sell_order=sell_market_order,
             timestamp=timestamp)
-        asserted_execution_order = TradingClass.OrderExecution(execution_id=0, quantity=trading_matrix_entry, price=10.,
+        asserted_execution_order = TradingClass.OrderExecution(execution_id=None, quantity=trading_matrix_entry, price=10.,
                                                                execution_time=timestamp,
                                                                buyer_client_order_id=buy_market_order.client_order_id,
                                                                buyer_company_id=buy_market_order.account_company_id,
