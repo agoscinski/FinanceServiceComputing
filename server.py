@@ -848,7 +848,7 @@ class ServerDatabaseHandler:
                        "Side, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
                        "CashOrderQuantity from `Order` where LastStatus=1 and ClientOrderID='%s' "
                        "and Account_CompanyID='%s'") % (client_order_id, account_company_id)
-        #TODO Husein return only the latest order, why do you return list?
+        #TODO Husein not finished yet
         order_arguments_rows = self.execute_responsive_sql_command(sql_command)
         order_list = []
         for order_arguments_row in order_arguments_rows:
