@@ -155,8 +155,8 @@ class FIXDate(object):
         self.date = date_object
 
     @classmethod
-    def from_date_stamp_string(cls, date_stamp_string):
-        """Constructor from date stamp strings
+    def from_fix_date_stamp_string(cls, date_stamp_string):
+        """Constructor for mysql date stamp strings
 
         Args:
             date_stamp_string (string): string in format YYYYMMDD
@@ -164,6 +164,18 @@ class FIXDate(object):
             (FIXDate object)
         """
         date_object = datetime.datetime.strptime(date_stamp_string, "%Y%m%d").date()
+        return cls(date_object)
+
+    @classmethod
+    def from_mysql_date_stamp_string(cls, date_stamp_string):
+        """Constructor for mysql date stamp strings
+
+        Args:
+            date_stamp_string (string): string in format YYYY-MM-DD
+        Returns:
+            (FIXDate object)
+        """
+        date_object = datetime.datetime.strptime(date_stamp_string, "%Y-%m-%d").date()
         return cls(date_object)
 
     @classmethod
@@ -723,9 +735,9 @@ class Order(object):
         self.cash_order_quantity = cash_order_quantity
 
     @classmethod
-    def create_dummy_order(cls, client_order_id="20161120-001", account_company_id="client", received_date=FIXDate.from_date_stamp_string("20161120"), handling_instruction="1",
-                          stock_ticker="TSLA", side="1", maturity_date=FIXDate.from_date_stamp_string("20161125"), order_type="1", order_quantity=100.00, price=10.00,
-                          last_status=0, msg_seq_num=0):
+    def create_dummy_order(cls, client_order_id="20161120-001", account_company_id="client", received_date=FIXDate.from_fix_date_stamp_string("20161120"), handling_instruction="1",
+                           stock_ticker="TSLA", side="1", maturity_date=FIXDate.from_fix_date_stamp_string("20161125"), order_type="1", order_quantity=100.00, price=10.00,
+                           last_status=0, msg_seq_num=0):
         """For testing"""
         dummy_order = cls(client_order_id=client_order_id, account_company_id=account_company_id,
                           received_date=received_date, handling_instruction=handling_instruction,
@@ -907,10 +919,10 @@ class OrderExecution:
                                          "20111111-11:11:11"),
                                      buyer_client_order_id="client",
                                      buyer_company_id="Client Firm",
-                                     buyer_received_date=FIXDate.from_date_stamp_string("20111110"),
+                                     buyer_received_date=FIXDate.from_fix_date_stamp_string("20111110"),
                                      seller_client_order_id="MS",
                                      seller_company_id="Morgan Stanely",
-                                     seller_received_date=FIXDate.from_date_stamp_string("20111109")):
+                                     seller_received_date=FIXDate.from_fix_date_stamp_string("20111109")):
         """
         Args:
             executed_quantity (float): quantity of the order execution
