@@ -93,7 +93,7 @@ class ServerFIXApplication(fix.Application):
         return self.order_id
 
 
-class ServerFIXHandler:
+class ServerFIXHandler(TradingClass.FIXHandler):
     def __init__(self, server_logic, server_config_file_name):
         self.server_logic = server_logic
         self.server_config_file_name = server_config_file_name
@@ -184,41 +184,17 @@ class ServerFIXHandler:
 
         return
 
-    def handle_order_request(self, message):
-        """Process market data request
+    def handle_order_request(self, fix_message):
+        """Process order request from a client
 
             Args:
-            message :  order fix message received from client
+                fix_message (quickfix.Message): order fix message received from client
 
             Returns:
-            None
+                None
         """
-        # Retrieving Fix Data from order request sent by client
-        header = message.getHeader()
-        cl_ord_id = self.get_field_value(fix.ClOrdID(), message)
-        handl_inst = self.get_field_value(fix.HandlInst(), message)
-        exec_inst = self.get_field_value(fix.ExecInst(), message)
-        symbol = self.get_field_value(fix.Symbol(), message)
-        maturity_month_year = self.get_field_value(fix.MaturityMonthYear(), message)
-        maturity_day = self.get_field_value(fix.MaturityDay(), message)
-        side = self.get_field_value(fix.Side(), message)
-        transact_time = self.get_field_string(fix.TransactTime(), message)
-        order_qty = self.get_field_value(fix.OrderQty(), message)
-        ord_type = self.get_field_value(fix.OrdType(), message)
-        price = self.get_field_value(fix.Price(), message)
-        stop_px = self.get_field_value(fix.StopPx(), message)
-        sender_comp_id = self.get_header_field_value(fix.SenderCompID(), message)
-        sending_time = self.get_header_field_string(fix.SendingTime(), message)
-        on_behalf_of_comp_id = self.get_header_field_value(fix.OnBehalfOfCompID(), message)
-        sender_sub_id = self.get_header_field_value(fix.SenderSubID(), message)
-
-        # Create NewSingleOrder Object to be sent to server logic
-        fix_order = NewSingleOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side,
-                                   transact_time, order_qty, ord_type, price, stop_px, sender_comp_id,
-                                   sending_time, on_behalf_of_comp_id, sender_sub_id)
-
+        fix_order = NewSingleOrder.from_fix_message(fix_message)
         self.server_logic.process_order_request(fix_order)
-
         return
 
     def send_execution_report_respond(self, execution_report):
@@ -234,67 +210,24 @@ class ServerFIXHandler:
         fix.Session.sendToTarget(fix_message, self.fix_application.sessionID)
         return
 
-    def send_reject_order_execution_respond(self, order_execution):
+    def handle_cancel_request(self, message):
+        #TODO Husein
+        pass
+
+    def send_reject_order_execution_respond(self, execution_report):
         """Send order reject execution respond
 
             Args:
-                order_execution : OrderExecution object created in server logic
+                execution_report (TradingClass.ExecutionReport):
 
             Returns:
                 None
             """
         # Create Executio n Report Fix Message based on order_execution object created in server logic
-        message = fix.Message()
-        header = message.getHeader()
-        header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
-        header.setField(fix.MsgSeqNum(self.fix_application.exec_id))
-        header.setField(fix.SendingTime())
-
-        message.setField(fix.OrderID(order_execution.order_id))
-        message.setField(fix.ClOrdID(order_execution.cl_ord_id))
-        message.setField(fix.ExecID(order_execution.exec_id))
-        message.setField(fix.ExecTransType(order_execution.exec_trans_type))
-        message.setField(fix.ExecType(order_execution.exec_type))
-        message.setField(fix.OrdStatus(order_execution.ord_status))
-        message.setField(fix.Symbol(order_execution.symbol))
-        message.setField(fix.Side(order_execution.side))
-        message.setField(fix.LeavesQty(order_execution.leaves_qty))
-        message.setField(fix.CumQty(order_execution.cum_qty))
-        message.setField(fix.AvgPx(order_execution.avg_px))
-        message.setField(fix.Price(order_execution.price))
-        if (order_execution.stop_px != None):
-            message.setField(fix.StopPx(order_execution.stop_px))
-
-        fix.Session.sendToTarget(message, self.fix_application.sessionID)
+        fix_message = execution_report.create_fix_message()
+        fix.Session.sendToTarget(fix_message, self.fix_application.sessionID)
         return
 
-    def get_field_value(self, fix_object, message):
-        if message.isSetField(fix_object.getField()):
-            message.getField(fix_object)
-            return fix_object.getValue()
-        else:
-            return None
-
-    def get_field_string(self, fix_object, message):
-        if message.isSetField(fix_object.getField()):
-            message.getField(fix_object)
-            return fix_object.getString()
-        else:
-            return None
-
-    def get_header_field_value(self, fix_object, message):
-        if message.getHeader().isSetField(fix_object.getField()):
-            message.getHeader().getField(fix_object)
-            return fix_object.getValue()
-        else:
-            return None
-
-    def get_header_field_string(self, fix_object, message):
-        if message.getHeader().isSetField(fix_object.getField()):
-            message.getHeader().getField(fix_object)
-            return fix_object.getString()
-        else:
-            return None
 
 
 def transform_fix_order_to_order(fix_order):
@@ -306,7 +239,6 @@ def transform_fix_order_to_order(fix_order):
     Returns:
         order (TradingClass.Order): The order object
     """
-
     # Subscribe means will be sent periodically, so for now we use snapshot
 
     account_company_id = fix_order.get_sender_comp_id()
@@ -388,6 +320,7 @@ class ServerLogic:
 
         pass
 
+
     def process_order_request(self, requested_fix_order):
         """Process an order request from the FIX Handler
 
@@ -406,7 +339,7 @@ class ServerLogic:
             self.process_invalid_order_request(requested_order)
 
     def process_valid_order_request(self, requested_order):
-        """
+        """Processes an order sent by a client
         Args:
             requested_order (TradingClass.Order):
         """
@@ -449,7 +382,6 @@ class ServerLogic:
         self.server_fix_handler.send_reject_order_execution_respond(reject_order_execution)
 
     def check_if_order_is_valid(self, requested_order):
-        # TODO Husein
         stock_total_volume = self.server_database_handler.fetch_stock_total_volume(requested_order.stock_ticker)
         stock_information = self.server_database_handler.fetch_stock_information(requested_order.stock_ticker)
         current_price = stock_information.current_price
@@ -462,7 +394,18 @@ class ServerLogic:
             return True
         else:
             return False
+
+    def process_cancel_order_request(self, requested_order):
+        """Process an cancel order request from the FIX Handler
+
+        Args:
+            requested_fix_order (NewSingleOrder): NewSingleOrder Object from fix handler
+
+        Returns:
+            None
+        """
         pass
+
 
     def pack_into_fix_market_data_response(self, market_data_required_id, market_data_entry_types, symbol,
                                            pending_stock_orders, stock_information):

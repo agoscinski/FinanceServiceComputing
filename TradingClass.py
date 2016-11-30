@@ -284,6 +284,41 @@ class FIXDateTimeUTC(object):
         self.date_time = date_time
 
 
+class FIXHandler:
+    @staticmethod
+    def get_field_value(fix_object, message):
+        if message.isSetField(fix_object.getField()):
+            message.getField(fix_object)
+            return fix_object.getValue()
+        else:
+            return None
+
+    @staticmethod
+    def get_field_string(fix_object, message):
+        if message.isSetField(fix_object.getField()):
+            message.getField(fix_object)
+            return fix_object.getString()
+        else:
+            return None
+
+    @staticmethod
+    def get_header_field_value(fix_object, message):
+        if message.getHeader().isSetField(fix_object.getField()):
+            message.getHeader().getField(fix_object)
+            return fix_object.getValue()
+        else:
+            return None
+
+    @staticmethod
+    def get_header_field_string(fix_object, message):
+        if message.getHeader().isSetField(fix_object.getField()):
+            message.getHeader().getField(fix_object)
+            return fix_object.getString()
+        else:
+            return None
+
+
+
 
 class MarketDataRequest(object):
     """Constructor of class MarketDataRequest:
@@ -392,7 +427,7 @@ class MarketDataResponse(object):
 
 
 class NewSingleOrder(object):
-    """Constructor of class FIXOrder:
+    """Constructor of class NewSingleOrder:
         @Parameter:
         client_order_id (string): client order id
         handling_instruction (char): handling instruction
@@ -445,9 +480,31 @@ class NewSingleOrder(object):
 
     @classmethod
     def from_fix_message(cls, fix_message):
-        """Constructor from a quickfix.Message"""
-        #TODO
-        pass
+        """Constructor from a quickfix.Message
+        Args:
+           fix_message (quickfix.Message)
+        Returns:
+            NewSingleOrder
+        """
+        cl_ord_id = FIXHandler.get_field_value(fix.ClOrdID(), fix_message)
+        handl_inst = FIXHandler.get_field_value(fix.HandlInst(), fix_message)
+        exec_inst = FIXHandler.get_field_value(fix.ExecInst(), fix_message)
+        symbol = FIXHandler.get_field_value(fix.Symbol(), fix_message)
+        maturity_month_year = FIXHandler.get_field_value(fix.MaturityMonthYear(), fix_message)
+        maturity_day = FIXHandler.get_field_value(fix.MaturityDay(), fix_message)
+        side = FIXHandler.get_field_value(fix.Side(), fix_message)
+        transact_time = FIXHandler.get_field_string(fix.TransactTime(), fix_message)
+        order_qty = FIXHandler.get_field_value(fix.OrderQty(), fix_message)
+        ord_type = FIXHandler.get_field_value(fix.OrdType(), fix_message)
+        price = FIXHandler.get_field_value(fix.Price(), fix_message)
+        stop_px = FIXHandler.get_field_value(fix.StopPx(), fix_message)
+        sender_comp_id = FIXHandler.get_header_field_value(fix.SenderCompID(), fix_message)
+        sending_time = FIXHandler.get_header_field_string(fix.SendingTime(), fix_message)
+        on_behalf_of_comp_id = FIXHandler.get_header_field_value(fix.OnBehalfOfCompID(), fix_message)
+        sender_sub_id = FIXHandler.get_header_field_value(fix.SenderSubID(), fix_message)
+        return cls(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side,
+                                   transact_time, order_qty, ord_type, price, stop_px, sender_comp_id,
+                                   sending_time, on_behalf_of_comp_id, sender_sub_id)
 
     def get_cl_ord_id(self):
         return self.client_order_id
