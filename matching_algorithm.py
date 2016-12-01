@@ -27,56 +27,56 @@ def pro_rata(buy, sell):
         return 0
     
     
-    lb = len(buy)
-    ls = len(sell)
+    lenbuy = len(buy)
+    lensell = len(sell)
     
-    "get total volume of buy"
-    volbuy = 0
-    for i in range(lb):
-        volbuy += buy[i].get_order_qty()
+    #get total volume of buy
+    volume_buy = 0
+    for i in range(lenbuy):
+        volume_buy += buy[i].get_order_quantity()
         
-    "get total volume of sell"
-    volsell = 0
-    for i in range(ls):
-        volsell += sell[i].get_order_qty()
+    #get total volume of sell
+    volume_sell = 0
+    for i in range(lensell):
+        volume_sell += sell[i].get_order_quantity()
         
-    "compare volumes"
-    if(volsell>volbuy):
-        dif = volsell - volbuy -1
+    #compare volumes
+    if(volume_sell>volume_buy):
+        dif = volume_sell - volume_buy -1
         while(dif>0):
-            dif = dif - sell[ls-1].get_order_qty()
-            ls = ls-1
+            dif = dif - sell[lensell-1].get_order_quantity()
+            lensell = lensell-1
 
             
     summ = 0
 
     
-    for i in range(ls):
-        summ += buy[i].get_order_qty()*(i+1)
+    for i in range(lensell):
+        summ += buy[i].get_order_quantity()*(i+1)
 
     
-    "list of transactions, line is seller(i), row is buyer(j)"
+    #list of transactions, line is seller(i), row is buyer(j)
     trade = np.zeros(shape=(len(sell), len(buy)))
 
-    "time pro rata algorithm"
+    #time pro rata algorithm
     p = []
-    for i in range(lb):
-        p.append((buy[i].get_order_qty()*buy[i].get_price()*(i+1))/summ)
+    for i in range(lenbuy):
+        p.append((buy[i].get_order_quantity()*buy[i].get_price()*(i+1))/summ)
 
     P = []
-    for i in range(lb):
-        comp = [buy[i].get_order_qty() * buy[i].get_price(), np.floor(p[i]*len(sell))]
+    for i in range(lenbuy):
+        comp = [buy[i].get_order_quantity() * buy[i].get_price(), np.floor(p[i]*lensell)]
         P.append(np.min(comp))
     
-    for i in range(ls):
-        while(sell[i].get_order_qty()>0):
-            for j in range(lb):
+    for i in range(lensell):
+        while(sell[i].get_order_quantity()>0):
+            for j in range(lenbuy):
                 if P[j] > 0:
                     P[j] -= 1
-                    buy[j].set_order_qty(buy[j].get_order_qty()-1)
-                    sell[i].set_order_qty(sell[i].get_order_qty()-1)
+                    buy[j].set_order_quantity(buy[j].get_order_quantity()-1)
+                    sell[i].set_order_quantity(sell[i].get_order_quantity()-1)
                     trade[[i],[j]] += 1
-                    if(sell[i].get_order_qty()==0):
+                    if(sell[i].get_order_quantity()==0):
                         break
 
 
