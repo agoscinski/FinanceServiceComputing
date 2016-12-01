@@ -12,7 +12,7 @@ fsc_server_logic = server.ServerLogic(server_config_file_name, fsc_server_databa
 
 def setup_module(module):
     """ setup any state specific to the execution of the given module."""
-    #fsc_server_database_handler.init_database()
+    fsc_server_database_handler.init_database()
 
 
 
@@ -20,7 +20,7 @@ def teardown_module(module):
     """ teardown any state that was previously setup with a setup_module
     method.
     """
-    #fsc_server_database_handler.teardown_database()
+    fsc_server_database_handler.teardown_database()
 
 class TestServerLogic:
 
@@ -44,7 +44,7 @@ class TestServerDatabaseHandler:
     def test_parse_sql_commands_from_sql_file(self):
         parsed_sql_commands = server.ServerDatabaseHandler.parse_sql_commands_from_sql_file("tests/example_sql_commands.sql")
         asserted_sql_commands = ["SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0",
-                                "CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`Stock` (  `Ticker` VARCHAR(6) NOT NULL,  `CompanyName` VARCHAR(45) NULL,  `LotSize` INT NULL,  `TickSize` DECIMAL(20,2) NULL,  `TotalVolume` INT NULL,  PRIMARY KEY (`Ticker`))ENGINE = InnoDB",
+                                "CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`Stock` (   `Ticker` VARCHAR(6) NOT NULL,   `CompanyName` VARCHAR(45) NULL,   `LotSize` INT NULL,   `TickSize` DECIMAL(20,2) NULL,   `TotalVolume` INT NULL,   PRIMARY KEY (`Ticker`)) ENGINE = InnoDB",
                                 "INSERT INTO Stock(Ticker, CompanyName, LotSize, TickSize, TotalVolume) VALUES('MS','Morgan Stanley','100','0.01','10000000')"]
         assert parsed_sql_commands[0] == asserted_sql_commands[0]
         assert parsed_sql_commands[1] == asserted_sql_commands[1]

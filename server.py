@@ -767,7 +767,7 @@ class ServerDatabaseHandler:
             sql_commands (list of string): each element is one sql command to be executed
         """
         with open(sql_file_file_path) as sql_file:
-            sql_file_content = sql_file.read().replace("\n", "").split(";")
+            sql_file_content = sql_file.read().replace("\n", " ").split(";")
 
         sql_commands = []
         pattern_for_sql_command = re.compile("(CREATE|INSERT|SET ..|UPDATE|DELETE).+")
