@@ -1,9 +1,10 @@
--- create structure and tables
+-- create tables and dependencies
 source tests/database/create_tables.sql
 -- create views
-source tests/database/create_view.sql
+source database/create_views.sql
 -- insert data
-source tests/database/account_insert.sql
-source tests/database/stock_insert.sql
-source tests/database/order_insert.sql
-source tests/database/order_execution_insert.sql
+source database/account_role_inserts.sql
+source database/account_inserts.sql
+source database/stock_inserts.sql
+source database/order_inserts.sql
+source database/order_execution_inserts.sql

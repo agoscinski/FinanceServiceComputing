@@ -40,7 +40,7 @@ class TestOrder:
         dummy_order = TradingClass.Order.create_dummy_order()
         dummy_order.client_order_id = "20161120-001"
         dummy_order.account_company_id = "client"
-        dummy_order.received_time = TradingClass.FIXDate.from_date_stamp_string("20161120")
+        dummy_order.received_time = TradingClass.FIXDate.from_fix_date_stamp_string("20161120")
         assert dummy_order.order_id == "20161120-001_client_20161120"
 
 class TestGlobalFunctions:

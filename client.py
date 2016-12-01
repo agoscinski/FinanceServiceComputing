@@ -4,9 +4,10 @@ from quickfix import Side_BUY, Side_SELL
 import quickfix42 as fix42
 import TradingClass
 from TradingClass import MarketDataResponse
-from TradingClass import ExecutionReport
+from TradingClass import OrderExecution
 from TradingClass import NewSingleOrder
-from TradingClass import FIXYearMonth
+from TradingClass import OrderCancelRequest
+from TradingClass import YearMonthFix
 from TradingClass import FIXDateTimeUTC
 from TradingClass import FIXTime
 import datetime
@@ -128,6 +129,9 @@ class ClientFIXApplication(fix.Application):
         elif (msg_Type.getString() == fix.MsgType_ExecutionReport):
             print "ExecutionReport"
             self.client_fix_handler.handle_execution_report(message)
+        elif (msg_Type.getString() == fix.MsgType_OrderCancelReject):
+            print "OrderCancelReject"
+            self.client_fix_handler.handle_order_cancel_reject(message)
 
     def toApp(self, message, session_id):
         print "OUT", message
@@ -304,6 +308,28 @@ class ClientFIXHandler:
         self.client_logic.process_market_data_respond(market_data)
         pass
 
+    def send_order_cancel_request(self, order_cancel_request):
+        # Create Fix Message for Order Cancel Request
+        message = fix.Message()
+        header = message.getHeader()
+        header.setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
+        transact_time_fix = fix.TransactTime()
+        transact_time_fix.setString(order_cancel_request.transact_time.__str__())
+
+        message.setField(fix.OrigClOrdID(order_cancel_request.orig_cl_ord_id))
+        message.setField(fix.ClOrdID(order_cancel_request.cl_ord_id))
+        message.setField(fix.Symbol(order_cancel_request.symbol))
+        message.setField(fix.Side(order_cancel_request.side))
+        message.setField(transact_time_fix)
+        message.setField(fix.OrderQty(order_cancel_request.order_qty))
+
+        # Send Fix Message to Server
+        fix.Session.sendToTarget(message, self.fix_application.sessionID)
+
+    def handle_order_cancel_reject(self, message):
+        #TODO query to database to update cancel order is failure
+        print "reject the order cancellation"
+
     def send_order(self, fix_order):
         """Sends an order to server based on fix_order object created in client_logic
 
@@ -351,6 +377,7 @@ class ClientFIXHandler:
     def handle_execution_report(self, message):
         order_id = self.get_field_value(fix.OrderID(),message)
         cl_ord_id = self.get_field_value(fix.ClOrdID(),message)
+        orig_cl_ord_id = self.get_field_value(fix.OrigClOrdID(),message)
         exec_id = self.get_field_value(fix.ExecID(),message)
         exec_trans_type = self.get_field_value(fix.ExecTransType(),message)
         exec_type = self.get_field_value(fix.ExecType(),message)
@@ -364,10 +391,12 @@ class ClientFIXHandler:
         stop_px = self.get_field_value(fix.StopPx(),message)
 
         # Encapsulate result of receiving execution report into order execution report
-        order_execution = ExecutionReport(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol
-                                          , side, leaves_qty, cum_qty, avg_px, price, stop_px)
-
-        self.client_logic.process_order_execution_respond(order_execution)
+        if ord_status == '4':
+            self.client_logic.process_order_cancel_respond(orig_cl_ord_id, ord_status, leaves_qty, cum_qty )
+        else:
+            order_execution = OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol
+                                         , side, leaves_qty, cum_qty,avg_px, price, stop_px)
+            self.client_logic.process_order_execution_respond(order_execution)
 
         return
 
@@ -509,14 +538,31 @@ class ClientLogic():
         return
 
     def process_order_request(self, order):
-        """ Processes the order
-        Args:
-            order (TradingClass.Order): order to be processed
-        """
+        # Get Order instruction from GUI
+        # Left Blank
 
-        #TODO should be like this, but what data is user input, and what, is added
-        #fix_order = TradingClass.NewSingleOrder.from_order(order)
-        fix_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
+        # Construct Fix Order Object to be sent to the fix handler
+        cl_ord_id = '1'#self.client_fix_handler.fix_application.gen_order_id()
+        handl_inst = '1'
+        exec_inst = '2'
+        symbol = 'TSLA'
+        maturity_month_year = YearMonthFix(2016, 1)
+        maturity_day = 1
+        side = Side_BUY
+        transact_time = FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
+        order_qty = 10
+        ord_type = '1'
+        price = 20000
+        stop_px = 10000
+        sender_comp_id = "client"
+        sending_time = None
+        on_behalf_of_comp_id = None
+        sender_sub_id = None
+
+        fix_order = NewSingleOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side
+                                   , transact_time, order_qty, ord_type, price, stop_px, sender_comp_id, sending_time,
+                                   on_behalf_of_comp_id
+                                   , sender_sub_id)
         self.client_fix_handler.send_order(fix_order)
         return
 
@@ -551,6 +597,23 @@ class ClientLogic():
         print(order_execution.price)
         print(order_execution.stop_px)
         return
+
+    def process_order_cancel_request(self, order_id):
+        # Construct Fix Order Object to be sent to the fix handler
+        orig_cl_ord_id=order_id
+        cl_ord_id = '1'  # self.client_fix_handler.fix_application.gen_order_id()
+        #should be retrieved from database
+        symbol = 'TSLA'
+        side = Side_BUY
+        order_qty=100
+        transact_time = FIXDateTimeUTC.create_for_current_time()
+        ocr = OrderCancelRequest(orig_cl_ord_id,cl_ord_id,symbol,side,transact_time,order_qty)
+        self.client_fix_handler.send_order_cancel_request(ocr)
+        return
+
+    def process_order_cancel_respond(self, order_cl_ord_id, ord_status, leaves_qty, cum_qty):
+        #TODO Database Query
+        print "process order cancel respond"
 
     def request_trading_transactions(self, user_name):
         # TODO alex write database request/fetch
@@ -740,7 +803,7 @@ class GUIHandler:
 
     def wait_for_input(self):
         while True:
-            print '''input 1 to logon\ninput 2 to logout\ninput 3 to send market request\ninput 4 to order\ninput 5 to quit'''
+            print '''input 1 to logon\ninput 2 to logout\ninput 3 to send market request\ninput 4 to order\ninput 5 to cancel order\n input 6 to quit'''
             input = raw_input()
             if input == '1':
                 self.button_login_actuated("john", "papapa")
@@ -751,6 +814,8 @@ class GUIHandler:
             elif input == '4':
                 self.send_order_request_option("order")
             elif input == '5':
+                self.send_order_cancel_request_option("1")
+            elif input == '6':
                 break
             else:
                 continue
@@ -782,6 +847,9 @@ class GUIHandler:
 
     def send_order_request_option(self, order):
         self.client_logic.process_order_request(order)
+
+    def send_order_cancel_request_option(self, order_id):
+        self.client_logic.process_order_cancel_request(order_id)
 
     def button_buy_actuated(self, stock_ticker, price, quantity):
         # TODO alex
