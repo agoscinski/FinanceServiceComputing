@@ -9,76 +9,69 @@ import numpy as np
 import TradingClass
 
 
-def pro_rata(buy, sell):
+def pro_rata(buy_orders, sell_orders):
     """Matching algorithm using pro rata algorithm
 
     Require: buy and sell orders shall not been matured yet
 
     Args:
-        buy (list of TradingClass.Order):
-        sell (list of TradingClass.Order):
+        buy_orders (list of TradingClass.Order):
+        sell_orders (list of TradingClass.Order):
     Returns:
-        return trade matrix with traded shares
-        set buy and sell shares to new amount"""
+        rade_matrix (numpy.array): matrix for traded shares set buy and sell shares to new amount"""
 
-    if (len(buy) == 0):
-        return 0
+    if len(buy_orders) == 0 or len(sell_orders) == 0: return None
 
-    if (len(sell) == 0):
-        return 0
-    
-    
-    lenbuy = len(buy)
-    lensell = len(sell)
-    
-    #get total volume of buy
+    current_buy_orders_length = len(buy_orders)
+    current_sell_orders_length = len(sell_orders)
+
+    # get total volume of buy
     volume_buy = 0
-    for i in range(lenbuy):
-        volume_buy += buy[i].get_order_quantity()
-        
-    #get total volume of sell
+    for i in range(current_buy_orders_length):
+        volume_buy += buy_orders[i].order_quantity
+
+    # get total volume of sell
     volume_sell = 0
-    for i in range(lensell):
-        volume_sell += sell[i].get_order_quantity()
-        
-    #compare volumes
-    if(volume_sell>volume_buy):
-        dif = volume_sell - volume_buy -1
-        while(dif>0):
-            dif = dif - sell[lensell-1].get_order_quantity()
-            lensell = lensell-1
+    for i in range(current_sell_orders_length):
+        volume_sell += sell_orders[i].order_quantity
 
+    # compare volumes
+    if volume_sell > volume_buy:
+        sell_buy_diff = volume_sell - volume_buy - 1
+        while sell_buy_diff > 0:
+            sell_buy_diff -= sell_orders[current_sell_orders_length - 1].order_quantity
+            current_sell_orders_length -= 1
 
-    summ = 0
-    
-    for i in range(lensell):
-        summ += buy[i].get_order_quantity()*(i+1)
-   
-    #list of transactions, line is seller(i), row is buyer(j)
-    trade = np.zeros(shape=(len(sell), len(buy)))
+    sum_of_weighted_orders = 0
 
-    #time pro rata algorithm
+    for i in range(current_sell_orders_length):
+        sum_of_weighted_orders += buy_orders[i].order_quantity * (i + 1)
+
+    # list of transactions, line is seller(i), row is buyer(j)
+    trade_matrix = np.zeros(shape=(len(sell_orders), len(buy_orders)))
+
+    # time pro rata algorithm
     p = []
-    for i in range(lenbuy):
-        p.append((buy[i].get_order_quantity()*buy[i].get_price()*(i+1))/summ)
+    for i in range(current_buy_orders_length):
+        p.append((buy_orders[i].order_quantity * buy_orders[i].price * (i + 1)) / sum_of_weighted_orders)
 
     P = []
-    for i in range(lenbuy):
-        comp = [buy[i].get_order_quantity() * buy[i].get_price(), np.floor(p[i]*lensell)]
+    for i in range(current_buy_orders_length):
+        comp = [buy_orders[i].order_quantity * buy_orders[i].price, np.floor(p[i] * current_sell_orders_length)]
         P.append(np.min(comp))
-    
-    for i in range(lensell):
-        while(sell[i].get_order_quantity()>0):
-            for j in range(lenbuy):
+
+    for i in range(current_sell_orders_length):
+        while sell_orders[i].order_quantity > 0:
+            for j in range(current_buy_orders_length):
                 if P[j] > 0:
                     P[j] -= 1
-                    buy[j].set_order_quantity(buy[j].get_order_quantity()-1)
-                    sell[i].set_order_quantity(sell[i].get_order_quantity()-1)
-                    trade[[i],[j]] += 1
-                    if(sell[i].get_order_quantity()==0):
+                    buy_orders[j].order_quantity -= 1
+                    sell_orders[i].order_quantity -= 1
+                    trade_matrix[[i], [j]] += 1
+                    if sell_orders[i].order_quantity == 0:
                         break
 
-    return trade
+    return trade_matrix
 
 
 def match(orders):
@@ -96,6 +89,8 @@ def match(orders):
     return order_executions
 
 
+# TODO sorting to latest is order is oldest order
+# TODO change MARKET_ORDERS to 1 for sell and float max for buy
 def extract_buy_and_sell_orders(orders):
     """This function takes a list of orders and returns one list with all buy orders, and one with all sell orders
 
@@ -170,7 +165,8 @@ def create_order_execution_from_trading_matrix_entry(trading_matrix_entry, buy_o
     return execution_order
 
 
-#TODO two market orders should be matched on current market price, otherwise it only makes sense create exetreme high prices for market orders, to get higher value
+# TODO two market orders should be matched on current market price, otherwise it only makes sense create exetreme high prices for market orders, to get higher value;
+# TODO solution: current take market price for two market orders
 def determine_price_for_match(buy_order, sell_order):
     """Determines the price between a buy and sell order which has been matched
 

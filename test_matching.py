@@ -1,38 +1,22 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Nov  1 15:04:18 2016
-
-@author: Emely
-"""
-
 import TradingClass
 import matching_algorithm
 
 
 class TestMatchingAlgorithm:
-    """
+
     def test_pro_rata(self):
-        b1 = TradingClass.Order(1, 0, 0, 0, 0, 0, 0, 120, 200, 0, 0, 0, 0, 0)
-        b2 = TradingClass.Order(2, 0, 0, 0, 0, 0, 0, 180, 220, 0, 0, 0, 0, 0)
-        b3 = TradingClass.Order(3, 0, 0, 0, 0, 0, 0, 100, 190, 0, 0, 0, 0, 0)
-        b4 = TradingClass.Order(4, 0, 0, 0, 0, 0, 0, 50, 180, 0, 0, 0, 0, 0)
-        b5 = TradingClass.Order(5, 0, 0, 0, 0, 0, 0, 560, 210, 0, 0, 0, 0, 0)
+        buy_order = TradingClass.Order.create_dummy_order(order_quantity=120, price=200)
+        sell_order = TradingClass.Order.create_dummy_order(order_quantity=120, price=200)
 
-        s6 = TradingClass.Order(6, 0, 0, 0, 0, 0, 0, 0, 90, 230, 0, 0, 0, 0, 0)
-        s7 = TradingClass.Order(7, 0, 0, 0, 0, 0, 0, 0, 230, 230, 0, 0, 0, 0, 0)
-        s8 = TradingClass.Order(8, 0, 0, 0, 0, 0, 0, 0, 40, 180, 0, 0, 0, 0, 0)
-        s9 = TradingClass.Order(9, 0, 0, 0, 0, 0, 0, 0, 600, 170, 0, 0, 0, 0, 0)
-        s10 = TradingClass.Order(10, 0, 0, 0, 0, 0, 0, 0, 140, 200, 0, 0, 0, 0, 0)
+        buy_orders = [buy_order, buy_order, buy_order, buy_order, buy_order]
+        sell_orders = [sell_order, sell_order, sell_order, sell_order, sell_order]
 
-        b = [b1, b2, b3, b4, b5]
+        assert matching_algorithm.pro_rata([], []) is None
+        assert matching_algorithm.pro_rata([], sell_orders) is None
+        assert matching_algorithm.pro_rata(buy_orders, []) is None
+        # shape test
+        assert  matching_algorithm.pro_rata(buy_orders, sell_orders).shape == (len(sell_orders), len(buy_orders))
 
-        s = [s6, s7, s8, s9, s10]
-
-        assert len(matching_algorithm.pro_rata([], [])) == 0
-        assert len(matching_algorithm.pro_rata([], s)) == 0
-        assert len(matching_algorithm.pro_rata(b, [])) == 0
-        # TODO scenarios: 4,2 match perfectly, matched partially, only one 1 quantity
-    """
     def test_extract_buy_and_sell_orders(self):
         dummy_orders = []
         dummy_orders.append(TradingClass.Order.create_dummy_order(side=TradingClass.OrderSideType.SELL))
