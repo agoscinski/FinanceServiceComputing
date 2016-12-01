@@ -7,8 +7,9 @@ from TradingClass import MarketDataResponse
 from TradingClass import OrderExecution
 from TradingClass import NewSingleOrder
 from TradingClass import OrderCancelRequest
-from TradingClass import YearMonthFix
+from TradingClass import OrderCancelReject
 from TradingClass import FIXDateTimeUTC
+from TradingClass import FIXYearMonth
 from TradingClass import FIXTime
 import datetime
 import pdb
@@ -327,8 +328,8 @@ class ClientFIXHandler:
         fix.Session.sendToTarget(message, self.fix_application.sessionID)
 
     def handle_order_cancel_reject(self, message):
-        #TODO query to database to update cancel order is failure
-        print "reject the order cancellation"
+        order_cancel_reject = OrderCancelReject.from_fix_message(message)
+        self.client_logic.process_order_cancel_reject(order_cancel_reject)
 
     def send_order(self, fix_order):
         """Sends an order to server based on fix_order object created in client_logic
@@ -546,7 +547,7 @@ class ClientLogic():
         handl_inst = '1'
         exec_inst = '2'
         symbol = 'TSLA'
-        maturity_month_year = YearMonthFix(2016, 1)
+        maturity_month_year = FIXYearMonth(2016, 1)
         maturity_day = 1
         side = Side_BUY
         transact_time = FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
@@ -612,8 +613,12 @@ class ClientLogic():
         return
 
     def process_order_cancel_respond(self, order_cl_ord_id, ord_status, leaves_qty, cum_qty):
-        #TODO Database Query
+        #TODO Database Query Update Order Status
         print "process order cancel respond"
+
+    def process_order_cancel_reject(self, order_cancel_reject):
+        #TODO Database Query Update Order Cancel Rejected
+        print "reject the order cancellation"
 
     def request_trading_transactions(self, user_name):
         # TODO alex write database request/fetch
