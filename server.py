@@ -11,11 +11,10 @@ import matching_algorithm
 import TradingClass
 from TradingClass import MarketDataResponse
 from TradingClass import NewSingleOrder
+from TradingClass import LastStatus
 from TradingClass import OrderCancelRequest
 from TradingClass import Order
 from TradingClass import OrderCancelReject
-from TradingClass import OrderStatus
-from TradingClass import LastStatus
 from TradingClass import ExecutionReport
 from TradingClass import FIXDateTimeUTC
 
@@ -754,7 +753,7 @@ class ServerDatabaseHandler:
             sql_commands (list of string): each element is one sql command to be executed
         """
         with open(sql_file_file_path) as sql_file:
-            sql_file_content = sql_file.read().replace("\n", "").split(";")
+            sql_file_content = sql_file.read().replace("\n", " ").split(";")
 
         sql_commands = []
         pattern_for_sql_command = re.compile("(CREATE|INSERT|SET ..|UPDATE|DELETE).+")
@@ -785,11 +784,11 @@ class ServerDatabaseHandler:
             "INSERT INTO OrderExecution(OrderExecutionQuantity, OrderExecutionPrice, ExecutionTime, Order_BuyClientOrderID,"
             "Order_BuyCompanyID, Order_BuyReceivedDate, Order_SellClientOrderID, Order_SellCompanyID, Order_SellReceivedDate)"
             " VALUES('%s','%s','%s', '%s','%s','%s', '%s','%s','%s')"
-            % (str(order_execution.quantity), str(order_execution.price), str(order_execution.execution_time),
+            % (str(order_execution.quantity), str(order_execution.price), order_execution.execution_time.mysql_date_stamp_string,
                order_execution.buyer_client_order_id,
-               order_execution.buyer_company_id, str(order_execution.buyer_received_date),
+               order_execution.buyer_company_id, str(order_execution.buyer_received_date.mysql_date_stamp_string),
                order_execution.seller_client_order_id, order_execution.seller_company_id,
-               order_execution.seller_received_date))
+               order_execution.seller_received_date.mysql_date_stamp_string))
         order_execution_id = self.execute_responsive_insert_sql_command(command)
         return order_execution_id
 
@@ -826,10 +825,17 @@ class ServerDatabaseHandler:
         Returns:
             order quantity (TradingClass.Order): the order object
         """
-        command = "select * from Order where ClientOrderID=" + client_order_id + " and Account_CompanyID="\
-                  + account_company_id + " and ReceivedDate=" + received_date
-        # TODO use execute_select_sql_command
-        # return TradingClass.Order.create_dummy_order()
+        command=("select * from Order where ClientOrderID="
+                    "'%s' and Account_CompanyID="
+                    "'%s' and ReceivedDate='%s'" %(client_order_id,account_company_id,received_date))
+        order_fetched=1
+        order_rows = self.execute_select_sql_command(command)
+        for order_row in order_rows:
+            order_fetched = Order(order_row[0], order_row[1], order_row[2], order_row[3], order_row[4], order_row[5], order_row[6],
+                         order_row[7], order_row[8], order_row[10], order_row[11])
+
+
+        return str(order_fetched)
 
     def fetch_latest_order_by_client_information(self, client_order_id, account_company_id):
         """Fetches the order data of the latest order with the client information (client_order_id, account_company_id)
@@ -850,19 +856,6 @@ class ServerDatabaseHandler:
         order_argument_row = list(order_arguments_rows[0])
         order = Order(*order_argument_row)
         return order
-
-        pending_orders_arguments_as_list = self.execute_select_sql_command(sql_command)  # list of tuples
-        pending_orders = []
-        for pending_order_arguments in pending_orders_arguments_as_list:
-            pending_order_arguments_as_list = list(pending_order_arguments)  # ClientOrderID
-            pending_order_arguments_as_list[2] = TradingClass.FIXDate(pending_order_arguments[2])  # ReceivedDate
-            pending_order_arguments_as_list[6] = TradingClass.FIXDate(pending_order_arguments[6])  # MaturityDate
-            pending_order_arguments_as_list[8] = float(pending_order_arguments_as_list[8])  # OrderQuantity
-            pending_order_arguments_as_list[9] = float(pending_order_arguments_as_list[9])  # Price
-            pending_order_arguments_as_list[10] = int(pending_order_arguments_as_list[10])  # LastStatus
-            order = Order(*pending_order_arguments_as_list)
-            pending_orders.append(order)
-        return pending_orders
 
     def insert_order(self, order):
         """Inserts a TradingClass.Order into the database
@@ -941,15 +934,7 @@ class ServerDatabaseHandler:
         except MySQLdb.Error, e:
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 
-    def fetch_order_received_date_by_order_id(self, client_order_id, account_company_id):
-        sql_command = ("SELECT Max(ReceivedDate) FROM `Order` where ClientOrderID='%s' AND Account_CompanyID='%s'"
-                       % (client_order_id, account_company_id))
-        received_date_arguments_rows = self.execute_select_sql_command(sql_command)
-        received_date = received_date_arguments_rows[0][0]
-        return received_date
-
     def insert_order_cancel(self, requested_order_cancel, order, cancel_quantity):
-        # TODO Husein figure out who does it
         last_status=0
         executed_time = FIXDateTimeUTC.create_for_current_time()
         sql_command = ("INSERT INTO OrderCancel(Order_ClientOrderID, OrderCancelID, Order_Account_CompanyID, " \
@@ -964,12 +949,6 @@ class ServerDatabaseHandler:
         # TODO Husein figure out who does it
         sql_command = ("UPDATE `Order` SET LastStatus ='%s' where ClientOrderID='%s' AND Account_CompanyID='%s' AND ReceivedDate ='%s'"
                        % (order_status, order.client_order_id, order.account_company_id, order.received_date))
-        self.execute_nonresponsive_sql_command(sql_command)
-
-    def update_order_cancel_success(self, client_order_id, account_company_id, order_cancel_status, cumulative_quantity,
-                                    executed_time):
-        # TODO Husein figure out who does it
-        sql_command = ""
         self.execute_nonresponsive_sql_command(sql_command)
 
     def fetch_pending_orders_for_stock_ticker(self, symbol):

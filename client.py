@@ -8,8 +8,8 @@ from TradingClass import OrderExecution
 from TradingClass import NewSingleOrder
 from TradingClass import OrderCancelRequest
 from TradingClass import OrderCancelReject
-from TradingClass import FIXDateTimeUTC
 from TradingClass import FIXYearMonth
+from TradingClass import FIXDateTimeUTC
 from TradingClass import FIXTime
 import datetime
 import pdb
@@ -547,7 +547,7 @@ class ClientLogic():
         handl_inst = '1'
         exec_inst = '2'
         symbol = 'TSLA'
-        maturity_month_year = FIXYearMonth(2016, 1)
+        maturity_month_year = FixYearMonth(2016, 1)
         maturity_day = 1
         side = Side_BUY
         transact_time = FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
@@ -613,7 +613,7 @@ class ClientLogic():
         return
 
     def process_order_cancel_respond(self, order_cl_ord_id, ord_status, leaves_qty, cum_qty):
-        #TODO Database Query Update Order Status
+        #TODO Database Query Update Order Status in client database
         print "process order cancel respond"
 
     def process_order_cancel_reject(self, order_cancel_reject):

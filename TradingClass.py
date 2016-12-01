@@ -27,6 +27,7 @@ class OrderType:
     MARKET = fix.TriggerOrderType_MARKET
     LIMIT = fix.TriggerOrderType_LIMIT
 
+
 class LastStatus:
     DONE = 0
     PENDING = 1
@@ -208,9 +209,8 @@ class FIXDate(object):
     def __eq__(self, other):
         return self.date.year == other.date.year and self.date.month == other.date.month and self.date.day == other.date.day
 
-
     def __ne__(self, other):
-        return not __eq__(self,other)
+        return not __eq__(self, other)
 
     def __str__(self):
         return self.date.strftime("%Y%m%d")
@@ -315,7 +315,7 @@ class FIXDateTimeUTC(object):
         return cls(current_time_datetime_object)
 
     @classmethod
-    def from_date_time_stamp_string(cls, date_time_stamp_string):
+    def from_date_fix_time_stamp_string(cls, date_time_stamp_string):
         """Constructor from date stamp strings
 
         Args:
@@ -328,6 +328,14 @@ class FIXDateTimeUTC(object):
 
     def __str__(self):
         return self.date_time.strftime("%Y%m%d-%H:%M:%S")
+
+    @property
+    def mysql_date_stamp_string(self):
+        return self.date.strftime("%Y-%m-%d %H:%M:%S")
+
+    @mysql_date_stamp_string.setter
+    def year(self, date_stamp_string):
+        self.date = datetime.datetime.strptime(date_stamp_string, "%Y-%m-%d %H:%M:%S").date()
 
     # TODO clean
     def get_date_time(self):
@@ -528,7 +536,6 @@ class OrderCancelRequest(object):
         if sender_sub_id is not None:
             self.sender_sub_id = sender_sub_id
 
-
     @classmethod
     def from_fix_message(cls, fix_message):
         """Constructor from a quickfix.Message
@@ -550,7 +557,6 @@ class OrderCancelRequest(object):
 
         return cls(orig_cl_ord_id, cl_ord_id, symbol, side, transaction_time, order_quantity, sender_company_id, sending_time,
                    on_behalf_of_comp_id, sender_sub_id)
-
 
 class OrderCancelReject(object):
     """Constructor of class OrderCancelReject represents a quickfix order cancel reject (message type 9):
@@ -577,7 +583,6 @@ class OrderCancelReject(object):
         else:
             self.cxl_rej_reason = None
 
-
     @classmethod
     def from_fix_message(cls, fix_message):
         """Constructor from a quickfix.Message
@@ -593,8 +598,7 @@ class OrderCancelReject(object):
         receiver_comp_id = FIXHandler.get_header_field_value(fix.TargetCompID(), fix_message)
         cxl_rej_reason = FIXHandler.get_field_value(fix.CxlRejReason(), fix_message)
 
-        return cls (orig_cl_ord_id, cl_ord_id, order_id, ord_status, receiver_comp_id, cxl_rej_reason)
-
+        return cls(orig_cl_ord_id, cl_ord_id, order_id, ord_status, receiver_comp_id, cxl_rej_reason)
 
 class NewSingleOrder(object):
     """Constructor of class NewSingleOrder:
@@ -638,7 +642,7 @@ class NewSingleOrder(object):
                                       execution_instruction="1",
                                       symbol="TSLA", maturity_month_year=FIXYearMonth.from_year_month(2000, 1),
                                       maturity_day=2, side=OrderSideType.BUY,
-                                      transaction_time=FIXDateTimeUTC.from_date_time_stamp_string("20000101-10:00:00"),
+                                      transaction_time=FIXDateTimeUTC.from_date_fix_time_stamp_string("20000101-10:00:00"),
                                       order_quantity=10., order_type=OrderType.LIMIT, price=100.,
                                       stop_prices=None, sender_company_id=None, sending_time=None,
                                       on_behalf_of_company_id=None, sender_sub_id=None):
@@ -694,13 +698,14 @@ class ExecutionReport(object):
         left_quantity (float): amount of shares open for further execution
         cumulative_quantity (float): total number of shares filled
         average_price (float): calculated average price of all fills on this order
-        price (float):
+        price (float): price of order if it's an order execution response
+        receiver_comp_id (String): receiver of company id
         original_client_order_id : client order id in case of cancellation response returned
     """
 
     def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type,
-                 order_status, symbol, side, left_quantity
-                 , cumulative_quantity, average_price, price, receiver_comp_id=None, original_client_order_id=None):
+                 order_status, symbol, side, left_quantity, cumulative_quantity, average_price, price,
+                 receiver_comp_id=None, original_client_order_id=None):
         self.order_id = order_id
         self.client_order_id = client_order_id
         self.execution_id = execution_id
@@ -798,6 +803,7 @@ class Order(object):
         on_behalf_of_company_id (string): original sender who sends order
         sender_sub_id (string): sub identifier of sender
         cash_order_quantity (float): amount of order requested
+        msg_seq_num (int)
     """
 
     def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
@@ -898,6 +904,48 @@ class Order(object):
         """
         return client_order_id + "_" + account_company_id + "_" + str(received_date)
 
+
+# TODO Husein merge ExecutionReport
+class OrderCancelExecution(object):
+    """Constructor
+        @Parameter:
+            order_id = order id (String)
+            cl_ord_id = client order id (String)
+            exec_id = execution id (String)
+            exec_trans_type = execution transaction type (char)
+            exec_type = execution type (char)
+            ord_status = order status (char)
+            symbol = symbol (String)
+            side = side (char)
+            leaves_qty = quantity leaves to be fulfiled (float)
+            cum_qty = cumulative quantity (float)
+            avg_px = average price (float)
+            price = price (float)
+            stop_px = stop price (float)
+        """
+
+    def __init__(self, order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol, side,
+                 leaves_qty, cum_qty, avg_px, price, stop_px, receiver_comp_id=None, orig_cl_ord_id=None):
+        self.order_id = order_id
+        self.cl_ord_id = cl_ord_id
+        self.exec_id = exec_id
+        self.exec_trans_type = exec_trans_type
+        self.exec_type = exec_type
+        self.ord_status = ord_status
+        self.symbol = symbol
+        self.side = side
+        self.leaves_qty = leaves_qty
+        self.cum_qty = cum_qty
+        self.avg_px = avg_px
+        self.price = price
+        self.stop_px = stop_px
+        self.receiver_comp_id = receiver_comp_id
+        if orig_cl_ord_id is not None:
+            self.orig_cl_ord_id = orig_cl_ord_id
+        else:
+            self.orig_cl_ord_id = None
+
+
 ################################
 ### Database related classes ###
 ################################
@@ -966,7 +1014,7 @@ class OrderExecution:
 
     @classmethod
     def create_dummy_order_execution(cls, execution_id=0, quantity=100., price=50.,
-                                     execution_time=FIXDateTimeUTC.from_date_time_stamp_string(
+                                     execution_time=FIXDateTimeUTC.from_date_fix_time_stamp_string(
                                          "20111111-11:11:11"),
                                      buyer_client_order_id="client",
                                      buyer_company_id="Client Firm",
