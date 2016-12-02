@@ -1,99 +1,7 @@
+import re
 import datetime
 import quickfix as fix
 import quickfix42 as fix42
-
-
-# TODO move these enums to FIXHandler
-#######################
-## FIX related Enums ##
-#######################
-
-class MarketDataEntryType:
-    OFFER = 0
-    BID = 1
-    CURRENT_PRICE = 2
-    OPENING_PRICE = 4
-    CLOSING_PRICE = 5
-    DAY_HIGH = 7
-    DAY_LOW = 8
-
-
-class OrderSideType:
-    BUY = fix.Side_BUY
-    SELL = fix.Side_SELL
-
-
-class OrderType:
-    MARKET = fix.TriggerOrderType_MARKET
-    LIMIT = fix.TriggerOrderType_LIMIT
-
-
-class LastStatus:
-    DONE = 0
-    PENDING = 1
-    CANCELED = 2
-    EXPIRED = 3
-
-
-class OrderStatus:
-    NEW = 2
-    REPLACED = 3
-    PARTIALLY_FILLED = 4
-    EXPIRED = 5
-    CANCELED = 6
-    FILLED = 8
-    PENDING_REPLACE = 11
-    PENDING_CANCEL = 12
-
-
-class ExecutionType:
-    NEW = 0
-    PARTIAL_FILL = 1
-    FILL = 2
-    CANCELED = 4
-    REJECTED = 8
-
-
-class ExecutionTransactionType:
-    NEW = '0'
-    PARTIAL_FILL = '1'
-    FILL = '2'
-    CANCELED = '4'
-    REPLACE = '5'
-    REJECTED = '8'
-    EXPIRED = 'C'
-
-
-# TODO replace with MarketDataEntryType
-class MDEntryType:
-    TRADE = '2'
-    OPENING = '4'
-    CLOSING = '5'
-    SESSION_HIGH = '7'
-    SESSION_LOW = '8'
-
-
-# TODO create DatabaseHandler and move these enums to DatabaseHandler
-############################
-## Database related Enums ##
-############################
-
-class DatabaseOrderType:
-    MARKET = 1
-    LIMIT = 2
-
-
-class OrderSide:
-    BUY = 1
-    SELL = 2
-
-
-class LastStatus:
-    DONE = 0
-    PENDING = 1
-    CANCELED = 2
-    EXPIRED = 3
-
 
 ##################
 ## Time classes ##
@@ -317,6 +225,15 @@ class FIXDateTimeUTC(object):
     @classmethod
     def from_date_fix_time_stamp_string(cls, date_time_stamp_string):
         """Constructor from date stamp strings
+    @staticmethod
+    def parse_file_names_from_init_script(init_script_file_path):
+        file_names = []
+        pattern_for_line_with_file = re.compile("(?<=source ).+")
+        for line in open(init_script_file_path):
+            for match in re.finditer(pattern_for_line_with_file, line):
+                file_name = match.group(0)
+                file_names.append(file_name)
+        return file_names
 
         Args:
             date_time_stamp_string (string): string in format YYYYMMDD-HH:MM:SS
@@ -358,7 +275,54 @@ class FIXDateTimeUTC(object):
 ## Server/Client related classes ##
 ###################################
 
-class FIXHandler:
+class FIXHandlerUtils:
+
+    class MarketDataEntryType:
+        OFFER = 0
+        BID = 1
+        CURRENT_PRICE = 2
+        OPENING_PRICE = 4
+        CLOSING_PRICE = 5
+        DAY_HIGH = 7
+        DAY_LOW = 8
+
+    class Side:
+        BUY = fix.Side_BUY
+        SELL = fix.Side_SELL
+
+    class OrderType:
+        MARKET = fix.TriggerOrderType_MARKET
+        LIMIT = fix.TriggerOrderType_LIMIT
+
+    class OrderStatus:
+        NEW = 2
+        REPLACED = 3
+        PARTIALLY_FILLED = 4
+        EXPIRED = 5
+        CANCELED = 6
+        FILLED = 8
+        PENDING_REPLACE = 11
+        PENDING_CANCEL = 12
+
+    class ExecutionType:
+        NEW = 0
+        PARTIAL_FILL = 1
+        FILL = 2
+        CANCELED = 4
+        REJECTED = 8
+
+    class ExecutionTransactionType:
+        NEW = '0'
+        PARTIAL_FILL = '1'
+        FILL = '2'
+        CANCELED = '4'
+        REPLACE = '5'
+        REJECTED = '8'
+        EXPIRED = 'C'
+
+    class HandlingInstruction:
+        AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION = fix.HandlInst_AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION
+
     @staticmethod
     def get_field_value(fix_object, message):
         if message.isSetField(fix_object.getField()):
@@ -390,6 +354,56 @@ class FIXHandler:
             return fix_object.getString()
         else:
             return None
+
+class DatabaseHandlerUtils:
+    # Enums
+    class OrderType:
+        MARKET = 1
+        LIMIT = 2
+
+    class Side:
+        BUY = 1
+        SELL = 2
+
+    class LastStatus:
+        DONE = 0
+        PENDING = 1
+        CANCELED = 2
+        EXPIRED = 3
+
+    class HandlingInstruction:
+        AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION = 1
+
+    @staticmethod
+    def parse_file_names_from_init_script(init_script_file_path):
+        file_names = []
+        pattern_for_line_with_file = re.compile("(?<=source ).+")
+        for line in open(init_script_file_path):
+            for match in re.finditer(pattern_for_line_with_file, line):
+                file_name = match.group(0)
+                file_names.append(file_name)
+        return file_names
+
+    @staticmethod
+    def parse_sql_commands_from_sql_file(sql_file_file_path):
+        """Parses a sql file and extracts the sql commands of it
+        Args:
+            sql_file_file_path (string): the file path of the sql file
+
+        Returns:
+            sql_commands (list of string): each element is one sql command to be executed
+        """
+        with open(sql_file_file_path) as sql_file:
+            sql_file_content = sql_file.read().replace("\n", " ").split(";")
+
+        sql_commands = []
+        pattern_for_sql_command = re.compile("(CREATE|INSERT|SET ..|UPDATE|DELETE).+")
+        for block in sql_file_content:
+            match = re.search(pattern_for_sql_command, block)
+            if match is not None:
+                sql_command = match.group(0)
+                sql_commands.append(sql_command)
+        return sql_commands
 
 
 #################################
@@ -568,28 +582,28 @@ class OrderCancelReject(object):
 
 
 class NewSingleOrder(object):
-    """Constructor of class NewSingleOrder:
-        @Parameter:
-        cl_ord_id = client order id (String)
-        handl_inst = handling instruction (char)
-        exec_inst= execution instruction (String)
-        symbol = symbol (String)
-        side = side (char)
-        maturity_month_year = maturity month year (YearMonthFix Object=> datetime Date with format YYYYMM)
-        maturity_day = maturity day (int 1-31)
-        transact_time = transaction time (DateTimeFix Object=> DateTime datetime UTC YYYYMMDD-HH:MM:SS)
-        order_qty = order quantity (float)
-        ord_type = order type (char)
-        price = price (float)
-        stop_px = stop price (float)
+    """A New single order is designed after the FIX message of type D "Order - Single" and is used to
+     encapsulate a message into an object
+
+    Args:
+        client_order_id (string)
+        handling_instruction (char/FIXHandler.HandlingInstruction)
+        symbol (string)
+        side (char/FIXHandler.Side)
+        maturity_month_year (FIXYearMonth)
+        maturity_day (int): between 1-31
+        transaction_time (FIXDateTime)
+        order_quantity (float)
+        order_type (char/FIXHandler.OrderType)
+        price (float)
+        stop_price (float)
     """
 
-    def __init__(self, client_order_id, handling_instruction, execution_instruction, symbol, maturity_month_year,
+    def __init__(self, client_order_id, handling_instruction, symbol, maturity_month_year,
                  maturity_day, side, transaction_time, order_quantity, order_type, price, stop_price,
                  sender_company_id, sending_time, on_behalf_of_comp_id, sender_sub_id):
         self.client_order_id = client_order_id
         self.handling_instruction = handling_instruction
-        self.execution_instruction = execution_instruction
         self.symbol = symbol
         self.maturity_month_year = maturity_month_year
         self.maturity_day = maturity_day
@@ -606,18 +620,17 @@ class NewSingleOrder(object):
 
     @classmethod
     def create_dummy_new_single_order(cls, client_order_id="client", handling_instruction="1",
-                                      execution_instruction="1",
                                       symbol="TSLA", maturity_month_year=FIXYearMonth.from_year_month(2000, 1),
-                                      maturity_day=2, side=OrderSideType.BUY,
+                                      maturity_day=2, side=FIXHandlerUtils.Side.BUY,
                                       transaction_time=FIXDateTimeUTC.from_date_fix_time_stamp_string("20000101-10:00:00"),
-                                      order_quantity=10., order_type=OrderType.LIMIT, price=100.,
-                                      stop_prices=None, sender_company_id=None, sending_time=None,
+                                      order_quantity=10., order_type=FIXHandlerUtils.OrderType.LIMIT, price=100.,
+                                      stop_price=None, sender_company_id=None, sending_time=None,
                                       on_behalf_of_company_id=None, sender_sub_id=None):
         """For testing"""
-        dummy_new_single_order = cls(client_order_id, handling_instruction, execution_instruction,
+        dummy_new_single_order = cls(client_order_id, handling_instruction,
                                      symbol, maturity_month_year, maturity_day, side,
                                      transaction_time, order_quantity, order_type, price,
-                                     stop_prices, sender_company_id, sending_time,
+                                     stop_price, sender_company_id, sending_time,
                                      on_behalf_of_company_id, sender_sub_id)
         return dummy_new_single_order
 
@@ -629,22 +642,22 @@ class NewSingleOrder(object):
         Returns:
             NewSingleOrder
         """
-        client_order_id = FIXHandler.get_field_value(fix.ClOrdID(), fix_message)
-        handling_instruction = FIXHandler.get_field_value(fix.HandlInst(), fix_message)
-        execution_instruction = FIXHandler.get_field_value(fix.ExecInst(), fix_message)
-        symbol = FIXHandler.get_field_value(fix.Symbol(), fix_message)
-        maturity_month_year = FIXHandler.get_field_value(fix.MaturityMonthYear(), fix_message)
-        maturity_day = FIXHandler.get_field_value(fix.MaturityDay(), fix_message)
-        side = FIXHandler.get_field_value(fix.Side(), fix_message)
-        transact_time = FIXHandler.get_field_string(fix.TransactTime(), fix_message)
-        order_quantity = FIXHandler.get_field_value(fix.OrderQty(), fix_message)
-        order_type = FIXHandler.get_field_value(fix.OrdType(), fix_message)
-        price = FIXHandler.get_field_value(fix.Price(), fix_message)
-        stop_price = FIXHandler.get_field_value(fix.StopPx(), fix_message)
-        sender_company_id = FIXHandler.get_header_field_value(fix.SenderCompID(), fix_message)
-        sending_time = FIXHandler.get_header_field_string(fix.SendingTime(), fix_message)
-        on_behalf_of_comp_id = FIXHandler.get_header_field_value(fix.OnBehalfOfCompID(), fix_message)
-        sender_sub_id = FIXHandler.get_header_field_value(fix.SenderSubID(), fix_message)
+        client_order_id = FIXHandlerUtils.get_field_value(fix.ClOrdID(), fix_message)
+        handling_instruction = FIXHandlerUtils.get_field_value(fix.HandlInst(), fix_message)
+        execution_instruction = FIXHandlerUtils.get_field_value(fix.ExecInst(), fix_message)
+        symbol = FIXHandlerUtils.get_field_value(fix.Symbol(), fix_message)
+        maturity_month_year = FIXHandlerUtils.get_field_value(fix.MaturityMonthYear(), fix_message)
+        maturity_day = FIXHandlerUtils.get_field_value(fix.MaturityDay(), fix_message)
+        side = FIXHandlerUtils.get_field_value(fix.Side(), fix_message)
+        transact_time = FIXHandlerUtils.get_field_string(fix.TransactTime(), fix_message)
+        order_quantity = FIXHandlerUtils.get_field_value(fix.OrderQty(), fix_message)
+        order_type = FIXHandlerUtils.get_field_value(fix.OrdType(), fix_message)
+        price = FIXHandlerUtils.get_field_value(fix.Price(), fix_message)
+        stop_price = FIXHandlerUtils.get_field_value(fix.StopPx(), fix_message)
+        sender_company_id = FIXHandlerUtils.get_header_field_value(fix.SenderCompID(), fix_message)
+        sending_time = FIXHandlerUtils.get_header_field_string(fix.SendingTime(), fix_message)
+        on_behalf_of_comp_id = FIXHandlerUtils.get_header_field_value(fix.OnBehalfOfCompID(), fix_message)
+        sender_sub_id = FIXHandlerUtils.get_header_field_value(fix.SenderSubID(), fix_message)
         return cls(client_order_id, handling_instruction, execution_instruction, symbol, maturity_month_year,
                    maturity_day, side,
                    transact_time, order_quantity, order_type, price, stop_price, sender_company_id,
@@ -751,14 +764,14 @@ class Order(object):
         client_order_id (string): The order ID from the client side
         account_company_id (string): account company id related to the order
         received_date (FIXDate object): received_date
-        handling_instruction (int): handling instruction
+        handling_instruction (int/DatabaseHandler.HandlingInstruction): handling instruction
         stock_ticker (string): ticker symbol of the stock referring in the order
-        side (int): type of order
+        side (int/DatabaseHandler.Side): type of order
         maturity_date (FIXDate object): the date when order will mature
-        order_type (int): the type of order, see Side for different types
+        order_type (int/DatabaseHandler.OrderType): the type of order, see Side for different types
         order_quantity (float): order quantity
         price (float): price of the stock
-        last_status (LastStatus): last status
+        last_status (int/DatabaseHandler.LastStatus): last status
         msg_seq_num (int): message sequence number
         on_behalf_of_company_id (string): original sender who sends order
         sender_sub_id (string): sub identifier of sender
@@ -789,14 +802,14 @@ class Order(object):
     @classmethod
     def create_dummy_order(cls, client_order_id="20161120-001", account_company_id="client",
                            received_date=FIXDate.from_fix_date_stamp_string("20161120"), handling_instruction=1,
-                           stock_ticker="TSLA", side=1, maturity_date=FIXDate.from_fix_date_stamp_string("20161125"),
-                           order_type=1, order_quantity=100.00, price=10.00,
-                           last_status=0, msg_seq_num=0):
+                           stock_ticker="TSLA", side=DatabaseHandlerUtils.Side.BUY, maturity_date=FIXDate.from_fix_date_stamp_string("20161125"),
+                           order_type=DatabaseHandlerUtils.OrderType.MARKET, order_quantity=100.00, price=10.00,
+                           last_status=DatabaseHandlerUtils.LastStatus.PENDING, msg_seq_num=0):
         """For testing"""
         dummy_order = cls(client_order_id=client_order_id, account_company_id=account_company_id,
                           received_date=received_date, handling_instruction=handling_instruction,
                           stock_ticker=stock_ticker, side=side, maturity_date=maturity_date, order_type=order_type,
-                          order_quantity=order_quantity, price=price, last_status=last_status, msg_seq_num=0)
+                          order_quantity=order_quantity, price=price, last_status=last_status, msg_seq_num=msg_seq_num)
         return dummy_order
 
     @classmethod
@@ -820,7 +833,7 @@ class Order(object):
         order_type = new_single_order.order_type
         order_quantity = new_single_order.order_quantity
         price = new_single_order.price
-        last_status = LastStatus.PENDING
+        last_status = DatabaseHandlerUtils.LastStatus.PENDING
         message_sequence_number = 0
         on_behalf_of_company_id = None
         sender_sub_id = None
@@ -1074,7 +1087,7 @@ class OrderCancel(object):
         stock_ticker = order_cancel_request.symbol
         side = order_cancel_request.side
         order_quantity = order_cancel_request.order_qty
-        last_status = LastStatus.PENDING
+        last_status = DatabaseHandlerUtils.LastStatus.PENDING
         message_sequence_number = None
         on_behalf_of_company_id = None
         sender_sub_id = None

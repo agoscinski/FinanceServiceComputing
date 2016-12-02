@@ -104,9 +104,9 @@ def extract_buy_and_sell_orders(orders):
     buy_orders = []
     sell_orders = []
     for order in orders:
-        if order.side == TradingClass.OrderSideType.BUY:
+        if order.side == TradingClass.DatabaseHandlerUtils.Side.BUY:
             buy_orders.append(order)
-        elif order.side == TradingClass.OrderSideType.SELL:
+        elif order.side == TradingClass.DatabaseHandlerUtils.Side.SELL:
             sell_orders.append(order)
     return buy_orders, sell_orders
 
@@ -186,11 +186,11 @@ def determine_price_for_match(buy_order, sell_order):
     is_intersection = buy_order.price >= sell_order.price
     if is_intersection:
         return sell_order.price + (buy_order.price - sell_order.price) / 2.
-    elif buy_order.order_type == TradingClass.OrderType.MARKET and sell_order.order_type == TradingClass.OrderType.MARKET:
+    elif buy_order.order_type == TradingClass.DatabaseHandlerUtils.OrderType.MARKET and sell_order.order_type == TradingClass.DatabaseHandlerUtils.OrderType.MARKET:
         return buy_order.price + (sell_order.price - buy_order.price) / 2.
-    elif buy_order.order_type == TradingClass.OrderType.LIMIT and sell_order.order_type == TradingClass.OrderType.LIMIT:
+    elif buy_order.order_type == TradingClass.DatabaseHandlerUtils.OrderType.LIMIT and sell_order.order_type == TradingClass.DatabaseHandlerUtils.OrderType.LIMIT:
         raise MatchingError("Matched orders have no intersection in price and are both limit orders.")
     else:
         # the state is only one order is a limit order
-        limit_order = buy_order if buy_order.order_id == TradingClass.OrderType.LIMIT else sell_order
+        limit_order = buy_order if buy_order.order_id == TradingClass.DatabaseHandlerUtils.OrderType.LIMIT else sell_order
         return limit_order.price

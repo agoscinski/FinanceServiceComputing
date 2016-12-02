@@ -105,7 +105,7 @@ class ServerFIXApplication(fix.Application):
         return self.order_id
 
 
-class ServerFIXHandler(TradingClass.FIXHandler):
+class ServerFIXHandler:
     def __init__(self, server_logic, server_config_file_name):
         self.server_logic = server_logic
         self.server_config_file_name = server_config_file_name
@@ -214,16 +214,16 @@ class ServerFIXHandler(TradingClass.FIXHandler):
         return
 
     def handle_order_cancel_request(self, message):
-        orig_cl_ord_id = TradingClass.FIXHandler.get_field_value(fix.OrigClOrdID(), message)
-        cl_ord_id = TradingClass.FIXHandler.get_field_value(fix.ClOrdID(), message)
-        symbol = TradingClass.FIXHandler.get_field_value(fix.Symbol(), message)
-        side = TradingClass.FIXHandler.get_field_value(fix.Side(), message)
-        transact_time = TradingClass.FIXHandler.get_field_string(fix.TransactTime(), message)
-        order_qty = TradingClass.FIXHandler.get_field_value(fix.OrderQty(), message)
-        sender_comp_id = TradingClass.FIXHandler.get_header_field_value(fix.SenderCompID(), message)
-        sending_time = TradingClass.FIXHandler.get_header_field_string(fix.SendingTime(), message)
-        on_behalf_of_comp_id = TradingClass.FIXHandler.get_header_field_value(fix.OnBehalfOfCompID(), message)
-        sender_sub_id = TradingClass.FIXHandler.get_header_field_value(fix.SenderSubID(), message)
+        orig_cl_ord_id = TradingClass.FIXHandlerUtils.get_field_value(fix.OrigClOrdID(), message)
+        cl_ord_id = TradingClass.FIXHandlerUtils.get_field_value(fix.ClOrdID(), message)
+        symbol = TradingClass.FIXHandlerUtils.get_field_value(fix.Symbol(), message)
+        side = TradingClass.FIXHandlerUtils.get_field_value(fix.Side(), message)
+        transact_time = TradingClass.FIXHandlerUtils.get_field_string(fix.TransactTime(), message)
+        order_qty = TradingClass.FIXHandlerUtils.get_field_value(fix.OrderQty(), message)
+        sender_comp_id = TradingClass.FIXHandlerUtils.get_header_field_value(fix.SenderCompID(), message)
+        sending_time = TradingClass.FIXHandlerUtils.get_header_field_string(fix.SendingTime(), message)
+        on_behalf_of_comp_id = TradingClass.FIXHandlerUtils.get_header_field_value(fix.OnBehalfOfCompID(), message)
+        sender_sub_id = TradingClass.FIXHandlerUtils.get_header_field_value(fix.SenderSubID(), message)
 
         # Create NewSingleOrder Object to be sent to server logic
         order_cancel_request = OrderCancelRequest(orig_cl_ord_id, cl_ord_id, symbol, side, transact_time, order_qty,
@@ -514,7 +514,6 @@ class ServerLogic:
         """Used to create a execution report for a new order
         Args:
             new_order (TradingClass.Order):
-            order_status (TradingClass.LastStatus):
 
         Returns:
             execution_report (TradingClass.ExecutionReport)
@@ -522,9 +521,9 @@ class ServerLogic:
         left_quantity = new_order.order_quantity
         cumulative_quantity = 0
         average_price = 0
-        execution_report = TradingClass.ExecutionReport.from_order(new_order, TradingClass.ExecutionTransactionType.NEW,
-                                                                   TradingClass.ExecutionType.NEW,
-                                                                   TradingClass.OrderStatus.NEW, left_quantity,
+        execution_report = TradingClass.ExecutionReport.from_order(new_order, TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW,
+                                                                   TradingClass.FIXHandlerUtils.ExecutionType.NEW,
+                                                                   TradingClass.FIXHandlerUtils.OrderStatus.NEW, left_quantity,
                                                                    cumulative_quantity, average_price)
         execution_report.execution_id = self.server_database_handler.insert_execution_report(execution_report)
         return execution_report
@@ -574,12 +573,12 @@ class ServerLogic:
 
         if is_order_filled:
             execution_transaction_type = TradingClass.ExecutionTransactionType.FILL
-            execution_type = TradingClass.ExecutionType.FILL
-            order_status = TradingClass.OrderStatus.FILLED
+            execution_type = TradingClass.FIXHandlerUtils.ExecutionType.FILL
+            order_status = TradingClass.FIXHandlerUtils.OrderStatus.FILLED
         else:
-            execution_transaction_type = TradingClass.ExecutionTransactionType.PARTIAL_FILL
-            execution_type = TradingClass.ExecutionType.PARTIAL_FILL
-            order_status = TradingClass.OrderStatus.PARTIALLY_FILLED
+            execution_transaction_type = TradingClass.FIXHandlerUtils.ExecutionTransactionType.PARTIAL_FILL
+            execution_type = TradingClass.FIXHandlerUtils.ExecutionType.PARTIAL_FILL
+            order_status = TradingClass.FIXHandlerUtils.OrderStatus.PARTIALLY_FILLED
 
         order_id = TradingClass.Order.create_order_id(client_order_id, account_company_id, received_date)
 
@@ -638,42 +637,42 @@ class ServerLogic:
                                                                     current_date_time.day)
         current_fix_time = TradingClass.FIXTime(current_date_time.hour, current_date_time.minute,
                                                 current_date_time.second)
-        if TradingClass.MDEntryType.TRADE in market_data_entry_types:
-            market_data_entry_type_list.append(TradingClass.MDEntryType.TRADE)
+        if TradingClass.FIXHandlerUtils.MarketDataEntryType.TRADE in market_data_entry_types:
+            market_data_entry_type_list.append(TradingClass.FIXHandlerUtils.MarketDataEntryType.TRADE)
             market_data_entry_price_list.append(stock_information.current_price)
             market_data_entry_size_list.append(0)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
         # TODO Not Finished! Filled with dummy only to not cause error in client side
-        # if TradingClass.MDEntryType.OPENING in market_data_entry_types_integer:
+        # if TradingClass.FIXHandler.MarketDataEntryType.OPENING in market_data_entry_types_integer:
         # if 5 in market_data_entry_types_integer:
         # if 7 in market_data_entry_types_integer:
         # if 8 in market_data_entry_types_integer:
 
-        if TradingClass.MDEntryType.OPENING in market_data_entry_types:
-            market_data_entry_type_list.append(TradingClass.MDEntryType.OPENING)
+        if TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING in market_data_entry_types:
+            market_data_entry_type_list.append(TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING)
             market_data_entry_price_list.append(20)
             market_data_entry_size_list.append(0)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
-        if TradingClass.MDEntryType.CLOSING in market_data_entry_types:
-            market_data_entry_type_list.append(TradingClass.MDEntryType.CLOSING)
+        if TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING in market_data_entry_types:
+            market_data_entry_type_list.append(TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING)
             market_data_entry_price_list.append(20)
             market_data_entry_size_list.append(0)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
-        if TradingClass.MDEntryType.SESSION_HIGH in market_data_entry_types:
-            market_data_entry_type_list.append(TradingClass.MDEntryType.SESSION_HIGH)
+        if TradingClass.FIXHandlerUtils.MarketDataEntryType.SESSION_HIGH in market_data_entry_types:
+            market_data_entry_type_list.append(TradingClass.FIXHandlerUtils.MarketDataEntryType.SESSION_HIGH)
             market_data_entry_price_list.append(20)
             market_data_entry_size_list.append(0)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
-        if TradingClass.MDEntryType.SESSION_LOW in market_data_entry_types:
-            market_data_entry_type_list.append(TradingClass.MDEntryType.SESSION_LOW)
+        if TradingClass.FIXHandlerUtils.MarketDataEntryType.SESSION_LOW in market_data_entry_types:
+            market_data_entry_type_list.append(TradingClass.FIXHandlerUtils.MarketDataEntryType.SESSION_LOW)
             market_data_entry_price_list.append(stock_information.current_price)
             market_data_entry_size_list.append(20)
             market_data_entry_date_list.append(current_fix_date)
@@ -737,46 +736,16 @@ class ServerDatabaseHandler:
         self.execute_nonresponsive_sql_command(sql_command)
 
     def load_init_script(self):
-        file_names = ServerDatabaseHandler.parse_file_names_from_init_script(self.init_database_script_path)
+        file_names = TradingClass.DatabaseHandlerUtils.parse_file_names_from_init_script(self.init_database_script_path)
         for file_name in file_names:
             self.load_sql_file(file_name)
         return
 
-    @staticmethod
-    def parse_file_names_from_init_script(init_script_file_path):
-        file_names = []
-        pattern_for_line_with_file = re.compile("(?<=source ).+")
-        for line in open(init_script_file_path):
-            for match in re.finditer(pattern_for_line_with_file, line):
-                file_name = match.group(0)
-                file_names.append(file_name)
-        return file_names
-
     def load_sql_file(self, file_path):
-        sql_commands = ServerDatabaseHandler.parse_sql_commands_from_sql_file(file_path)
+        sql_commands = TradingClass.DatabaseHandlerUtils.parse_sql_commands_from_sql_file(file_path)
         for sql_command in sql_commands:
             self.execute_nonresponsive_sql_command(sql_command)
 
-    @staticmethod
-    def parse_sql_commands_from_sql_file(sql_file_file_path):
-        """Parses a sql file and extracts the sql commands of it
-        Args:
-            sql_file_file_path (string): the file path of the sql file
-
-        Returns:
-            sql_commands (list of string): each element is one sql command to be executed
-        """
-        with open(sql_file_file_path) as sql_file:
-            sql_file_content = sql_file.read().replace("\n", " ").split(";")
-
-        sql_commands = []
-        pattern_for_sql_command = re.compile("(CREATE|INSERT|SET ..|UPDATE|DELETE).+")
-        for block in sql_file_content:
-            match = re.search(pattern_for_sql_command, block)
-            if match is not None:
-                sql_command = match.group(0)
-                sql_commands.append(sql_command)
-        return sql_commands
 
     def insert_execution_report(self, execution_report):
         # MAYBETODO
@@ -894,7 +863,7 @@ class ServerDatabaseHandler:
             % (order.client_order_id, order.account_company_id, order.received_date.mysql_date_stamp_string,
                order.handling_instruction, order.stock_ticker, str(order.side),
                str(order.maturity_date), order.order_type, str(order.order_quantity),
-               str(order.price), str(order.last_status), str(msg_seq_num)))
+               str(order.price), str(order.last_status), str(order.msg_seq_num)))
         self.execute_nonresponsive_sql_command(command)
         return
 

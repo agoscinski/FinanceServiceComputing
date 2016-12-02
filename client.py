@@ -1,17 +1,8 @@
 import sys
 import quickfix as fix
-from quickfix import Side_BUY, Side_SELL
 import quickfix42 as fix42
 import TradingClass
-from TradingClass import MarketDataResponse
-from TradingClass import OrderExecution
-from TradingClass import NewSingleOrder
-from TradingClass import OrderCancelRequest
-from TradingClass import YearMonthFix
-from TradingClass import FIXDateTimeUTC
-from TradingClass import FIXTime
 import datetime
-import pdb
 import htmlPy
 import json
 import demjson
@@ -283,7 +274,7 @@ class ClientFIXHandler:
         message.getField(total_volume_traded_fix)
 
         a_date = TradingClass.FIXDate.from_year_month_day(2000, 1, 1)
-        a_time = FIXTime(0, 0, 0)
+        a_time = TradingClass.FIXTime(0, 0, 0)
         groupMD = fix42.MarketDataSnapshotFullRefresh.NoMDEntries()
         for MDIndex in range(no_md_entries_fix.getValue()):
             message.getGroup(MDIndex + 1, groupMD)
@@ -301,7 +292,7 @@ class ClientFIXHandler:
             md_entry_time_list.append(a_time)
 
         # Encapsulate data into market data response object
-        market_data = MarketDataResponse(md_req_id_fix.getValue(), no_md_entries_fix.getValue(), symbol_fix.getValue()
+        market_data = TradingClass.MarketDataResponse(md_req_id_fix.getValue(), no_md_entries_fix.getValue(), symbol_fix.getValue()
                                          , md_entry_type_list, md_entry_px_list, md_entry_size_list, md_entry_date_list,
                                          md_entry_time_list,total_volume_traded_fix.getValue())
 
@@ -394,7 +385,7 @@ class ClientFIXHandler:
         if ord_status == '4':
             self.client_logic.process_order_cancel_respond(orig_cl_ord_id, ord_status, leaves_qty, cum_qty )
         else:
-            order_execution = OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol
+            order_execution = TradingClass.OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol
                                          , side, leaves_qty, cum_qty,avg_px, price, stop_px)
             self.client_logic.process_order_execution_respond(order_execution)
 
@@ -546,10 +537,10 @@ class ClientLogic():
         handl_inst = '1'
         exec_inst = '2'
         symbol = 'TSLA'
-        maturity_month_year = YearMonthFix(2016, 1)
+        maturity_month_year = TradingClass.FIXYearMonth(2016, 1)
         maturity_day = 1
-        side = Side_BUY
-        transact_time = FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
+        side = fix.Side_BUY
+        transact_time = TradingClass.FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
         order_qty = 10
         ord_type = '1'
         price = 20000
@@ -559,7 +550,7 @@ class ClientLogic():
         on_behalf_of_comp_id = None
         sender_sub_id = None
 
-        fix_order = NewSingleOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side
+        fix_order = TradingClass.NewSingleOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side
                                    , transact_time, order_qty, ord_type, price, stop_px, sender_comp_id, sending_time,
                                    on_behalf_of_comp_id
                                    , sender_sub_id)
@@ -604,10 +595,10 @@ class ClientLogic():
         cl_ord_id = '1'  # self.client_fix_handler.fix_application.gen_order_id()
         #should be retrieved from database
         symbol = 'TSLA'
-        side = Side_BUY
+        side = TradingClass.FIXHandlerUtils.Side.BUY
         order_qty=100
-        transact_time = FIXDateTimeUTC.create_for_current_time()
-        ocr = OrderCancelRequest(orig_cl_ord_id,cl_ord_id,symbol,side,transact_time,order_qty)
+        transact_time = TradingClass.FIXDateTimeUTC.create_for_current_time()
+        ocr = TradingClass.OrderCancelRequest(orig_cl_ord_id,cl_ord_id,symbol,side,transact_time,order_qty)
         self.client_fix_handler.send_order_cancel_request(ocr)
         return
 
@@ -624,45 +615,45 @@ class ClientLogic():
     @staticmethod
     def extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
                                       market_data_entry_quantity):
-        prices = market_data_entry_prices[market_data_entry_types == TradingClass.OrderEntryType.OFFER]
-        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.OrderEntryType.OFFER]
+        prices = market_data_entry_prices[market_data_entry_types == TradingClass.FIXHandlerUtils.OrderEntryType.OFFER]
+        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.FIXHandlerUtils.OrderEntryType.OFFER]
         return prices, quantity
 
     @staticmethod
     def extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
                                    market_data_entry_quantity):
-        prices = market_data_entry_prices[market_data_entry_types == TradingClass.MarketDataEntryType.BID]
-        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.MarketDataEntryType.BID]
+        prices = market_data_entry_prices[market_data_entry_types == TradingClass.FIXHandlerUtils.MarketDataEntryType.BID]
+        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.FIXHandlerUtils.MarketDataEntryType.BID]
         return prices, quantity
 
     @staticmethod
     def extract_current_price(market_data_entry_types, market_data_entry_prices):
         current_price = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.CURRENT_PRICE)
+            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.CURRENT_PRICE)
         return current_price
 
     @staticmethod
     def extract_opening_price(market_data_entry_types, market_data_entry_prices):
         opening_price = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.OPENING_PRICE)
+            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING_PRICE)
         return opening_price
 
     @staticmethod
     def extract_closing_price(market_data_entry_types, market_data_entry_prices):
         closing_price = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.CLOSING_PRICE)
+            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING_PRICE)
         return closing_price
 
     @staticmethod
     def extract_day_high(market_data_entry_types, market_data_entry_prices):
         session_high = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.DAY_HIGH)
+            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_HIGH)
         return session_high
 
     @staticmethod
     def extract_day_low(market_data_entry_types, market_data_entry_prices):
         session_low = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.MarketDataEntryType.DAY_LOW)
+            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_LOW)
         return session_low
 
     @staticmethod
