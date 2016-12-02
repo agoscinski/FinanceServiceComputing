@@ -777,12 +777,15 @@ class Order(object):
         sender_sub_id (string): sub identifier of sender
         cash_order_quantity (float): amount of order requested
         msg_seq_num (int)
+        cumulative_order_quantity (float): the remaining amount of shares of the order able to be sold/bought
+        average_price (float): the average price of the sold, bought shares
+
     """
 
     def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
                  maturity_date,
                  order_type, order_quantity, price, last_status, msg_seq_num=None, on_behalf_of_company_id=None,
-                 sender_sub_id=None, cash_order_quantity=None):
+                 sender_sub_id=None, cash_order_quantity=None, cumulative_order_quantity=None, average_price=None):
         self.client_order_id = client_order_id
         self.account_company_id = account_company_id
         self.received_date = received_date
@@ -798,18 +801,22 @@ class Order(object):
         self.on_behalf_of_company_id = on_behalf_of_company_id
         self.sender_sub_id = sender_sub_id
         self.cash_order_quantity = cash_order_quantity
+        self.cumulative_order_quantity = cumulative_order_quantity
+        self.average_price = average_price
 
     @classmethod
     def create_dummy_order(cls, client_order_id="20161120-001", account_company_id="client",
                            received_date=FIXDate.from_fix_date_stamp_string("20161120"), handling_instruction=1,
                            stock_ticker="TSLA", side=DatabaseHandlerUtils.Side.BUY, maturity_date=FIXDate.from_fix_date_stamp_string("20161125"),
                            order_type=DatabaseHandlerUtils.OrderType.MARKET, order_quantity=100.00, price=10.00,
-                           last_status=DatabaseHandlerUtils.LastStatus.PENDING, msg_seq_num=0):
+                           last_status=DatabaseHandlerUtils.LastStatus.PENDING, msg_seq_num=0,
+                           cumulative_order_quantity=50., average_price=12.):
         """For testing"""
         dummy_order = cls(client_order_id=client_order_id, account_company_id=account_company_id,
                           received_date=received_date, handling_instruction=handling_instruction,
                           stock_ticker=stock_ticker, side=side, maturity_date=maturity_date, order_type=order_type,
-                          order_quantity=order_quantity, price=price, last_status=last_status, msg_seq_num=msg_seq_num)
+                          order_quantity=order_quantity, price=price, last_status=last_status, msg_seq_num=msg_seq_num,
+                          cumulative_order_quantity=cumulative_order_quantity, average_price=average_price)
         return dummy_order
 
     @classmethod

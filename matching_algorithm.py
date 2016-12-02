@@ -28,24 +28,24 @@ def pro_rata(buy_orders, sell_orders):
     # get total volume of buy
     volume_buy = 0
     for i in range(current_buy_orders_length):
-        volume_buy += buy_orders[i].order_quantity
+        volume_buy += buy_orders[i].cumulative_order_quantity
 
     # get total volume of sell
     volume_sell = 0
     for i in range(current_sell_orders_length):
-        volume_sell += sell_orders[i].order_quantity
+        volume_sell += sell_orders[i].cumulative_order_quantity
 
     # compare volumes
     if volume_sell > volume_buy:
         sell_buy_diff = volume_sell - volume_buy - 1
         while sell_buy_diff > 0:
-            sell_buy_diff -= sell_orders[current_sell_orders_length - 1].order_quantity
+            sell_buy_diff -= sell_orders[current_sell_orders_length - 1].cumulative_order_quantity
             current_sell_orders_length -= 1
 
     sum_of_weighted_orders = 0
 
     for i in range(current_sell_orders_length):
-        sum_of_weighted_orders += buy_orders[i].order_quantity * (i + 1)
+        sum_of_weighted_orders += buy_orders[i].cumulative_order_quantity * (i + 1)
 
     # list of transactions, line is seller(i), row is buyer(j)
     trade_matrix = np.zeros(shape=(len(sell_orders), len(buy_orders)))
@@ -53,22 +53,22 @@ def pro_rata(buy_orders, sell_orders):
     # time pro rata algorithm
     p = []
     for i in range(current_buy_orders_length):
-        p.append((buy_orders[i].order_quantity * buy_orders[i].price * (i + 1)) / sum_of_weighted_orders)
+        p.append((buy_orders[i].cumulative_order_quantity * buy_orders[i].price * (i + 1)) / sum_of_weighted_orders)
 
     P = []
     for i in range(current_buy_orders_length):
-        comp = [buy_orders[i].order_quantity * buy_orders[i].price, np.floor(p[i] * current_sell_orders_length)]
+        comp = [buy_orders[i].cumulative_order_quantity * buy_orders[i].price, np.floor(p[i] * current_sell_orders_length)]
         P.append(np.min(comp))
 
     for i in range(current_sell_orders_length):
-        while sell_orders[i].order_quantity > 0:
+        while sell_orders[i].cumulative_order_quantity > 0:
             for j in range(current_buy_orders_length):
                 if P[j] > 0:
                     P[j] -= 1
-                    buy_orders[j].order_quantity -= 1
-                    sell_orders[i].order_quantity -= 1
+                    buy_orders[j].cumulative_order_quantity -= 1
+                    sell_orders[i].cumulative_order_quantity -= 1
                     trade_matrix[[i], [j]] += 1
-                    if sell_orders[i].order_quantity == 0:
+                    if sell_orders[i].cumulative_order_quantity == 0:
                         break
 
     return trade_matrix
