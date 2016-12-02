@@ -577,6 +577,106 @@ class ClientLogic():
         Returns
             maturity_date (FIXYearMonth)
             maturity_day (int): between 1-31
+
+    @staticmethod
+    def extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                      market_data_entry_quantity):
+        prices = market_data_entry_prices[market_data_entry_types == TradingClass.FIXHandlerUtils.OrderEntryType.OFFER]
+        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.FIXHandlerUtils.OrderEntryType.OFFER]
+        return prices, quantity
+
+    @staticmethod
+    def extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                   market_data_entry_quantity):
+        prices = market_data_entry_prices[market_data_entry_types == TradingClass.FIXHandlerUtils.MarketDataEntryType.BID]
+        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.FIXHandlerUtils.MarketDataEntryType.BID]
+        return prices, quantity
+
+    @staticmethod
+    def extract_current_price(market_data_entry_types, market_data_entry_prices):
+        current_price = ClientLogic.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.CURRENT_PRICE)
+        return current_price
+
+    @staticmethod
+    def extract_opening_price(market_data_entry_types, market_data_entry_prices):
+        opening_price = ClientLogic.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING_PRICE)
+        return opening_price
+
+    @staticmethod
+    def extract_closing_price(market_data_entry_types, market_data_entry_prices):
+        closing_price = ClientLogic.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING_PRICE)
+        return closing_price
+
+    @staticmethod
+    def extract_day_high(market_data_entry_types, market_data_entry_prices):
+        session_high = ClientLogic.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_HIGH)
+        return session_high
+
+    @staticmethod
+    def extract_day_low(market_data_entry_types, market_data_entry_prices):
+        session_low = ClientLogic.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_LOW)
+        return session_low
+
+    @staticmethod
+    def extract_market_data_information(market_data):
+        market_data_entry_types = np.array(market_data.get_md_entry_type_list())
+        market_data_entry_prices = np.array(market_data.get_md_entry_px_list())
+        market_data_entry_quantity = np.array(market_data.get_md_entry_size_list())
+
+        offers_price, offers_quantity = ClientLogic.extract_offers_price_quantity(market_data_entry_types,
+                                                                           market_data_entry_prices,
+                                                                           market_data_entry_quantity)
+        bids_price, bids_quantity = ClientLogic.extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                                                           market_data_entry_quantity)
+        current_price = ClientLogic.extract_current_price(market_data_entry_types, market_data_entry_prices)
+        current_quantity = market_data.get_md_total_volume_traded()
+        opening_price = ClientLogic.extract_opening_price(market_data_entry_types)
+        closing_price = ClientLogic.extract_closing_price(market_data_entry_types)
+        day_high = ClientLogic.extract_day_high(market_data_entry_types)
+        day_low = ClientLogic.extract_low_low(market_data_entry_types)
+
+        offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
+        closing_price, day_high, day_low = \
+            ClientLogic.transform_numpy_array_to_list(offers_price, offers_quantity, bids_price, bids_quantity, current_price,
+                                          current_quantity, opening_price, closing_price, day_high, day_low)
+        return offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
+               closing_price, day_high, day_low
+
+
+    @staticmethod
+    def extract_five_smallest_offers(offers_price, offers_quantity):
+        five_smallest_offers_indices = ClientLogic.extract_n_smallest_indices(offers_price, 5)
+        five_smallest_offers_price, five_smallest_offers_quantity = \
+            ClientLogic.get_values_from_lists_for_certain_indices(five_smallest_offers_indices, offers_price, offers_quantity)
+        return five_smallest_offers_price, five_smallest_offers_quantity
+
+
+    @staticmethod
+    def extract_five_biggest_bids(bids_price, bids_quantity):
+        five_biggest_bids_indices = ClientLogic.extract_n_biggest_indices(bids_price)
+        five_biggest_bids_price, five_biggest_bids_quantity = ClientLogic.get_values_from_lists_for_certain_indices(
+            five_biggest_bids_indices, bids_price, bids_quantity)
+        return five_biggest_bids_price, five_biggest_bids_quantity
+
+    @staticmethod
+    def get_index_of_first_occurring_value(numpy_array, value):
+        indices_of_occurrences = numpy_array[numpy_array == value]
+        index = indices_of_occurrences[0] if len(indices_of_occurrences) > 0 else None
+        return index
+
+
+    @staticmethod
+    def get_value_for_id(values, ids, id):
+        """Gets the value of the entry in the numpy array values with the index of the id in the numpy array ids
+        Args:
+            values (numpy.array of float64): collection of values
+            ids (numpy.array of int64): collection of different ids
+            id (int): the id for which the index is determined in ids
         """
         #TODO Valentin
         maturity_date = TradingClass.FIXYearMonth()
@@ -598,10 +698,6 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         #TODO Valentin use execute_nonresponsive_sql_command for this
         pass
 
-    def generate_new_client_order_id(self, new_single_order):
-        #TODO
-        self.last_order_id += 1
-        return self.last_order_id
 
     def generate_market_data_request_id(self):
         self.last_market_data_request_id = self.last_market_data_request_id + 1

@@ -714,7 +714,6 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
                order_execution.buyer_company_id, order_execution.buyer_received_date.mysql_date_stamp_string,
                order_execution.seller_client_order_id, order_execution.seller_company_id,
                order_execution.seller_received_date.mysql_date_stamp_string))
-        print command
         order_execution_id = self.execute_responsive_insert_sql_command(command)
         return order_execution_id
 

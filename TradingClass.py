@@ -5,7 +5,6 @@ import datetime
 import quickfix as fix
 import quickfix42 as fix42
 
-
 ##################
 ## Time classes ##
 ##################
@@ -279,6 +278,7 @@ class FIXDateTimeUTC(object):
 ###################################
 
 class FIXHandlerUtils:
+
     class MarketDataEntryType:
         OFFER = 0
         BID = 1
@@ -356,6 +356,56 @@ class FIXHandlerUtils:
             return fix_object.getString()
         else:
             return None
+
+class DatabaseHandlerUtils:
+    # Enums
+    class OrderType:
+        MARKET = 1
+        LIMIT = 2
+
+    class Side:
+        BUY = 1
+        SELL = 2
+
+    class LastStatus:
+        DONE = 0
+        PENDING = 1
+        CANCELED = 2
+        EXPIRED = 3
+
+    class HandlingInstruction:
+        AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION = 1
+
+    @staticmethod
+    def parse_file_names_from_init_script(init_script_file_path):
+        file_names = []
+        pattern_for_line_with_file = re.compile("(?<=source ).+")
+        for line in open(init_script_file_path):
+            for match in re.finditer(pattern_for_line_with_file, line):
+                file_name = match.group(0)
+                file_names.append(file_name)
+        return file_names
+
+    @staticmethod
+    def parse_sql_commands_from_sql_file(sql_file_file_path):
+        """Parses a sql file and extracts the sql commands of it
+        Args:
+            sql_file_file_path (string): the file path of the sql file
+
+        Returns:
+            sql_commands (list of string): each element is one sql command to be executed
+        """
+        with open(sql_file_file_path) as sql_file:
+            sql_file_content = sql_file.read().replace("\n", " ").split(";")
+
+        sql_commands = []
+        pattern_for_sql_command = re.compile("(CREATE|INSERT|SET ..|UPDATE|DELETE).+")
+        for block in sql_file_content:
+            match = re.search(pattern_for_sql_command, block)
+            if match is not None:
+                sql_command = match.group(0)
+                sql_commands.append(sql_command)
+        return sql_commands
 
 
 class DatabaseHandler:
@@ -880,8 +930,7 @@ class NewSingleOrder(object):
     def create_dummy_new_single_order(cls, client_order_id="client", handling_instruction="1",
                                       symbol="TSLA", maturity_month_year=FIXYearMonth.from_year_month(2000, 1),
                                       maturity_day=2, side=FIXHandlerUtils.Side.BUY,
-                                      transaction_time=FIXDateTimeUTC.from_date_fix_time_stamp_string(
-                                          "20000101-10:00:00"),
+                                      transaction_time=FIXDateTimeUTC.from_date_fix_time_stamp_string("20000101-10:00:00"),
                                       order_quantity=10., order_type=FIXHandlerUtils.OrderType.LIMIT, price=100.,
                                       stop_price=None, sender_company_id=None, sending_time=None,
                                       on_behalf_of_company_id=None, sender_sub_id=None):

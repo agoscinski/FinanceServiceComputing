@@ -30,6 +30,7 @@ class TestServerLogic:
 
 
 class TestServerDatabaseHandler:
+<<<<<<< 8cf643acdb90eb4846e47369c1d01b36146d9b00
     def setup_method(self, method):
         """ setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
@@ -108,6 +109,13 @@ class TestServerDatabaseHandler:
         assert order_id == 1
 
 
+    """
+    def test_fetch_order_by_order_id(self):
+        order_id = fsc_server_database_handler.fetch_order_by_order_id(0, 'GS', '2016-11-09')
+        assert order_id == 1
+        # TODO yelingsheng: assertion is weird. You should compare the object you obtain with an object you create here. See test_fetch_pending_orders_for_stock_ticker for it. It is done similar
+    """
+
     def test_insert_order_execution(self):
         order_execution = TradingClass.OrderExecution.create_dummy_order_execution(execution_id=None)
-        assert fsc_server_database_handler.insert_order_execution(order_execution) == 4
+        assert fsc_server_database_handler.insert_order_execution(order_execution) == 3
