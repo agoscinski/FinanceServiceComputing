@@ -1,7 +1,10 @@
+import MySQLdb
+import numpy as np
 import re
 import datetime
 import quickfix as fix
 import quickfix42 as fix42
+
 
 ##################
 ## Time classes ##
@@ -276,7 +279,6 @@ class FIXDateTimeUTC(object):
 ###################################
 
 class FIXHandlerUtils:
-
     class MarketDataEntryType:
         OFFER = 0
         BID = 1
@@ -355,6 +357,126 @@ class FIXHandlerUtils:
         else:
             return None
 
+
+class DatabaseHandler:
+
+    def __init__(self, user_name="root", user_password="root", database_name="FSCDatabase", database_port=3306,
+                 init_database_script_path="./database/init_fsc_database.sql"):
+        """
+        Args:
+            user_name (string)
+            user_password (string)
+            database_name (string)
+            database_port (int)
+            init_database_script_path (string)
+        """
+        self.user_name = user_name
+        self.user_password = user_password
+        self.database_name = database_name
+        self.database_port = database_port
+        self.init_database_script_path = init_database_script_path
+
+    def init_database(self):
+        """This function initializes a new database, by first dropping the database with self.database_name and the creating
+         a new one with the same name. It then load all sql files saved in the init script file located in self.init_database_script_path,
+         see database documentation for file format of the init script
+        """
+        self.drop_schema()
+        self.create_schema()
+        self.load_init_script()
+        return
+
+    def teardown_database(self):
+        self.drop_schema()
+
+    def create_schema(self):
+        sql_command = "CREATE SCHEMA IF NOT EXISTS `" + self.database_name + "` DEFAULT CHARACTER SET utf8 ;"
+        try:
+            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password)
+            cursor = connection.cursor()
+            cursor.execute(sql_command)
+            connection.commit()
+            connection.close()
+            return
+        except MySQLdb.Error, e:
+            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+        return
+
+    def drop_schema(self):
+        """This function drops the database with self.database_name"""
+        sql_command = "DROP SCHEMA IF EXISTS `" + self.database_name + "` ;"
+        self.execute_nonresponsive_sql_command(sql_command)
+
+    def load_init_script(self):
+        file_names = DatabaseHandlerUtils.parse_file_names_from_init_script(self.init_database_script_path)
+        for file_name in file_names:
+            self.load_sql_file(file_name)
+        return
+
+    def load_sql_file(self, file_path):
+        sql_commands = DatabaseHandlerUtils.parse_sql_commands_from_sql_file(file_path)
+        for sql_command in sql_commands:
+            self.execute_nonresponsive_sql_command(sql_command)
+
+    def execute_select_sql_command(self, sql_command):
+        """Used to execute SELECT commands which return a table
+        Args:
+            sql_command (string): the sql command to be executed
+        Returns:
+            fetched_database_rows (list of tuples): the each entry is a row of the select statement #TODO do not know if this is correct
+        """
+        fetched_database_rows = []
+        try:
+            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+                                         db=self.database_name, port=self.database_port)
+            cursor = connection.cursor()
+            execution = (sql_command)
+            cursor.execute(execution)
+            fetched_database_rows = cursor.fetchall()
+            connection.close()
+        except MySQLdb.Error, e:
+            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+
+        return fetched_database_rows
+
+    def execute_nonresponsive_sql_command(self, sql_command):
+        """Used to execute commands CREATE, UPDATE, DELETE which returns nothing
+        Args:
+            sql_command (string): the sql command to be executed
+        Returns:
+            None
+        """
+        try:
+            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+                                         db=self.database_name, port=self.database_port)
+            cursor = connection.cursor()
+            cursor.execute(sql_command)
+            connection.commit()
+            connection.close()
+            return
+        except MySQLdb.Error, e:
+            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+
+    def execute_responsive_insert_sql_command(self, insert_sql_command):
+        """Used to execute commands INSERT which returns the produced ID from database server
+        Args:
+            insert_sql_command (string): the sql command to be executed
+        Returns:
+            id_of_inserted_row (ID type in database): the ID of the object inserted
+        """
+        try:
+            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+                                         db=self.database_name, port=self.database_port)
+            cursor = connection.cursor()
+            cursor.execute(insert_sql_command)
+            connection.commit()
+            id_of_inserted_row = cursor.lastrowid
+            connection.close()
+            return id_of_inserted_row
+        except MySQLdb.Error, e:
+            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+
+
 class DatabaseHandlerUtils:
     # Enums
     class OrderType:
@@ -404,6 +526,142 @@ class DatabaseHandlerUtils:
                 sql_command = match.group(0)
                 sql_commands.append(sql_command)
         return sql_commands
+
+
+class ClientLogicUtils:
+    @staticmethod
+    def extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                      market_data_entry_quantity):
+        prices = market_data_entry_prices[market_data_entry_types == FIXHandlerUtils.OrderEntryType.OFFER]
+        quantity = market_data_entry_quantity[market_data_entry_types == FIXHandlerUtils.OrderEntryType.OFFER]
+        return prices, quantity
+
+    @staticmethod
+    def extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                   market_data_entry_quantity):
+        prices = market_data_entry_prices[market_data_entry_types == FIXHandlerUtils.MarketDataEntryType.BID]
+        quantity = market_data_entry_quantity[market_data_entry_types == FIXHandlerUtils.MarketDataEntryType.BID]
+        return prices, quantity
+
+    @staticmethod
+    def extract_current_price(market_data_entry_types, market_data_entry_prices):
+        current_price = ClientLogicUtils.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, FIXHandlerUtils.MarketDataEntryType.CURRENT_PRICE)
+        return current_price
+
+    @staticmethod
+    def extract_opening_price(market_data_entry_types, market_data_entry_prices):
+        opening_price = ClientLogicUtils.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, FIXHandlerUtils.MarketDataEntryType.OPENING_PRICE)
+        return opening_price
+
+    @staticmethod
+    def extract_closing_price(market_data_entry_types, market_data_entry_prices):
+        closing_price = ClientLogicUtils.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, FIXHandlerUtils.MarketDataEntryType.CLOSING_PRICE)
+        return closing_price
+
+    @staticmethod
+    def extract_day_high(market_data_entry_types, market_data_entry_prices):
+        session_high = ClientLogicUtils.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, FIXHandlerUtils.MarketDataEntryType.DAY_HIGH)
+        return session_high
+
+    @staticmethod
+    def extract_day_low(market_data_entry_types, market_data_entry_prices):
+        session_low = ClientLogicUtils.get_value_for_id(
+            market_data_entry_prices, market_data_entry_types, FIXHandlerUtils.MarketDataEntryType.DAY_LOW)
+        return session_low
+
+    @staticmethod
+    def extract_market_data_information(market_data):
+        market_data_entry_types = np.array(market_data.get_md_entry_type_list())
+        market_data_entry_prices = np.array(market_data.get_md_entry_px_list())
+        market_data_entry_quantity = np.array(market_data.get_md_entry_size_list())
+
+        offers_price, offers_quantity = ClientLogicUtils.extract_offers_price_quantity(market_data_entry_types,
+                                                                                       market_data_entry_prices,
+                                                                                       market_data_entry_quantity)
+        bids_price, bids_quantity = ClientLogicUtils.extract_bid_price_quantity(market_data_entry_types,
+                                                                                market_data_entry_prices,
+                                                                                market_data_entry_quantity)
+        current_price = ClientLogicUtils.extract_current_price(market_data_entry_types, market_data_entry_prices)
+        current_quantity = market_data.get_md_total_volume_traded()
+        opening_price = ClientLogicUtils.extract_opening_price(market_data_entry_types)
+        closing_price = ClientLogicUtils.extract_closing_price(market_data_entry_types)
+        day_high = ClientLogicUtils.extract_day_high(market_data_entry_types)
+        day_low = ClientLogicUtils.extract_low_low(market_data_entry_types)
+
+        offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
+        closing_price, day_high, day_low = \
+            ClientLogicUtils.transform_numpy_array_to_list(offers_price, offers_quantity, bids_price, bids_quantity,
+                                                           current_price,
+                                                           current_quantity, opening_price, closing_price, day_high,
+                                                           day_low)
+        return offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
+               closing_price, day_high, day_low
+
+    @staticmethod
+    def extract_five_smallest_offers(offers_price, offers_quantity):
+        five_smallest_offers_indices = ClientLogicUtils.extract_n_smallest_indices(offers_price, 5)
+        five_smallest_offers_price, five_smallest_offers_quantity = \
+            ClientLogicUtils.get_values_from_lists_for_certain_indices(five_smallest_offers_indices, offers_price,
+                                                                       offers_quantity)
+        return five_smallest_offers_price, five_smallest_offers_quantity
+
+    @staticmethod
+    def extract_five_biggest_bids(bids_price, bids_quantity):
+        five_biggest_bids_indices = ClientLogicUtils.extract_n_biggest_indices(bids_price)
+        five_biggest_bids_price, five_biggest_bids_quantity = ClientLogicUtils.get_values_from_lists_for_certain_indices(
+            five_biggest_bids_indices, bids_price, bids_quantity)
+        return five_biggest_bids_price, five_biggest_bids_quantity
+
+    @staticmethod
+    def get_index_of_first_occurring_value(numpy_array, value):
+        indices_of_occurrences = numpy_array[numpy_array == value]
+        index = indices_of_occurrences[0] if len(indices_of_occurrences) > 0 else None
+        return index
+
+    @staticmethod
+    def get_value_for_id(values, ids, id):
+        """Gets the value of the entry in the numpy array values with the index of the id in the numpy array ids
+        Args:
+            values (numpy.array of float64): collection of values
+            ids (numpy.array of int64): collection of different ids
+            id (int): the id for which the index is determined in ids
+        """
+        index_of_first_occurring_value = ClientLogicUtils.get_index_of_first_occurring_value(ids, id)
+        value = None if index_of_first_occurring_value is None else values[index_of_first_occurring_value]
+        return value
+
+    @staticmethod
+    def extract_n_smallest_indices(integer_list, n, order="ascending"):
+        n_smallest_indices = np.argsort(integer_list)[:n]
+        if order == "descending":
+            n_smallest_indices = n_smallest_indices[::-1]
+
+        return n_smallest_indices
+
+    @staticmethod
+    def extract_n_biggest_indices(integer_list, n, order="ascending"):
+        n_biggest_indices = np.argsort(integer_list)[-n:]
+        if order == "descending":
+            n_biggest_indices = n_biggest_indices[::-1]
+        return n_biggest_indices
+
+    @staticmethod
+    def get_values_from_lists_for_certain_indices(certain_indices, *lists):
+        values_of_lists = []
+        for list_ in lists:
+            values_of_lists.append(list(np.array(list_)[certain_indices]))
+        return values_of_lists
+
+    @staticmethod
+    def transform_numpy_array_to_list(*numpy_arrays):
+        lists = []
+        for numpy_array in numpy_arrays:
+            lists.append(list(numpy_array))
+        return lists
 
 
 #################################
@@ -592,7 +850,7 @@ class NewSingleOrder(object):
         side (char/FIXHandler.Side)
         maturity_month_year (FIXYearMonth)
         maturity_day (int): between 1-31
-        transaction_time (FIXDateTime)
+        transaction_time (FIXDateTimeUTC)
         order_quantity (float)
         order_type (char/FIXHandler.OrderType)
         price (float)
@@ -622,7 +880,8 @@ class NewSingleOrder(object):
     def create_dummy_new_single_order(cls, client_order_id="client", handling_instruction="1",
                                       symbol="TSLA", maturity_month_year=FIXYearMonth.from_year_month(2000, 1),
                                       maturity_day=2, side=FIXHandlerUtils.Side.BUY,
-                                      transaction_time=FIXDateTimeUTC.from_date_fix_time_stamp_string("20000101-10:00:00"),
+                                      transaction_time=FIXDateTimeUTC.from_date_fix_time_stamp_string(
+                                          "20000101-10:00:00"),
                                       order_quantity=10., order_type=FIXHandlerUtils.OrderType.LIMIT, price=100.,
                                       stop_price=None, sender_company_id=None, sending_time=None,
                                       on_behalf_of_company_id=None, sender_sub_id=None):
@@ -662,6 +921,34 @@ class NewSingleOrder(object):
                    maturity_day, side,
                    transact_time, order_quantity, order_type, price, stop_price, sender_company_id,
                    sending_time, on_behalf_of_comp_id, sender_sub_id)
+
+    def create_fix_message(self):
+        """Creates from a new single order object a fix message
+        Returns:
+            message (quickfix.Message"""
+        message = fix.Message()
+        header = message.getHeader()
+        header.setField(fix.SenderCompID(self.sender_company_id()))
+        header.setField(fix.MsgType(fix.MsgType_NewOrderSingle))
+        header.setField(fix.SendingTime())
+
+        # Set Fix Message fix_order object
+        maturity_month_year_fix = fix.MaturityMonthYear()
+        maturity_month_year_fix.setString(str(self.maturity_month_year()))
+        transact_time_fix = fix.TransactTime()
+        transact_time_fix.setString(str(self.transaction_time))
+
+        message.setField(fix.ClOrdID(self.client_order_id))
+        message.setField(fix.HandlInst(self.handling_instruction))
+        message.setField(fix.Symbol(self.symbol))
+        message.setField(maturity_month_year_fix)
+        message.setField(fix.MaturityDay(str(self.maturity_day)))
+        message.setField(fix.Side(self.side))
+        message.setField(transact_time_fix)
+        message.setField(fix.OrderQty(self.order_quantity))
+        message.setField(fix.OrdType(self.order_type))
+        message.setField(fix.Price(self.price))
+        if self.stop_price is not None: message.setField(fix.StopPx(self.stop_price))
 
 
 class ExecutionReport(object):
@@ -807,7 +1094,8 @@ class Order(object):
     @classmethod
     def create_dummy_order(cls, client_order_id="20161120-001", account_company_id="client",
                            received_date=FIXDate.from_fix_date_stamp_string("20161120"), handling_instruction=1,
-                           stock_ticker="TSLA", side=DatabaseHandlerUtils.Side.BUY, maturity_date=FIXDate.from_fix_date_stamp_string("20161125"),
+                           stock_ticker="TSLA", side=DatabaseHandlerUtils.Side.BUY,
+                           maturity_date=FIXDate.from_fix_date_stamp_string("20161125"),
                            order_type=DatabaseHandlerUtils.OrderType.MARKET, order_quantity=100.00, price=10.00,
                            last_status=DatabaseHandlerUtils.LastStatus.PENDING, msg_seq_num=0,
                            cumulative_order_quantity=50., average_price=12.):

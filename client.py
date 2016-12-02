@@ -142,7 +142,8 @@ class ClientFIXApplication(fix.Application):
 class ClientFIXHandler:
     def __init__(self, client_logic, client_config_file_name):
         self.client_logic = client_logic
-        self.client_database_handler = ClientDatabaseHandler()
+        self.client_database_handler = ClientDatabaseHandler(user_name="root", user_password="root", database_name="BrokerDatabase", database_port=3306,
+                 init_database_script_path="./database/init_broker_database.sql")
         self.client_config_file_name = client_config_file_name
         self.fix_application = None
         self.socket_initiator = None
@@ -203,7 +204,7 @@ class ClientFIXHandler:
         message = fix.Message();
         header = message.getHeader();
         header.setField(fix.MsgType(fix.MsgType_MarketDataRequest))
-        header.setField(fix.MsgSeqNum(self.client_database_handler.generate_new_order_id()))
+        header.setField(fix.MsgSeqNum(self.client_database_handler.generate_new_client_order_id()))
         header.setField(fix.SendingTime())
         message.setField(fix.MDReqID(str(self.client_database_handler.generate_market_data_request_id())))
         message.setField(fix.SubscriptionRequestType(fix.SubscriptionRequestType_SNAPSHOT))
@@ -321,46 +322,16 @@ class ClientFIXHandler:
         #TODO query to database to update cancel order is failure
         print "reject the order cancellation"
 
-    def send_order(self, fix_order):
-        """Sends an order to server based on fix_order object created in client_logic
-
-        TODO @husein description if needed
+    def send_new_single_order(self, new_single_order):
+        """Sends an new single order to server
 
         Args:
-            order (class order): s
+            new_single_order (TradingClass.NewSingleOrder):
 
         Returns:
-
+            None
         """
-
-        # Create Fix Message for Order
-        message = fix.Message()
-        header = message.getHeader()
-        header.setField(fix.SenderCompID(fix_order.get_sender_comp_id()))
-        header.setField(fix.MsgType(fix.MsgType_NewOrderSingle))
-        header.setField(fix.MsgSeqNum(self.fix_application.order_id))
-        header.setField(fix.SendingTime())
-
-        # Set Fix Message fix_order object
-        maturity_month_year_fix = fix.MaturityMonthYear()
-        maturity_month_year_fix.setString(fix_order.get_maturity_month_year().__str__())
-        transact_time_fix = fix.TransactTime()
-        transact_time_fix.setString(fix_order.get_transact_time().__str__())
-
-        message.setField(fix.ClOrdID(str(fix_order.get_cl_ord_id())))
-        message.setField(fix.HandlInst(fix_order.get_handl_inst()))
-        message.setField(fix.ExecInst(fix_order.get_exec_inst()))
-        message.setField(fix.Symbol(fix_order.get_symbol()))
-        message.setField(maturity_month_year_fix)
-        message.setField(fix.MaturityDay(str(fix_order.get_maturity_day())))
-        message.setField(fix.Side(fix_order.get_side()))
-        message.setField(transact_time_fix)
-        message.setField(fix.OrderQty(fix_order.get_order_qty()))
-        message.setField(fix.OrdType(fix_order.get_ord_type()))
-        message.setField(fix.Price(fix_order.get_price()))
-        message.setField(fix.StopPx(fix_order.get_stop_px()))
-
-        # Send Fix Message to Server
+        message = new_single_order.to_fix_message()
         fix.Session.sendToTarget(message, self.fix_application.sessionID)
 
         return
@@ -528,33 +499,22 @@ class ClientLogic():
 
         return
 
-    def process_order_request(self, order):
-        # Get Order instruction from GUI
-        # Left Blank
+    def process_new_single_order_request(self, stock_ticker, side, order_type, price, quantity):
+        """This function processes and order and sends it to the server
 
-        # Construct Fix Order Object to be sent to the fix handler
-        cl_ord_id = '1'#self.client_fix_handler.fix_application.gen_order_id()
-        handl_inst = '1'
-        exec_inst = '2'
-        symbol = 'TSLA'
-        maturity_month_year = TradingClass.FIXYearMonth(2016, 1)
-        maturity_day = 1
-        side = fix.Side_BUY
-        transact_time = TradingClass.FIXDateTimeUTC(2016, 1, 1, 11, 40, 10)
-        order_qty = 10
-        ord_type = '1'
-        price = 20000
-        stop_px = 10000
-        sender_comp_id = "client"
-        sending_time = None
-        on_behalf_of_comp_id = None
-        sender_sub_id = None
-
-        fix_order = TradingClass.NewSingleOrder(cl_ord_id, handl_inst, exec_inst, symbol, maturity_month_year, maturity_day, side
-                                   , transact_time, order_qty, ord_type, price, stop_px, sender_comp_id, sending_time,
-                                   on_behalf_of_comp_id
-                                   , sender_sub_id)
-        self.client_fix_handler.send_order(fix_order)
+        Args:
+            stock_ticker (string)
+            side (int/FIXHandler.Side)
+            order_type (char/FIXHandler.OrderType)
+            price (float)
+            quantity (float)
+        """
+        client_order_id, = self.client_database_handler.generate_new_client_order_id()
+        maturity_month_year, maturity_day = self.get_tomorrows_maturity_date()
+        handling_instruction = TradingClass.FIXHandlerUtils.HandlingInstruction.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION
+        sending_time = TradingClass.FIXDateTimeUTC.create_for_current_time()
+        new_single_order = TradingClass.NewSingleOrder(client_order_id=client_order_id, symbol=stock_ticker, side=side, price=price, order_quantity=quantity, transaction_time=sending_time, order_type=order_type, handling_instruction=handling_instruction, maturity_month_year=maturity_month_year, maturity_day=maturity_day)
+        self.client_fix_handler.send_new_single_order(new_single_order)
         return
 
     def process_order_execution_respond(self, order_execution):
@@ -612,153 +572,25 @@ class ClientLogic():
         trading_transaction = None
         return trading_transaction
 
-    @staticmethod
-    def extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
-                                      market_data_entry_quantity):
-        prices = market_data_entry_prices[market_data_entry_types == TradingClass.FIXHandlerUtils.OrderEntryType.OFFER]
-        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.FIXHandlerUtils.OrderEntryType.OFFER]
-        return prices, quantity
-
-    @staticmethod
-    def extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
-                                   market_data_entry_quantity):
-        prices = market_data_entry_prices[market_data_entry_types == TradingClass.FIXHandlerUtils.MarketDataEntryType.BID]
-        quantity = market_data_entry_quantity[market_data_entry_types == TradingClass.FIXHandlerUtils.MarketDataEntryType.BID]
-        return prices, quantity
-
-    @staticmethod
-    def extract_current_price(market_data_entry_types, market_data_entry_prices):
-        current_price = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.CURRENT_PRICE)
-        return current_price
-
-    @staticmethod
-    def extract_opening_price(market_data_entry_types, market_data_entry_prices):
-        opening_price = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING_PRICE)
-        return opening_price
-
-    @staticmethod
-    def extract_closing_price(market_data_entry_types, market_data_entry_prices):
-        closing_price = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING_PRICE)
-        return closing_price
-
-    @staticmethod
-    def extract_day_high(market_data_entry_types, market_data_entry_prices):
-        session_high = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_HIGH)
-        return session_high
-
-    @staticmethod
-    def extract_day_low(market_data_entry_types, market_data_entry_prices):
-        session_low = ClientLogic.get_value_for_id(
-            market_data_entry_prices, market_data_entry_types, TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_LOW)
-        return session_low
-
-    @staticmethod
-    def extract_market_data_information(market_data):
-        market_data_entry_types = np.array(market_data.get_md_entry_type_list())
-        market_data_entry_prices = np.array(market_data.get_md_entry_px_list())
-        market_data_entry_quantity = np.array(market_data.get_md_entry_size_list())
-
-        offers_price, offers_quantity = ClientLogic.extract_offers_price_quantity(market_data_entry_types,
-                                                                           market_data_entry_prices,
-                                                                           market_data_entry_quantity)
-        bids_price, bids_quantity = ClientLogic.extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
-                                                                           market_data_entry_quantity)
-        current_price = ClientLogic.extract_current_price(market_data_entry_types, market_data_entry_prices)
-        current_quantity = market_data.get_md_total_volume_traded()
-        opening_price = ClientLogic.extract_opening_price(market_data_entry_types)
-        closing_price = ClientLogic.extract_closing_price(market_data_entry_types)
-        day_high = ClientLogic.extract_day_high(market_data_entry_types)
-        day_low = ClientLogic.extract_low_low(market_data_entry_types)
-
-        offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
-        closing_price, day_high, day_low = \
-            ClientLogic.transform_numpy_array_to_list(offers_price, offers_quantity, bids_price, bids_quantity, current_price,
-                                          current_quantity, opening_price, closing_price, day_high, day_low)
-        return offers_price, offers_quantity, bids_price, bids_quantity, current_price, current_quantity, opening_price, \
-               closing_price, day_high, day_low
-
-
-    @staticmethod
-    def extract_five_smallest_offers(offers_price, offers_quantity):
-        five_smallest_offers_indices = ClientLogic.extract_n_smallest_indices(offers_price, 5)
-        five_smallest_offers_price, five_smallest_offers_quantity = \
-            ClientLogic.get_values_from_lists_for_certain_indices(five_smallest_offers_indices, offers_price, offers_quantity)
-        return five_smallest_offers_price, five_smallest_offers_quantity
-
-
-    @staticmethod
-    def extract_five_biggest_bids(bids_price, bids_quantity):
-        five_biggest_bids_indices = ClientLogic.extract_n_biggest_indices(bids_price)
-        five_biggest_bids_price, five_biggest_bids_quantity = ClientLogic.get_values_from_lists_for_certain_indices(
-            five_biggest_bids_indices, bids_price, bids_quantity)
-        return five_biggest_bids_price, five_biggest_bids_quantity
-
-    @staticmethod
-    def get_index_of_first_occurring_value(numpy_array, value):
-        indices_of_occurrences = numpy_array[numpy_array == value]
-        index = indices_of_occurrences[0] if len(indices_of_occurrences) > 0 else None
-        return index
-
-
-    @staticmethod
-    def get_value_for_id(values, ids, id):
-        """Gets the value of the entry in the numpy array values with the index of the id in the numpy array ids
-        Args:
-            values (numpy.array of float64): collection of values
-            ids (numpy.array of int64): collection of different ids
-            id (int): the id for which the index is determined in ids
+    def get_tomorrows_maturity_date(self):
+        """Returns the standard maturity date which is the date of tomorrow
+        Returns
+            maturity_date (FIXYearMonth)
+            maturity_day (int): between 1-31
         """
-        index_of_first_occurring_value = ClientLogic.get_index_of_first_occurring_value(ids, id)
-        value = None if index_of_first_occurring_value is None else values[index_of_first_occurring_value]
-        return value
+        #TODO Valentin
+        maturity_date = TradingClass.FIXYearMonth()
+        maturity_day = 1
+        return maturity_date, maturity_day
 
 
-    @staticmethod
-    def extract_n_smallest_indices(integer_list, n, order="ascending"):
-        n_smallest_indices = np.argsort(integer_list)[:n]
-        if order == "descending":
-            n_smallest_indices = n_smallest_indices[::-1]
+class ClientDatabaseHandler(TradingClass.DatabaseHandler):
+    last_order_id=0
+    last_market_data_request_id=0
 
-        return n_smallest_indices
-
-
-    @staticmethod
-    def extract_n_biggest_indices(integer_list, n, order="ascending"):
-        n_biggest_indices = np.argsort(integer_list)[-n:]
-        if order == "descending":
-            n_biggest_indices = n_biggest_indices[::-1]
-        return n_biggest_indices
-
-
-    @staticmethod
-    def get_values_from_lists_for_certain_indices(certain_indices, *lists):
-        values_of_lists = []
-        for list_ in lists:
-            values_of_lists.append(list(np.array(list_)[certain_indices]))
-        return values_of_lists
-
-
-    @staticmethod
-    def transform_numpy_array_to_list(*numpy_arrays):
-        lists = []
-        for numpy_array in numpy_arrays:
-            lists.append(list(numpy_array))
-        return lists
-
-
-
-
-class ClientDatabaseHandler:
-    last_order_id = 0
-    last_market_data_request_id = 0
-
-    # TODO not threadsafe, but anyway it should be mysql request
-    def generate_new_order_id(self):
-        self.last_order_id = self.last_order_id + 1
+    def generate_new_client_order_id(self, new_single_order):
+        #TODO
+        self.last_order_id += 1
         return self.last_order_id
 
     def generate_market_data_request_id(self):
@@ -801,13 +633,14 @@ class GUIHandler:
             elif input == '3':
                 self.send_market_data_request_option("TSLA")
             elif input == '4':
-                self.send_order_request_option("order")
+                self.send_order_request_option()
             elif input == '5':
                 self.send_order_cancel_request_option("1")
             elif input == '6':
                 break
             else:
                 continue
+
 
     def button_login_actuated(self, user_name, user_password):
         """This function is activated when the login button is pushed"""
@@ -834,13 +667,30 @@ class GUIHandler:
     def send_market_data_request_option(self, symbol):
         self.client_logic.process_market_data_request(symbol)
 
-    def send_order_request_option(self, order):
-        self.client_logic.process_order_request(order)
+    # this function is used for button_buy_actuated as long it does not work
+    def send_order_request_option(self, ):
+        """
+        Args:
+            stock_ticker (string)
+            side (int/FIXHandler.Side)
+            price (float)
+            quantity (float)
+        """
+        dummy_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
+        self.button_buy_actuated(dummy_order.symbol, dummy_order.side, dummy_order.order_type, dummy_order.price, dummy_order.quantity)
 
     def send_order_cancel_request_option(self, order_id):
         self.client_logic.process_order_cancel_request(order_id)
 
-    def button_buy_actuated(self, stock_ticker, price, quantity):
+    def button_buy_actuated(self, stock_ticker, side, order_type, price, quantity):
+        """
+        Args:
+            stock_ticker (string)
+            side (int/FIXHandler.Side)
+            price (float)
+            quantity (float)
+        """
+        self.client_logic.process_new_single_order_request(stock_ticker, side, order_type, price, quantity)
         # TODO alex
         pass
 
