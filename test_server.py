@@ -87,15 +87,6 @@ class TestServerDatabaseHandler:
         execution_id = fsc_server_database_handler.execute_responsive_insert_sql_command(insert_sql)
         assert execution_id == 3
 
-    def test_execute_responsive_insert_sql_command2(self):
-        insert_sql = "INSERT INTO OrderExecution(OrderExecutionQuantity, OrderExecutionPrice, ExecutionTime," \
-                     " Order_BuyClientOrderID, Order_BuyCompanyID, Order_BuyReceivedDate, Order_SellClientOrderID," \
-                     " Order_SellCompanyID, Order_SellReceivedDate) VALUES('100','550','2016-11-09 12:14:07', '0','GS'," \
-                     "'2016-11-09', '1','MS','2016-11-08')"
-        execution_id = fsc_server_database_handler.execute_responsive_insert_sql_command(insert_sql)
-        assert execution_id == 3
-
-
     def test_insert_order(self):
         dummy_order = TradingClass.Order.create_dummy_order(msg_seq_num=0)
         fsc_server_database_handler.insert_order(dummy_order)
