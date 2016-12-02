@@ -251,7 +251,7 @@ class FIXDateTimeUTC(object):
 
     @property
     def mysql_date_stamp_string(self):
-        return self.date.strftime("%Y-%m-%d %H:%M:%S")
+        return self.date_time.strftime("%Y-%m-%d %H:%M:%S")
 
     @mysql_date_stamp_string.setter
     def year(self, date_stamp_string):
@@ -1284,12 +1284,12 @@ class OrderExecution:
     def create_dummy_order_execution(cls, execution_id=0, quantity=100., price=50.,
                                      execution_time=FIXDateTimeUTC.from_date_fix_time_stamp_string(
                                          "20111111-11:11:11"),
-                                     buyer_client_order_id="client",
-                                     buyer_company_id="Client Firm",
-                                     buyer_received_date=FIXDate.from_fix_date_stamp_string("20111110"),
-                                     seller_client_order_id="MS",
-                                     seller_company_id="Morgan Stanely",
-                                     seller_received_date=FIXDate.from_fix_date_stamp_string("20111109")):
+                                     buyer_client_order_id="0",
+                                     buyer_company_id="GS",
+                                     buyer_received_date=FIXDate.from_fix_date_stamp_string("20161109"),
+                                     seller_client_order_id="1",
+                                     seller_company_id="MS",
+                                     seller_received_date=FIXDate.from_fix_date_stamp_string("20161108")):
         """
         Args:
             executed_quantity (float): quantity of the order execution

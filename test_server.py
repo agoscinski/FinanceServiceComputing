@@ -103,7 +103,6 @@ class TestServerDatabaseHandler:
         dummy_order = TradingClass.Order.create_dummy_order(msg_seq_num=0)
         fsc_server_database_handler.insert_order(dummy_order)
 
-"""
     def test_fetch_order_by_order_id(self):
         order_id = fsc_server_database_handler.fetch_order_by_order_id(0, 'GS', '2016-11-09')
         assert order_id == 1
@@ -112,4 +111,3 @@ class TestServerDatabaseHandler:
     def test_insert_order_execution(self):
         order_execution = TradingClass.OrderExecution.create_dummy_order_execution(execution_id=None)
         assert fsc_server_database_handler.insert_order_execution(order_execution) == 4
-"""
