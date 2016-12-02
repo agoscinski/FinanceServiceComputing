@@ -42,6 +42,18 @@ class TestServerDatabaseHandler:
         """
         fsc_server_database_handler.teardown_database()
 
+    def test_check_if_order_is_valid(self):
+        #TODO Valentin
+        pass
+
+    def test_create_execution_report_for_order_execution(self):
+        #TODO Valentin
+        pass
+
+    def test_create_execution_report_for_executed_order(self):
+        #TODO Valentin
+        pass
+
     def test_fetch_pending_order_with_cumulative_quantity_by_stock_ticker(self):
         symbol = "TSLA"
         order_list = fsc_server_database_handler.fetch_pending_order_with_cumulative_quantity_by_stock_ticker(symbol)
