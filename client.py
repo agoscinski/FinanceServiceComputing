@@ -780,8 +780,6 @@ class GUIHandler:
             if (input == '1'):
                 self.wait_for_input()
             elif (input == '2'):
-                file = open("rawData.json", "r")
-                rawData = file.read()
                 json = {
                 }
                 htmlPy_app.template = ("index.html", json)
