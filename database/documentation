@@ -13,12 +13,12 @@ Account_CompanyID: The ID of the company making the order
 ReceivedTime: The date when the order was first accepted
 HandlingInstruction: The way the order should be handled (we only support the values 1 = Automated execution order, private, no Broker intervention)
 Stock_Ticker: The ticker symbol the order is related to
-Side: Describes the type of Order (we only support the values 1 = Buy, 2 = Sell)
-OrderType (we only support the values 1 = Market, 2 = Limit)
+Side: Describes the type of Order (1: Buy, 2: Sell)
+OrderType (1: Market, 2: Limit)
 OrderQuantity: The total quantity of the order (be careful, it could be that the order is partially fulfilled, therefore it has to be checked if there exist
 CashOrderQuantity: Defines (is not supported)
 Price
-LastStatus: 0:Done, 1:Pending, 2: Canceled, 3:Expired
+LastStatus: (0:Done, 1:Pending, 2: Canceled, 3:Expired)
 MsqSeqNum:
 OnBehalfOfCompanyID:
 SenderSubID:

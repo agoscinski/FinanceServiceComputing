@@ -588,6 +588,16 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
     last_order_id=0
     last_market_data_request_id=0
 
+    def insert_order(self, order):
+        """Insert a order into the the client database
+        Args:
+            order (TradingClass.Order)
+        Returns:
+            None
+        """
+        #TODO Valentin use execute_nonresponsive_sql_command for this
+        pass
+
     def generate_new_client_order_id(self, new_single_order):
         #TODO
         self.last_order_id += 1
