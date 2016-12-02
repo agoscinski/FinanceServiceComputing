@@ -365,7 +365,7 @@ class ServerLogic:
         symbol = md_request.symbol_list[0]
         md_entry_type_list = md_request.md_entry_type_list
 
-        pending_stock_orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(symbol)
+        pending_stock_orders = self.server_database_handler.fetch_pending_order_with_cumulative_quantity_by_stock_ticker(symbol)
         stock_information = self.server_database_handler.fetch_stock_information(symbol)
         market_data_response = self.pack_into_fix_market_data_response(md_req_id, md_entry_type_list, symbol,
                                                                        pending_stock_orders, stock_information)
@@ -399,7 +399,7 @@ class ServerLogic:
         self.server_database_handler.insert_order(requested_order)
         acknowledge_execution_report = self.create_execution_report_for_new_order(requested_order)
         self.server_fix_handler.send_execution_report_respond(acknowledge_execution_report)
-        orders = self.server_database_handler.fetch_pending_orders_for_stock_ticker(requested_order.symbol)
+        orders = self.server_database_handler.fetch_pending_order_with_cumulative_quantity_by_stock_ticker(requested_order.symbol)
         order_executions = matching_algorithm.match(orders)
         for order_execution in order_executions:
             order_execution.execution_id = self.server_database_handler.insert_order_execution(order_execution)
@@ -788,7 +788,7 @@ class ServerDatabaseHandler:
             cumulative_quantity (float): total number of shares filled of an order with the given order id
             average_price (float): the average price of all filled shares
         """
-        sql_command = ("select CumulativeQuantity, AveragePrice from `OrderCumulativeQuantityAndAveragePrice` "
+        sql_command = ("select CumulativeQuantity, AveragePrice from `OrderWithCumulativeQuantityAndAveragePrice` "
                        "where ClientOrderID='%s' and Account_CompanyID='%s' and ReceivedDate = '%s'") % (
                           client_order_id, account_company_id, received_date.mysql_date_stamp_string)
 
@@ -941,8 +941,8 @@ class ServerDatabaseHandler:
         sql_command = ""
         self.execute_nonresponsive_sql_command(sql_command)
 
-    def fetch_pending_orders_for_stock_ticker(self, symbol):
-        """Fetches all orders from the database with status not finished
+    def fetch_pending_order_with_cumulative_quantity_by_stock_ticker(self, symbol):
+        """Fetches all orders from the database with status pending and returns them in a list of orders
 
         Args:
             symbol (string): The ticker symbol for which orders are fetched
@@ -951,19 +951,31 @@ class ServerDatabaseHandler:
             pending_orders (list of TradingClass.Order): pending orders
         """
         sql_command = ("select ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
-                       "Side, MaturityDate, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
-                       "CashOrderQuantity from `Order` where LastStatus=1 and Stock_Ticker='%s'") % (
+                       "Side, MaturityDate, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID,"
+                       " SenderSubID, CashOrderQuantity, CumulativeQuantity from "
+                       "`OrderWithCumulativeQuantityAndAveragePrice` where LastStatus=1 and Stock_Ticker='%s'") % (
                           symbol)
 
         pending_orders_arguments_as_list = self.execute_select_sql_command(sql_command)  # list of tuples
         pending_orders = []
         for pending_order_arguments in pending_orders_arguments_as_list:
             pending_order_arguments_as_list = list(pending_order_arguments)  # ClientOrderID
-            pending_order_arguments_as_list[2] = TradingClass.FIXDate(pending_order_arguments[2])  # ReceivedDate
-            pending_order_arguments_as_list[6] = TradingClass.FIXDate(pending_order_arguments[6])  # MaturityDate
-            pending_order_arguments_as_list[8] = float(pending_order_arguments_as_list[8])  # OrderQuantity
-            pending_order_arguments_as_list[9] = float(pending_order_arguments_as_list[9])  # Price
-            pending_order_arguments_as_list[10] = int(pending_order_arguments_as_list[10])  # LastStatus
+            #pending_order_arguments_as_list[0] = pending_order_arguments_as_list[0]  # ClientOrderID
+            #pending_order_arguments_as_list[1] = pending_order_arguments_as_list[1]  # Account_CompanyID
+            pending_order_arguments_as_list[2] = TradingClass.FIXDate(pending_order_arguments_as_list[2])  # ReceivedDate
+            #pending_order_arguments_as_list[3] = pending_order_arguments_as_list[3]  # HandlingInstruction
+            #pending_order_arguments_as_list[4] = pending_order_arguments_as_list[4]  # Stock_Ticker
+            # pending_order_arguments_as_list[5] = pending_order_arguments_as_list[5]  # Side
+            pending_order_arguments_as_list[6] = TradingClass.FIXDate(pending_order_arguments_as_list[6])  # MaturityDate
+            #pending_order_arguments_as_list[7] = int(pending_order_arguments_as_list[7])  # OrderType
+            #pending_order_arguments_as_list[8] = float(pending_order_arguments_as_list[8])  # OrderQuantity
+            #pending_order_arguments_as_list[9] = float(pending_order_arguments_as_list[9])  # Price
+            #pending_order_arguments_as_list[10] = int(pending_order_arguments_as_list[10])  # LastStatus
+            #pending_order_arguments_as_list[11] = pending_order_arguments_as_list[11]  # MsgSeqNum
+            #pending_order_arguments_as_list[12] = pending_order_arguments_as_list[12]  # OnBehalfOfCompanyID
+            #pending_order_arguments_as_list[13] = pending_order_arguments_as_list[13]  # SenderSubID
+            #pending_order_arguments_as_list[14] = pending_order_arguments_as_list[14]  # CashOrderQuantity
+            pending_order_arguments_as_list[15] = float(pending_order_arguments_as_list[15])  # OrderWithCumulativeQuantityAndAveragePrice
             order = Order(*pending_order_arguments_as_list)
             pending_orders.append(order)
         return pending_orders

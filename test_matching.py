@@ -5,8 +5,8 @@ import matching_algorithm
 class TestMatchingAlgorithm:
 
     def test_pro_rata(self):
-        buy_order = TradingClass.Order.create_dummy_order(order_quantity=120, price=200)
-        sell_order = TradingClass.Order.create_dummy_order(order_quantity=120, price=200)
+        buy_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=120, price=200)
+        sell_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=120, price=200)
 
         buy_orders = [buy_order, buy_order, buy_order, buy_order, buy_order]
         sell_orders = [sell_order, sell_order, sell_order, sell_order, sell_order]
