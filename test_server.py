@@ -30,26 +30,17 @@ class TestServerLogic:
 
 
 class TestServerDatabaseHandler:
-    def test_extract_file_names_from_init_script(self):
-        parsed_file_names = TradingClass.DatabaseHandlerUtils.parse_file_names_from_init_script(
-            "tests/example_init_script.sql")
-        asserted_file_names = ["tests/database/create_tables.sql",
-                               "tests/database/create_view.sql",
-                               "tests/database/account_insert.sql",
-                               "tests/database/stock_insert.sql",
-                               "tests/database/order_insert.sql",
-                               "tests/database/order_execution_insert.sql"]
-        assert parsed_file_names == asserted_file_names
+    def setup_method(self, method):
+        """ setup any state tied to the execution of the given method in a
+        class.  setup_method is invoked for every test method of a class.
+        """
+        fsc_server_database_handler.init_database()
 
-    def test_parse_sql_commands_from_sql_file(self):
-        parsed_sql_commands = TradingClass.DatabaseHandlerUtils.parse_sql_commands_from_sql_file(
-            "tests/example_sql_commands.sql")
-        asserted_sql_commands = ["SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0",
-                                 "CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`Stock` (   `Ticker` VARCHAR(6) NOT NULL,   `CompanyName` VARCHAR(45) NULL,   `LotSize` INT NULL,   `TickSize` DECIMAL(20,2) NULL,   `TotalVolume` INT NULL,   PRIMARY KEY (`Ticker`)) ENGINE = InnoDB",
-                                 "INSERT INTO Stock(Ticker, CompanyName, LotSize, TickSize, TotalVolume) VALUES('MS','Morgan Stanley','100','0.01','10000000')"]
-        assert parsed_sql_commands[0] == asserted_sql_commands[0]
-        assert parsed_sql_commands[1] == asserted_sql_commands[1]
-        assert parsed_sql_commands[2] == asserted_sql_commands[2]
+    def teardown_method(self, method):
+        """ teardown any state that was previously setup with a setup_method
+        call.
+        """
+        fsc_server_database_handler.teardown_database()
 
     def test_fetch_pending_order_with_cumulative_quantity_by_stock_ticker(self):
         symbol = "TSLA"
