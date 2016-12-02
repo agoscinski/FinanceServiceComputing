@@ -123,8 +123,8 @@ class ServerFIXHandler:
         settings = fix.SessionSettings(self.server_config_file_name)
         self.fix_application = ServerFIXApplication(self)
         self.storeFactory = fix.FileStoreFactory(settings)
-        self.logFactory = fix.FileLogFactory(settings)
-        # self.logFactory = fix.ScreenLogFactory(settings)
+        #self.logFactory = fix.FileLogFactory(settings)
+        self.logFactory = fix.ScreenLogFactory(settings)
         self.socket_acceptor = fix.SocketAcceptor(self.fix_application, self.storeFactory, settings, self.logFactory)
 
     def handle_logon_request(self, message):
@@ -210,7 +210,7 @@ class ServerFIXHandler:
                 None
         """
         fix_order = NewSingleOrder.from_fix_message(fix_message)
-        self.server_logic.process_order_request(fix_order)
+        self.server_logic.process_new_single_order_request(fix_order)
         return
 
     def handle_order_cancel_request(self, message):
@@ -687,65 +687,7 @@ class ServerLogic:
         return market_data
 
 
-class ServerDatabaseHandler:
-    def __init__(self, user_name="root", user_password="root", database_name="FSCDatabase", database_port=3306,
-                 init_database_script_path="./database/init_fsc_database.sql"):
-        """
-        Args:
-            user_name (string)
-            user_password (string)
-            database_name (string)
-            database_port (int)
-            init_database_script_path (string)
-        """
-        self.user_name = user_name
-        self.user_password = user_password
-        self.database_name = database_name
-        self.database_port = database_port
-        self.init_database_script_path = init_database_script_path
-
-    def init_database(self):
-        """This function initializes a new database, by first dropping the database with self.database_name and the creating
-         a new one with the same name. It then load all sql files saved in the init script file located in self.init_database_script_path,
-         see database documentation for file format of the init script
-        """
-        self.drop_schema()
-        self.create_schema()
-        self.load_init_script()
-        return
-
-    def teardown_database(self):
-        self.drop_schema()
-
-    def create_schema(self):
-        sql_command = "CREATE SCHEMA IF NOT EXISTS `" + self.database_name + "` DEFAULT CHARACTER SET utf8 ;"
-        try:
-            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password)
-            cursor = connection.cursor()
-            cursor.execute(sql_command)
-            connection.commit()
-            connection.close()
-            return
-        except MySQLdb.Error, e:
-            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
-        return
-
-    def drop_schema(self):
-        """This function drops the database with self.database_name"""
-        sql_command = "DROP SCHEMA IF EXISTS `" + self.database_name + "` ;"
-        self.execute_nonresponsive_sql_command(sql_command)
-
-    def load_init_script(self):
-        file_names = TradingClass.DatabaseHandlerUtils.parse_file_names_from_init_script(self.init_database_script_path)
-        for file_name in file_names:
-            self.load_sql_file(file_name)
-        return
-
-    def load_sql_file(self, file_path):
-        sql_commands = TradingClass.DatabaseHandlerUtils.parse_sql_commands_from_sql_file(file_path)
-        for sql_command in sql_commands:
-            self.execute_nonresponsive_sql_command(sql_command)
-
+class ServerDatabaseHandler(TradingClass.DatabaseHandler):
 
     def insert_execution_report(self, execution_report):
         # MAYBETODO
@@ -867,63 +809,7 @@ class ServerDatabaseHandler:
         self.execute_nonresponsive_sql_command(command)
         return
 
-    def execute_select_sql_command(self, sql_command):
-        """Used to execute SELECT commands which return a table
-        Args:
-            sql_command (string): the sql command to be executed
-        Returns:
-            fetched_database_rows (list of tuples): the each entry is a row of the select statement #TODO do not know if this is correct
-        """
-        fetched_database_rows = []
-        try:
-            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
-                                         db=self.database_name, port=self.database_port)
-            cursor = connection.cursor()
-            execution = (sql_command)
-            cursor.execute(execution)
-            fetched_database_rows = cursor.fetchall()
-            connection.close()
-        except MySQLdb.Error, e:
-            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 
-        return fetched_database_rows
-
-    def execute_nonresponsive_sql_command(self, sql_command):
-        """Used to execute commands CREATE, UPDATE, DELETE which returns nothing
-        Args:
-            sql_command (string): the sql command to be executed
-        Returns:
-            None
-        """
-        try:
-            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
-                                         db=self.database_name, port=self.database_port)
-            cursor = connection.cursor()
-            cursor.execute(sql_command)
-            connection.commit()
-            connection.close()
-            return
-        except MySQLdb.Error, e:
-            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
-
-    def execute_responsive_insert_sql_command(self, insert_sql_command):
-        """Used to execute commands INSERT which returns the produced ID from database server
-        Args:
-            insert_sql_command (string): the sql command to be executed
-        Returns:
-            id_of_inserted_row (ID type in database): the ID of the object inserted
-        """
-        try:
-            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
-                                         db=self.database_name, port=self.database_port)
-            cursor = connection.cursor()
-            cursor.execute(insert_sql_command)
-            connection.commit()
-            id_of_inserted_row = cursor.lastrowid
-            connection.close()
-            return id_of_inserted_row
-        except MySQLdb.Error, e:
-            print "Mysql Error %d: %s" % (e.args[0], e.args[1])
 
     def insert_order_cancel(self, requested_order_cancel):
         # TODO Husein figure out who does it
