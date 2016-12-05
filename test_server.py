@@ -103,12 +103,20 @@ class TestServerDatabaseHandler:
     def test_insert_order(self):
         dummy_order = TradingClass.Order.create_dummy_order(msg_seq_num=0)
         fsc_server_database_handler.insert_order(dummy_order)
-    """
-    def test_fetch_order_by_order_id(self):
-        order = fsc_server_database_handler.fetch_order_by_order_id(0, 'GS', '2016-11-09')
-        assert order_id == 1 #TODO fetch_order_by_order_id returns an TradingClass.Order object so you need to compare these two kinds
 
-    """
+    def test_fetch_order_by_order_id(self):
+        order_by_id = fsc_server_database_handler.fetch_order_by_order_id(0, 'GS', '2016-11-09')
+        goldman_sachs_order = TradingClass.Order(client_order_id='0', account_company_id='GS',
+                                                 received_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-09'), handling_instruction=1,
+                                                 maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-15'), stock_ticker='TSLA',
+                                                 side=TradingClass.DatabaseHandlerUtils.Side.BUY,
+                                                 order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT,
+                                                 order_quantity=10000., price=1000.,
+                                                 last_status=TradingClass.DatabaseHandlerUtils.LastStatus.PENDING,
+                                                 cumulative_order_quantity=None)
+        assert order_by_id == goldman_sachs_order
 
     def test_insert_order_execution(self):
         order_execution = TradingClass.OrderExecution.create_dummy_order_execution(execution_id=None)

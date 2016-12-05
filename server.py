@@ -751,15 +751,17 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
             order quantity (TradingClass.Order): the order object
         """
         #DONE by yelinsheng
-        command=("select ClientOrderID,Account_CompanyID,ReceivedDate,HandlingInstruction,Stock_Ticker,Side,"
-                 "MaturityDate,OrderType,OrderQuantity,Price,LastStatus from `Order` "
+        command=("select ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker, Side,"
+                 " MaturityDate,OrderType,OrderQuantity,Price,LastStatus from `Order` "
                  "where ClientOrderID='%s' and Account_CompanyID="
                     "'%s' and ReceivedDate='%s'" %(client_order_id,account_company_id,received_date))
-        order_fetched=None
         order_rows = self.execute_select_sql_command(command)
-        for order_row in order_rows:
-            order_fetched = Order(order_row[0], order_row[1], order_row[2], order_row[3], order_row[4], order_row[5], order_row[6],
-                         order_row[7], order_row[8], order_row[9], order_row[10])
+        first_row = order_rows[0] if len(order_rows) == 1 else None
+        order_fetched = Order(client_order_id=first_row[0], account_company_id=first_row[1],
+                              received_date=TradingClass.FIXDate(first_row[2]), handling_instruction=first_row[3],
+                              stock_ticker=first_row[4], side=first_row[5],
+                              maturity_date=TradingClass.FIXDate(first_row[6]), order_type=first_row[7],
+                              order_quantity=first_row[8], price=first_row[9], last_status=first_row[10])
         return order_fetched
 
     def fetch_latest_order_by_client_information(self, client_order_id, account_company_id):
