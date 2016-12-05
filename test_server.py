@@ -48,11 +48,11 @@ class TestServerDatabaseHandler:
         pass
 
     def test_create_execution_report_for_order_execution(self):
-        #TODO Valentin
+        #TODO Emely
         pass
 
     def test_create_execution_report_for_executed_order(self):
-        #TODO Valentin
+        #TODO Emely
         pass
 
     def test_fetch_pending_order_with_cumulative_quantity_by_stock_ticker(self):
