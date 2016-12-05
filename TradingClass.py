@@ -579,6 +579,7 @@ class DatabaseHandlerUtils:
 
 
 class ClientLogicUtils:
+
     @staticmethod
     def extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
                                       market_data_entry_quantity):
@@ -713,6 +714,18 @@ class ClientLogicUtils:
             lists.append(list(numpy_array))
         return lists
 
+    @staticmethod
+    def get_value_for_id(values, ids, id):
+        """Gets the value of the entry in the numpy array values with the index of the id in the numpy array ids
+        Args:
+            values (numpy.array of float64): collection of values
+            ids (numpy.array of int64): collection of different ids
+            id (int): the id for which the index is determined in ids
+        """
+        #TODO Valentin
+        maturity_date = TradingClass.FIXYearMonth()
+        maturity_day = 1
+        return maturity_date, maturity_day
 
 #################################
 ## FIX message related classes ##
