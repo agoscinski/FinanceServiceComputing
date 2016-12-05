@@ -68,6 +68,14 @@ class GUISignal(htmlPy.Object):
         result = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
         htmlPy_app.evaluate_javascript("freshChart('"+result+"')")
 
+    @htmlPy.Slot(str,str,str)
+    def orderSell(self,price, quantity, type):
+        print "sell:\n"+"price:"+price+"; quantity:"+quantity+"; type:"+type
+
+    @htmlPy.Slot(str, str, str)
+    def orderBuy(self, price, quantity, type):
+        print "buy:\n" + "price:" + price + "; quantity:" + quantity + "; type:" + type
+
     @htmlPy.Slot(str, result=str)
     def get_form_data(self, json_data):
         # @htmlPy.Slot(arg1_type, arg2_type, ..., result=return_type)
