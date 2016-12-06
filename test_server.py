@@ -121,3 +121,19 @@ class TestServerDatabaseHandler:
     def test_insert_order_execution(self):
         order_execution = TradingClass.OrderExecution.create_dummy_order_execution(execution_id=None)
         assert fsc_server_database_handler.insert_order_execution(order_execution) == 3
+
+    def test_process_valid_order_cancel_request(self):
+        #TODO Husein
+        pass
+
+    def test_check_if_order_cancel_is_valid(self):
+        #TODO Husein
+        pass
+
+    def test_process_invalid_order_cancel_request(self):
+        #TODO Husein
+        pass
+
+    def test_update_order_status(self):
+        #TODO Husein
+        pass

@@ -401,9 +401,9 @@ class ServerLogic:
         exec_id = str(self.server_fix_handler.fix_application.gen_exec_id())
         cl_ord_id = requested_order.client_order_id
         receiver_comp_id = requested_order.account_company_id
-        exec_trans_type = '0'
-        exec_type = '8'
-        ord_status = '8'
+        exec_trans_type = '8' ##TODO Husein use TradingClass.FIXHandlerUtils now; example here should be: TradingClass.FIXHandlerUtils.ExecutionTransactionType.REJECTED
+        exec_type = '8' #TODO Husein use TradingClass.FIXHandlerUtils now
+        ord_status = '8' #TODO Husein use TradingClass.FIXHandlerUtils now
         symbol = requested_order.stock_ticker
         side = requested_order.side
         price = requested_order.price
@@ -431,7 +431,7 @@ class ServerLogic:
         return is_valid
 
     def process_invalid_order_cancel_request(self, requested_order_cancel):
-
+        #TODO Husein write documentation
         order_id = str(self.server_fix_handler.fix_application.gen_order_id())
         cl_ord_id = requested_order_cancel.order_cancel_id
         orig_cl_ord_id = requested_order_cancel.client_order_id
@@ -444,6 +444,7 @@ class ServerLogic:
         self.server_fix_handler.send_order_cancel_reject_respond(order_cancel_reject)
 
     def process_order_cancel_request(self, order_cancel_request):
+        #TODO Husein write documentation
         requested_order_cancel = TradingClass.OrderCancel.from_order_cancel_request(order_cancel_request)
         order = self.server_database_handler.fetch_latest_order_by_client_information(
             requested_order_cancel.client_order_id, requested_order_cancel.account_company_id)
@@ -454,25 +455,21 @@ class ServerLogic:
             self.process_invalid_order_cancel_request(requested_order_cancel)
 
     def check_if_order_cancel_is_valid(self, order):
+        #TODO Husein write documentation
         if order is None:
             return False
-        elif (order.last_status == LastStatus.DONE or order.last_status == LastStatus.CANCELED
-            or order.last_status == LastStatus.EXPIRED):
+        elif (order.last_status == TradingClass.DatabaseHandlerUtils.LastStatus.DONE or order.last_status == TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED
+            or order.last_status == TradingClass.DatabaseHandlerUtils.LastStatus.EXPIRED):
             return False
         else:
             return True
 
     def process_valid_order_cancel_request(self, requested_order_cancel, order):
-        """
-        received_date =  self.server_database_handler.fetch_order_received_date_by_order_id(
-            requested_order_cancel.client_order_id,
-            requested_order_cancel.account_company_id)
-        print received_dated
-        """
-        self.server_database_handler.update_order_status(order, DatabaseHandlerUtils.LastStatus.CANCELED)
+        #TODO Husein write documentation of function
+        self.server_database_handler.update_order_status(order, TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED)
         cumulative_quantity, average_price = self.server_database_handler.fetch_cumulative_quantity_and_average_price_by_order_id(
             order.client_order_id, order.account_company_id, order.received_date)
-        cancel_quantity=order.price-cumulative_quantity
+        cancel_quantity = order.price-cumulative_quantity
         self.server_database_handler.insert_order_cancel(requested_order_cancel, order, cancel_quantity)
         # self.server_database_handler.update_order_cancel_success(requested_order_cancel.client_order_id,
         #        requested_order_cancel.account_company_id, OrderCancelStatus.CANCELED, cumulative_quantity, executed_time)
@@ -482,17 +479,16 @@ class ServerLogic:
         cl_ord_id = requested_order_cancel.order_cancel_id
         exec_id = str(self.server_fix_handler.fix_application.gen_exec_id())
         receiver_comp_id = requested_order_cancel.account_company_id
-        exec_trans_type = '1'
-        exec_type = '4'
-        ord_status = '4'
+        exec_trans_type = '1' #TODO Husein use TradingClass.FIXHandlerUtils now
+        exec_type = '4' #TODO Husein use TradingClass.FIXHandlerUtils now
+        ord_status = '4' #TODO Husein use TradingClass.FIXHandlerUtils now
         symbol = requested_order_cancel.stock_ticker
         side = requested_order_cancel.side
         price = None
         leaves_qty = 0  # could also be filled order quantity-cum_quantity
-        cum_qty = cumulative_quantity
 
         order_cancel_execution = ExecutionReport(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type,
-                        ord_status, symbol, side, leaves_qty, cum_qty, averga_price, price, receiver_comp_id, orig_cl_ord_id)
+                        ord_status, symbol, side, leaves_qty, cumulative_quantity, average_price, price, receiver_comp_id, orig_cl_ord_id)
         self.server_fix_handler.send_order_cancel_execution_respond(order_cancel_execution)
 
     def create_execution_report_for_new_order(self, new_order):
@@ -801,7 +797,7 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         self.execute_nonresponsive_sql_command(sql_command)
 
     def update_order_status(self, order, order_status):
-        # TODO Husein figure out who does it
+        #TODO Husein write
         sql_command = ("UPDATE `Order` SET LastStatus ='%s' where ClientOrderID='%s' AND Account_CompanyID='%s' AND ReceivedDate ='%s'"
                        % (order_status, order.client_order_id, order.account_company_id, order.received_date))
         self.execute_nonresponsive_sql_command(sql_command)

@@ -722,10 +722,9 @@ class ClientLogicUtils:
             ids (numpy.array of int64): collection of different ids
             id (int): the id for which the index is determined in ids
         """
-        #TODO Valentin
-        maturity_date = TradingClass.FIXYearMonth()
-        maturity_day = 1
-        return maturity_date, maturity_day
+        index_of_first_occurring_value = ClientLogicUtils.get_index_of_first_occurring_value(ids, id)
+        value = None if index_of_first_occurring_value is None else values[index_of_first_occurring_value]
+        return value
 
 #################################
 ## FIX message related classes ##
@@ -879,16 +878,16 @@ class OrderCancelRequest(object):
         Returns:
             OrderCancelRequest
         """
-        orig_cl_ord_id = FIXHandler.get_field_value(fix.OrigClOrdID(), fix_message)
-        cl_ord_id = FIXHandler.get_field_value(fix.ClOrdID(), fix_message)
-        symbol = FIXHandler.get_field_value(fix.Symbol(), fix_message)
-        side = FIXHandler.get_field_value(fix.Side(), fix_message)
-        transaction_time = FIXHandler.get_field_string(fix.TransactTime(), fix_message)
-        order_quantity = FIXHandler.get_field_value(fix.OrderQty(), fix_message)
-        sender_company_id = FIXHandler.get_header_field_value(fix.SenderCompID(), fix_message)
-        sending_time = FIXHandler.get_header_field_string(fix.SendingTime(), fix_message)
-        on_behalf_of_comp_id = FIXHandler.get_header_field_value(fix.OnBehalfOfCompID(), fix_message)
-        sender_sub_id = FIXHandler.get_header_field_value(fix.SenderSubID(), fix_message)
+        orig_cl_ord_id = FIXHandlerUtils.get_field_value(fix.OrigClOrdID(), fix_message)
+        cl_ord_id = FIXHandlerUtils.get_field_value(fix.ClOrdID(), fix_message)
+        symbol = FIXHandlerUtils.get_field_value(fix.Symbol(), fix_message)
+        side = FIXHandlerUtils.get_field_value(fix.Side(), fix_message)
+        transaction_time = FIXHandlerUtils.get_field_string(fix.TransactTime(), fix_message)
+        order_quantity = FIXHandlerUtils.get_field_value(fix.OrderQty(), fix_message)
+        sender_company_id = FIXHandlerUtils.get_header_field_value(fix.SenderCompID(), fix_message)
+        sending_time = FIXHandlerUtils.get_header_field_string(fix.SendingTime(), fix_message)
+        on_behalf_of_comp_id = FIXHandlerUtils.get_header_field_value(fix.OnBehalfOfCompID(), fix_message)
+        sender_sub_id = FIXHandlerUtils.get_header_field_value(fix.SenderSubID(), fix_message)
 
         return cls(orig_cl_ord_id, cl_ord_id, symbol, side, transaction_time, order_quantity, sender_company_id, sending_time,
                    on_behalf_of_comp_id, sender_sub_id)
