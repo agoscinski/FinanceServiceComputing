@@ -327,8 +327,8 @@ class ClientFIXHandler:
         fix.Session.sendToTarget(message, self.fix_application.sessionID)
 
     def handle_order_cancel_reject(self, message):
-        #TODO query to database to update cancel order is failure
-        print "reject the order cancellation"
+        order_cancel_reject = OrderCancelReject.from_fix_message(message)
+        self.client_logic.process_order_cancel_reject(order_cancel_reject)
 
     def send_new_single_order(self, new_single_order):
         """Sends an new single order to server
@@ -510,6 +510,7 @@ class ClientLogic():
     def process_new_single_order_request(self, stock_ticker, side, order_type, price, quantity):
         """This function processes and order and sends it to the server
 
+<<<<<<< HEAD
         Args:
             stock_ticker (string)
             side (int/FIXHandler.Side)
@@ -571,8 +572,12 @@ class ClientLogic():
         return
 
     def process_order_cancel_respond(self, order_cl_ord_id, ord_status, leaves_qty, cum_qty):
-        #TODO Database Query
+        #TODO Database Query Update Order Status in client database
         print "process order cancel respond"
+
+    def process_order_cancel_reject(self, order_cancel_reject):
+        #TODO Database Query Update Order Cancel Rejected
+        print "reject the order cancellation"
 
     def request_trading_transactions(self, user_name):
         # TODO alex write database request/fetch
@@ -582,7 +587,7 @@ class ClientLogic():
 
     def get_tomorrows_maturity_date(self):
         """Returns the standard maturity date which is the date of tomorrow
-        Returns
+        Returns:
             maturity_date (FIXYearMonth)
             maturity_day (int): between 1-31
         """
@@ -700,7 +705,8 @@ class GUIHandler:
         """
         Args:
             stock_ticker (string)
-            side (int/FIXHandler.Side)
+            side (int/FIXHandlerUtils.Side)
+            order_type (int/FIXHandlerUtils.OrderType)
             price (float)
             quantity (float)
         """

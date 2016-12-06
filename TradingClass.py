@@ -871,6 +871,27 @@ class OrderCancelRequest(object):
         if sender_sub_id is not None:
             self.sender_sub_id = sender_sub_id
 
+    @classmethod
+    def from_fix_message(cls, fix_message):
+        """Constructor from a quickfix.Message
+        Args:
+           fix_message (quickfix.Message)
+        Returns:
+            OrderCancelRequest
+        """
+        orig_cl_ord_id = FIXHandler.get_field_value(fix.OrigClOrdID(), fix_message)
+        cl_ord_id = FIXHandler.get_field_value(fix.ClOrdID(), fix_message)
+        symbol = FIXHandler.get_field_value(fix.Symbol(), fix_message)
+        side = FIXHandler.get_field_value(fix.Side(), fix_message)
+        transaction_time = FIXHandler.get_field_string(fix.TransactTime(), fix_message)
+        order_quantity = FIXHandler.get_field_value(fix.OrderQty(), fix_message)
+        sender_company_id = FIXHandler.get_header_field_value(fix.SenderCompID(), fix_message)
+        sending_time = FIXHandler.get_header_field_string(fix.SendingTime(), fix_message)
+        on_behalf_of_comp_id = FIXHandler.get_header_field_value(fix.OnBehalfOfCompID(), fix_message)
+        sender_sub_id = FIXHandler.get_header_field_value(fix.SenderSubID(), fix_message)
+
+        return cls(orig_cl_ord_id, cl_ord_id, symbol, side, transaction_time, order_quantity, sender_company_id, sending_time,
+                   on_behalf_of_comp_id, sender_sub_id)
 
 class OrderCancelReject(object):
     """Constructor of class OrderCancelReject represents a quickfix order cancel reject (message type 9):
@@ -884,23 +905,35 @@ class OrderCancelReject(object):
 
     """
 
-    def __init__(self, orig_cl_ord_id, cl_ord_id, order_id, ord_status, cxl_rej_response_to, receiver_comp_id=None,
+    def __init__(self, orig_cl_ord_id, cl_ord_id, order_id, ord_status, cxl_rej_response_to, receiver_comp_id,
                  cxl_rej_reason=None):
         self.orig_cl_ord_id = orig_cl_ord_id
         self.cl_ord_id = cl_ord_id
         self.order_id = order_id
         self.ord_status = ord_status
         self.cxl_rej_response_to = cxl_rej_response_to
-        # TODO Husein ? why this ifs
-        if receiver_comp_id is not None:
-            self.sender_comp_id = receiver_comp_id
-        else:
-            self.sender_comp_id = None
+        self.receiver_comp_id = receiver_comp_id
         if cxl_rej_reason is not None:
             self.cxl_rej_reason = cxl_rej_reason
         else:
             self.cxl_rej_reason = None
 
+    @classmethod
+    def from_fix_message(cls, fix_message):
+        """Constructor from a quickfix.Message
+        Args:
+           fix_message (quickfix.Message)
+        Returns:
+            OrderCancelReject
+        """
+        orig_cl_ord_id = FIXHandler.get_field_value(fix.OrigClOrdID(), fix_message)
+        cl_ord_id = FIXHandler.get_field_value(fix.ClOrdID(), fix_message)
+        order_id = FIXHandler.get_field_value(fix.OrderID(), fix_message)
+        ord_status = FIXHandler.get_field_value(fix.OrdStatus(), fix_message)
+        receiver_comp_id = FIXHandler.get_header_field_value(fix.TargetCompID(), fix_message)
+        cxl_rej_reason = FIXHandler.get_field_value(fix.CxlRejReason(), fix_message)
+
+        return cls(orig_cl_ord_id, cl_ord_id, order_id, ord_status, receiver_comp_id, cxl_rej_reason)
 
 class NewSingleOrder(object):
     """A New single order is designed after the FIX message of type D "Order - Single" and is used to
@@ -1017,7 +1050,7 @@ class ExecutionReport(object):
     """Constructor
     Args:
         order_id (string): order id
-        client_order_id (string): client order id
+        client_order_id (string): client order id (if it's cancellation response it will be client cancel order id)
         execution_id (string): execution id
         execution_transaction_type (char): execution transaction type
         execution_type (char): execution type
@@ -1027,12 +1060,14 @@ class ExecutionReport(object):
         left_quantity (float): amount of shares open for further execution
         cumulative_quantity (float): total number of shares filled
         average_price (float): calculated average price of all fills on this order
-        price (float):
+        price (float): price of order if it's an order execution response
+        receiver_comp_id (String): receiver of company id
+        original_client_order_id : client order id in case of cancellation response returned
     """
 
     def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type,
-                 order_status, symbol, side, left_quantity
-                 , cumulative_quantity, average_price, price, receiver_comp_id=None):
+                 order_status, symbol, side, left_quantity, cumulative_quantity, average_price, price,
+                 receiver_comp_id=None, original_client_order_id=None):
         self.order_id = order_id
         self.client_order_id = client_order_id
         self.execution_id = execution_id
@@ -1046,6 +1081,11 @@ class ExecutionReport(object):
         self.average_price = average_price
         self.price = price
         self.receiver_comp_id = receiver_comp_id
+        if original_client_order_id is not None:
+            self.original_client_order_id = original_client_order_id
+        else:
+            self.original_client_order_id = None
+
 
     @classmethod
     def from_order(cls, order, execution_transaction_type, execution_type, order_status, left_quantity,
@@ -1113,14 +1153,14 @@ class Order(object):
         client_order_id (string): The order ID from the client side
         account_company_id (string): account company id related to the order
         received_date (FIXDate object): received_date
-        handling_instruction (int/DatabaseHandler.HandlingInstruction): handling instruction
+        handling_instruction (int/DatabaseHandlerUtils.HandlingInstruction): handling instruction
         stock_ticker (string): ticker symbol of the stock referring in the order
-        side (int/DatabaseHandler.Side): type of order
+        side (int/DatabaseHandlerUtils.Side): type of order
         maturity_date (FIXDate object): the date when order will mature
-        order_type (int/DatabaseHandler.OrderType): the type of order, see Side for different types
+        order_type (int/DatabaseHandlerUtils.OrderType): the type of order, see Side for different types
         order_quantity (float): order quantity
         price (float): price of the stock
-        last_status (int/DatabaseHandler.LastStatus): last status
+        last_status (int/DatabaseHandlerUtils.LastStatus): last status
         msg_seq_num (int): message sequence number
         on_behalf_of_company_id (string): original sender who sends order
         sender_sub_id (string): sub identifier of sender
