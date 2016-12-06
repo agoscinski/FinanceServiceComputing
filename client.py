@@ -9,16 +9,15 @@ import demjson
 
 sys.path.append('GUI')
 from frontEnd import htmlPy_app
-import numpy as np
 
 
 class GUISignal(htmlPy.Object):
     # GUI callable functions have to be inside a class.
     # The class should be inherited from htmlPy.Object.
 
-    def __init__(self,c_l):
+    def __init__(self, gui_hadler):
         super(GUISignal, self).__init__()
-        self.client_logic = c_l
+        self.gui_handler = gui_hadler
         self.fresh=1;
         # Initialize the class here, if required.
         return
@@ -29,7 +28,7 @@ class GUISignal(htmlPy.Object):
         usr = str(usr)
         psw = str(psw)
         print usr, psw
-        if (self.client_logic.gui_handler.button_login_actuated(usr, psw)):
+        if (self.gui_handler.button_login_actuated(usr, psw)):
             return_message = '{"success":true,"userName":"' + usr + '"}'
         else:
             return_message = '{"success":false,"msg":"username or password is wrong"}'
@@ -37,11 +36,11 @@ class GUISignal(htmlPy.Object):
 
     @htmlPy.Slot()
     def logOut(self):
-        self.client_logic.gui_handler.button_logout_actuated()
+        self.gui_handler.button_logout_actuated()
 
     @htmlPy.Slot(str)
     def searchStock(self, stockCode):
-        self.client_logic.gui_handler.search_for_stock_actuated(stockCode)
+        self.gui_handler.search_for_stock_actuated(stockCode)
 
     @htmlPy.Slot(str)
     def refreshChart(self, market_data):
@@ -59,10 +58,10 @@ class GUISignal(htmlPy.Object):
         # market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
 
 
-        quantity_chart_json = self.client_logic.gui_handler.extract_quantity_chart_json(market_data)
-        stock_course_chart_json = self.client_logic.gui_handler.extract_course_chart_json(market_data)
-        stock_information_json = self.client_logic.gui_handler.extract_stock_information_json(market_data)
-        order_book_json = self.client_logic.gui_handler.extract_order_book_json(market_data)
+        quantity_chart_json = self.gui_handler.extract_quantity_chart_json(market_data)
+        stock_course_chart_json = self.gui_handler.extract_course_chart_json(market_data)
+        stock_information_json = self.gui_handler.extract_stock_information_json(market_data)
+        order_book_json = self.gui_handler.extract_order_book_json(market_data)
 
         #trading_transaction_json = self.client_logic.gui_handler.extract_trading_transaction_json(trading_transaction)
         result = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
@@ -73,8 +72,10 @@ class GUISignal(htmlPy.Object):
         print "sell:\n"+"price:"+price+"; quantity:"+quantity+"; type:"+type
 
     @htmlPy.Slot(str, str, str)
-    def orderBuy(self, price, quantity, type):
-        print "buy:\n" + "price:" + price + "; quantity:" + quantity + "; type:" + type
+    def orderBuy(self, price, quantity, order_type):
+        TradingClass.DatabaseHandlerUtils.Side.BUY
+        #TODO yelinsheng need stock_ticker string from one field
+        #self.gui_handler.process_new_single_order_request(stock_ticker, TradingClass.DatabaseHandlerUtils.Side.BUY, order_type, price, quantity)
 
     @htmlPy.Slot(str, result=str)
     def get_form_data(self, json_data):
@@ -327,7 +328,7 @@ class ClientFIXHandler:
         fix.Session.sendToTarget(message, self.fix_application.sessionID)
 
     def handle_order_cancel_reject(self, message):
-        order_cancel_reject = OrderCancelReject.from_fix_message(message)
+        order_cancel_reject = TradingClass.OrderCancelReject.from_fix_message(message)
         self.client_logic.process_order_cancel_reject(order_cancel_reject)
 
     def send_new_single_order(self, new_single_order):
@@ -431,8 +432,9 @@ class ClientLogic():
     def __init__(self, client_config_file_name):
         self.client_fix_handler = ClientFIXHandler(self, client_config_file_name)
         self.client_database_handler = ClientDatabaseHandler()
-        self.gui_signal = GUISignal(self)
         self.gui_handler = GUIHandler(self)
+        self.gui_signal = GUISignal(self.gui_handler)
+
 
     def start_client(self):
         # start some gui stuff and other things, for now only gui
@@ -652,7 +654,7 @@ class GUIHandler:
             elif input == '3':
                 self.send_market_data_request_option("TSLA")
             elif input == '4':
-                self.send_order_request_option()
+                self.send_dummy_order()
             elif input == '5':
                 self.send_order_cancel_request_option("1")
             elif input == '6':
@@ -687,14 +689,8 @@ class GUIHandler:
         self.client_logic.process_market_data_request(symbol)
 
     # this function is used for button_buy_actuated as long it does not work
-    def send_order_request_option(self, ):
-        """
-        Args:
-            stock_ticker (string)
-            side (int/FIXHandler.Side)
-            price (float)
-            quantity (float)
-        """
+    def send_dummy_order(self):
+        """For testing"""
         dummy_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
         self.button_buy_actuated(dummy_order.symbol, dummy_order.side, dummy_order.order_type, dummy_order.price, dummy_order.quantity)
 
