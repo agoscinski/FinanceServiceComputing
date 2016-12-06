@@ -4,6 +4,7 @@ import re
 import datetime
 import quickfix as fix
 import quickfix42 as fix42
+import abc
 
 ##################
 ## Time classes ##
@@ -52,20 +53,7 @@ class FIXYearMonth(object):
         self.date.month = month
 
     def __str__(self):
-        return self.month_year.strftime("%Y%m")
-
-    # TODO remove
-    def get_year_month(self):
-        return self.month_year
-
-    def set_year_month(self, year, month):
-        self.month_year = datetime.date(year, month, 1)
-
-    def set_year_month_string(self, string):
-        self.month_year = datetime.datetime.strptime(string, "%Y%m").date()
-
-    def set_year_month_value(self, date):
-        self.month_year = date
+        return self.date.strftime("%Y%m")
 
 
 class FIXDate(object):
@@ -276,6 +264,23 @@ class FIXDateTimeUTC(object):
 ###################################
 ## Server/Client related classes ##
 ###################################
+
+class ServerFIXHandlerScheme(abc.ABCMeta):
+
+    @abc.abstractmethod
+    def handle_order_cancel_request(self, message):
+        pass
+
+    @abc.abstractmethod
+    def handle_order_request(self, message):
+        pass
+
+class DummyServerFIXHandler(ServerFIXHandlerScheme):
+    def handle_order_cancel_request(self, message):
+        pass
+
+    def handle_order_request(self, message):
+        pass
 
 class FIXHandlerUtils:
 
@@ -925,12 +930,12 @@ class OrderCancelReject(object):
         Returns:
             OrderCancelReject
         """
-        orig_cl_ord_id = FIXHandler.get_field_value(fix.OrigClOrdID(), fix_message)
-        cl_ord_id = FIXHandler.get_field_value(fix.ClOrdID(), fix_message)
-        order_id = FIXHandler.get_field_value(fix.OrderID(), fix_message)
-        ord_status = FIXHandler.get_field_value(fix.OrdStatus(), fix_message)
-        receiver_comp_id = FIXHandler.get_header_field_value(fix.TargetCompID(), fix_message)
-        cxl_rej_reason = FIXHandler.get_field_value(fix.CxlRejReason(), fix_message)
+        orig_cl_ord_id = FIXHandlerUtils.get_field_value(fix.OrigClOrdID(), fix_message)
+        cl_ord_id = FIXHandlerUtils.get_field_value(fix.ClOrdID(), fix_message)
+        order_id = FIXHandlerUtils.get_field_value(fix.OrderID(), fix_message)
+        ord_status = FIXHandlerUtils.get_field_value(fix.OrdStatus(), fix_message)
+        receiver_comp_id = FIXHandlerUtils.get_header_field_value(fix.TargetCompID(), fix_message)
+        cxl_rej_reason = FIXHandlerUtils.get_field_value(fix.CxlRejReason(), fix_message)
 
         return cls(orig_cl_ord_id, cl_ord_id, order_id, ord_status, receiver_comp_id, cxl_rej_reason)
 
@@ -940,21 +945,21 @@ class NewSingleOrder(object):
 
     Args:
         client_order_id (string)
-        handling_instruction (char/FIXHandler.HandlingInstruction)
+        handling_instruction (char/FIXHandlerUtils.HandlingInstruction)
         symbol (string)
-        side (char/FIXHandler.Side)
+        side (char/FIXHandlerUtils.Side)
         maturity_month_year (FIXYearMonth)
         maturity_day (int): between 1-31
         transaction_time (FIXDateTimeUTC)
         order_quantity (float)
-        order_type (char/FIXHandler.OrderType)
+        order_type (char/FIXHandlerUtils.OrderType)
         price (float)
         stop_price (float)
     """
 
     def __init__(self, client_order_id, handling_instruction, symbol, maturity_month_year,
-                 maturity_day, side, transaction_time, order_quantity, order_type, price, stop_price,
-                 sender_company_id, sending_time, on_behalf_of_comp_id, sender_sub_id):
+                 maturity_day, side, transaction_time, order_quantity, order_type, price, stop_price=None,
+                 sender_company_id=None, sending_time=None, on_behalf_of_comp_id=None, sender_sub_id=None):
         self.client_order_id = client_order_id
         self.handling_instruction = handling_instruction
         self.symbol = symbol
@@ -1016,19 +1021,19 @@ class NewSingleOrder(object):
                    transact_time, order_quantity, order_type, price, stop_price, sender_company_id,
                    sending_time, on_behalf_of_comp_id, sender_sub_id)
 
-    def create_fix_message(self):
+    def to_fix_message(self):
         """Creates from a new single order object a fix message
         Returns:
             message (quickfix.Message"""
         message = fix.Message()
         header = message.getHeader()
-        header.setField(fix.SenderCompID(self.sender_company_id()))
+        if self.sender_company_id is not None: header.setField(fix.SenderCompID(self.sender_company_id()))
         header.setField(fix.MsgType(fix.MsgType_NewOrderSingle))
         header.setField(fix.SendingTime())
 
         # Set Fix Message fix_order object
         maturity_month_year_fix = fix.MaturityMonthYear()
-        maturity_month_year_fix.setString(str(self.maturity_month_year()))
+        maturity_month_year_fix.setString(str(self.maturity_month_year))
         transact_time_fix = fix.TransactTime()
         transact_time_fix.setString(str(self.transaction_time))
 

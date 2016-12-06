@@ -73,9 +73,9 @@ class GUISignal(htmlPy.Object):
 
     @htmlPy.Slot(str, str, str)
     def orderBuy(self, price, quantity, order_type):
-        TradingClass.DatabaseHandlerUtils.Side.BUY
         #TODO yelinsheng need stock_ticker string from one field
-        #self.gui_handler.process_new_single_order_request(stock_ticker, TradingClass.DatabaseHandlerUtils.Side.BUY, order_type, price, quantity)
+        #self.gui_handler.process_new_single_order_request(stock_ticker, TradingClass.FIXHandlerUtils.Side.BUY, order_type, price, quantity)
+        pass
 
     @htmlPy.Slot(str, result=str)
     def get_form_data(self, json_data):
@@ -152,7 +152,7 @@ class ClientFIXHandler:
     def __init__(self, client_logic, client_config_file_name):
         self.client_logic = client_logic
         self.client_database_handler = ClientDatabaseHandler(user_name="root", user_password="root", database_name="BrokerDatabase", database_port=3306,
-                 init_database_script_path="./database/init_broker_database.sql")
+                 init_database_script_path="./database/init_client_database.sql")
         self.client_config_file_name = client_config_file_name
         self.fix_application = None
         self.socket_initiator = None
@@ -177,9 +177,7 @@ class ClientFIXHandler:
         self.socket_initiator.start()
         return
 
-    def connect_to_server(self, user_id, password):
-        self.set_user_id(user_id)
-        self.set_password(password)
+    def connect_to_server(self):
         self.init_fix_settings()
         self.socket_initiator.start()
         return
@@ -192,11 +190,7 @@ class ClientFIXHandler:
         Args:
             message (Swig Object of type 'FIX::Message *'): the message to be sent
         """
-        self.add_user_id_to_message(message)
-        self.add_password_to_message(message)
-        # TODO @alex flush password
-        # self.fix_application.del_user_id()
-        # self.fix_application.del_password()
+        pass
 
     def send_market_data_request(self, symbol):
         """Sends a market data request to server
@@ -371,33 +365,8 @@ class ClientFIXHandler:
 
         return
 
-    def add_user_id_to_message(self, message):
-        message.setField(fix.RawData(self.get_password()))
-        message.setField(fix.RawDataLength(len(self.get_password())))
-
-    def add_password_to_message(self, message):
-        message.getHeader().setField(fix.SenderSubID(self.get_user_id()))
-
     def send_logout_request(self):
         self.socket_initiator.stop()
-
-    def set_user_id(self, user_id):
-        self.user_id = user_id
-
-    def set_password(self, password):
-        self.password = password
-
-    def get_user_id(self):
-        return self.user_id
-
-    def get_password(self):
-        return self.password
-
-    def del_user_id(self):
-        del self.user_id
-
-    def del_password(self):
-        del self.password
 
     def get_field_value(self, fix_object, message):
         if message.isSetField(fix_object.getField()):
@@ -440,16 +409,12 @@ class ClientLogic():
         # start some gui stuff and other things, for now only gui
         self.gui_handler.start_gui()
 
-    def logon(self, user_id, password):
-        self.client_fix_handler.connect_to_server(user_id, password)
+    def logon(self):
+        self.client_fix_handler.connect_to_server()
 
         # TODO block mechanism
         self.block_gui()
-
-        # return self.success
-
-        # Notice that we should validate here
-        return True
+        return
 
     def block_gui(self):
         pass
@@ -511,8 +476,6 @@ class ClientLogic():
 
     def process_new_single_order_request(self, stock_ticker, side, order_type, price, quantity):
         """This function processes and order and sends it to the server
-
-<<<<<<< HEAD
         Args:
             stock_ticker (string)
             side (int/FIXHandler.Side)
@@ -520,7 +483,7 @@ class ClientLogic():
             price (float)
             quantity (float)
         """
-        client_order_id, = self.client_database_handler.generate_new_client_order_id()
+        client_order_id = self.client_database_handler.generate_new_client_order_id()
         maturity_month_year, maturity_day = self.get_tomorrows_maturity_date()
         handling_instruction = TradingClass.FIXHandlerUtils.HandlingInstruction.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION
         sending_time = TradingClass.FIXDateTimeUTC.create_for_current_time()
@@ -594,7 +557,7 @@ class ClientLogic():
             maturity_day (int): between 1-31
         """
         # TODO Valentin
-        maturity_date = TradingClass.FIXYearMonth()
+        maturity_date = TradingClass.FIXYearMonth.from_date_stamp_string("201612")
         maturity_day = 1
         return maturity_date, maturity_day
 
@@ -613,6 +576,9 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         #TODO Valentin use execute_nonresponsive_sql_command for this
         pass
 
+    def generate_new_client_order_id(self):
+        #TODO Alex
+        return "client_id_20161206_0"
 
     def generate_market_data_request_id(self):
         self.last_market_data_request_id = self.last_market_data_request_id + 1
@@ -665,7 +631,7 @@ class GUIHandler:
 
     def button_login_actuated(self, user_name, user_password):
         """This function is activated when the login button is pushed"""
-        return self.client_logic.logon(user_name, user_password)
+        return self.client_logic.logon()
 
     def request_trading_transactions(self, user_name):
         """Request trading transactions
@@ -692,7 +658,7 @@ class GUIHandler:
     def send_dummy_order(self):
         """For testing"""
         dummy_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
-        self.button_buy_actuated(dummy_order.symbol, dummy_order.side, dummy_order.order_type, dummy_order.price, dummy_order.quantity)
+        self.button_buy_actuated(dummy_order.symbol, dummy_order.side, dummy_order.order_type, dummy_order.price, dummy_order.order_quantity)
 
     def send_order_cancel_request_option(self, order_id):
         self.client_logic.process_order_cancel_request(order_id)
