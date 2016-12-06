@@ -786,6 +786,7 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
 
 
     def insert_order_cancel(self, requested_order_cancel, order, cancel_quantity):
+        #TODO Husein write documentation
         last_status=0
         executed_time = FIXDateTimeUTC.create_for_current_time()
         sql_command = ("INSERT INTO OrderCancel(Order_ClientOrderID, OrderCancelID, Order_Account_CompanyID, " \
@@ -797,7 +798,7 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         self.execute_nonresponsive_sql_command(sql_command)
 
     def update_order_status(self, order, order_status):
-        #TODO Husein write
+        #TODO Husein write documentation
         sql_command = ("UPDATE `Order` SET LastStatus ='%s' where ClientOrderID='%s' AND Account_CompanyID='%s' AND ReceivedDate ='%s'"
                        % (order_status, order.client_order_id, order.account_company_id, order.received_date))
         self.execute_nonresponsive_sql_command(sql_command)

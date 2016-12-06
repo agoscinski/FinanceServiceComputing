@@ -29,6 +29,35 @@ class TestServerLogic:
         fsc_server_logic.create_execution_report_for_new_order(dummy_order)
 
 
+    def test_check_if_order_is_valid(self):
+        # TODO Valentin
+        pass
+
+
+    def test_create_execution_report_for_order_execution(self):
+        # TODO Emely
+        pass
+
+
+    def test_create_execution_report_for_executed_order(self):
+        # TODO Emely
+        pass
+
+
+    def test_process_valid_order_cancel_request(self):
+        # TODO Husein
+        pass
+
+
+    def test_check_if_order_cancel_is_valid(self):
+        # TODO Husein
+        pass
+
+
+    def test_process_invalid_order_cancel_request(self):
+        # TODO Husein
+        pass
+
 class TestServerDatabaseHandler:
 
     def setup_method(self, method):
@@ -42,18 +71,6 @@ class TestServerDatabaseHandler:
         call.
         """
         fsc_server_database_handler.teardown_database()
-
-    def test_check_if_order_is_valid(self):
-        #TODO Valentin
-        pass
-
-    def test_create_execution_report_for_order_execution(self):
-        #TODO Emely
-        pass
-
-    def test_create_execution_report_for_executed_order(self):
-        #TODO Emely
-        pass
 
     def test_fetch_pending_order_with_cumulative_quantity_by_stock_ticker(self):
         symbol = "TSLA"
@@ -122,18 +139,10 @@ class TestServerDatabaseHandler:
         order_execution = TradingClass.OrderExecution.create_dummy_order_execution(execution_id=None)
         assert fsc_server_database_handler.insert_order_execution(order_execution) == 3
 
-    def test_process_valid_order_cancel_request(self):
-        #TODO Husein
-        pass
-
-    def test_check_if_order_cancel_is_valid(self):
-        #TODO Husein
-        pass
-
-    def test_process_invalid_order_cancel_request(self):
-        #TODO Husein
-        pass
-
     def test_update_order_status(self):
-        #TODO Husein
+        #TODO Yelinsheng
+        pass
+
+    def test_insert_order_cancel(self):
+        #TODO Yelinsheng
         pass
