@@ -453,7 +453,7 @@ class DatabaseHandler:
             connection.commit()
             connection.close()
             return
-        except MySQLdb.Error, e:
+        except MySQLdb.Error,e:
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
         return
 

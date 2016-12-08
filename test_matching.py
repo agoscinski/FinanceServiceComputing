@@ -1,5 +1,6 @@
 import TradingClass
 import matching_algorithm
+import timeit
 
 
 class TestMatchingAlgorithm:
@@ -16,6 +17,21 @@ class TestMatchingAlgorithm:
         assert matching_algorithm.pro_rata(buy_orders, []) is None
         # shape test
         assert  matching_algorithm.pro_rata(buy_orders, sell_orders).shape == (len(sell_orders), len(buy_orders))
+
+    def test_time_of_matching_algorithm(self):
+        buy_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=12000, price=200)
+        sell_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=12000, price=200)
+
+        buy_orders1 = [buy_order, buy_order, buy_order, buy_order, buy_order]
+        sell_orders1 = [sell_order, sell_order, sell_order, sell_order, sell_order]
+        buy_orders2 = [buy_order for _ in range(100)]
+        sell_orders2 = [sell_order for _ in range(100)]        
+        buy_orders3 = [buy_order for _ in range(1000)]
+        sell_orders3 = [sell_order for _ in range(1000)]
+
+        timeit.timeit("pro_rata(buy_orders1, sell_orders1)", setup = "from_matching_algorithm_import pro_rata")
+        timeit.timeit("pro_rata(buy_orders2, sell_orders2)", setup = "from_matching_algorithm_import pro_rata")
+        timeit.timeit("pro_rata(buy_orders3, sell_orders3)", setup = "from_matching_algorithm_import pro_rata")
 
     def test_extract_buy_and_sell_orders(self):
         dummy_orders = []
