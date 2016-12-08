@@ -6,6 +6,7 @@ import quickfix as fix
 import quickfix42 as fix42
 import abc
 
+
 ##################
 ## Time classes ##
 ##################
@@ -266,7 +267,6 @@ class FIXDateTimeUTC(object):
 ###################################
 
 class ServerFIXHandlerScheme(abc.ABCMeta):
-
     @abc.abstractmethod
     def handle_order_cancel_request(self, message):
         pass
@@ -274,6 +274,7 @@ class ServerFIXHandlerScheme(abc.ABCMeta):
     @abc.abstractmethod
     def handle_order_request(self, message):
         pass
+
 
 class DummyServerFIXHandler(ServerFIXHandlerScheme):
     def handle_order_cancel_request(self, message):
@@ -282,8 +283,8 @@ class DummyServerFIXHandler(ServerFIXHandlerScheme):
     def handle_order_request(self, message):
         pass
 
-class FIXHandlerUtils:
 
+class FIXHandlerUtils:
     class MarketDataEntryType:
         OFFER = 0
         BID = 1
@@ -362,6 +363,9 @@ class FIXHandlerUtils:
         else:
             return None
 
+
+
+
 class DatabaseHandlerUtils:
     # Enums
     class OrderType:
@@ -377,6 +381,9 @@ class DatabaseHandlerUtils:
         PENDING = 1
         CANCELED = 2
         EXPIRED = 3
+        NOT_YET_ACKNOWLEDGED = 4
+        REJECTED = 5
+
 
     class HandlingInstruction:
         AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION = 1
@@ -412,11 +419,16 @@ class DatabaseHandlerUtils:
                 sql_commands.append(sql_command)
         return sql_commands
 
+class ClientDatabaseHandlerUtils:
+    class Status:
+        DONE = 0
+        PENDING = 1
+        CANCELED = 2
+        EXPIRED = 3
 
 class DatabaseHandler:
-
-    def __init__(self, user_name="root", user_password="root", database_name="FSCDatabase", database_port=3306,
-                 init_database_script_path="./database/init_fsc_database.sql"):
+    def __init__(self, user_name="root", user_password="root", database_name="Database", database_port=3306,
+                 init_database_script_path="./database/init_database.sql"):
         """
         Args:
             user_name (string)
@@ -584,7 +596,6 @@ class DatabaseHandlerUtils:
 
 
 class ClientLogicUtils:
-
     @staticmethod
     def extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
                                       market_data_entry_quantity):
@@ -730,6 +741,7 @@ class ClientLogicUtils:
         index_of_first_occurring_value = ClientLogicUtils.get_index_of_first_occurring_value(ids, id)
         value = None if index_of_first_occurring_value is None else values[index_of_first_occurring_value]
         return value
+
 
 #################################
 ## FIX message related classes ##
@@ -894,8 +906,10 @@ class OrderCancelRequest(object):
         on_behalf_of_comp_id = FIXHandlerUtils.get_header_field_value(fix.OnBehalfOfCompID(), fix_message)
         sender_sub_id = FIXHandlerUtils.get_header_field_value(fix.SenderSubID(), fix_message)
 
-        return cls(orig_cl_ord_id, cl_ord_id, symbol, side, transaction_time, order_quantity, sender_company_id, sending_time,
+        return cls(orig_cl_ord_id, cl_ord_id, symbol, side, transaction_time, order_quantity, sender_company_id,
+                   sending_time,
                    on_behalf_of_comp_id, sender_sub_id)
+
 
 class OrderCancelReject(object):
     """Constructor of class OrderCancelReject represents a quickfix order cancel reject (message type 9):
@@ -939,6 +953,7 @@ class OrderCancelReject(object):
 
         return cls(orig_cl_ord_id, cl_ord_id, order_id, ord_status, receiver_comp_id, cxl_rej_reason)
 
+
 class NewSingleOrder(object):
     """A New single order is designed after the FIX message of type D "Order - Single" and is used to
      encapsulate a message into an object
@@ -980,7 +995,8 @@ class NewSingleOrder(object):
     def create_dummy_new_single_order(cls, client_order_id="client", handling_instruction="1",
                                       symbol="TSLA", maturity_month_year=FIXYearMonth.from_year_month(2000, 1),
                                       maturity_day=2, side=FIXHandlerUtils.Side.BUY,
-                                      transaction_time=FIXDateTimeUTC.from_date_fix_time_stamp_string("20000101-10:00:00"),
+                                      transaction_time=FIXDateTimeUTC.from_date_fix_time_stamp_string(
+                                          "20000101-10:00:00"),
                                       order_quantity=10., order_type=FIXHandlerUtils.OrderType.LIMIT, price=100.,
                                       stop_price=None, sender_company_id=None, sending_time=None,
                                       on_behalf_of_company_id=None, sender_sub_id=None):
@@ -1089,7 +1105,6 @@ class ExecutionReport(object):
             self.original_client_order_id = original_client_order_id
         else:
             self.original_client_order_id = None
-
 
     @classmethod
     def from_order(cls, order, execution_transaction_type, execution_type, order_status, left_quantity,
@@ -1498,6 +1513,65 @@ class OrderCancel(object):
                            side, order_quantity, last_status, received_time, message_sequence_number,
                            on_behalf_of_company_id, sender_sub_id, cancel_quantity, execution_time)
         return order_cancel
+
+
+class ClientOrder:
+    """This class is designed after the Order table of the client database"""
+
+    def __init__(self, order_id, transaction_time, side, order_type, order_price, order_quantity, last_status,
+                 maturity_day, quantity_filled, average_price):
+        """
+        Args:
+            order_id (string)
+            transaction_time (FIXDate)
+            order_type (int / DatabaseHandlerUtils.OrderType)
+            order_price (float)
+            order_quantity (float)
+            last_status (int / DatabaseHandlerUtils.LastStatus)
+            maturity_day (FIXDate)
+            quantity_filled(float)
+            average_price(float)
+        """
+        self.order_id = order_id
+        self.transaction_time = transaction_time
+        self.side = side
+        self.order_type = order_type
+        self.order_price = order_price
+        self.order_quantity = order_quantity
+        self.last_status = last_status
+        self.maturity_day = maturity_day
+        self.quantity_filled = quantity_filled
+        self.average_price = average_price
+
+    @classmethod
+    def from_new_single_order(cls, new_single_order, last_status, quantity_filled, average_price):
+        """Creates a client order from a new single order
+        Args:
+            new_single_order (NewSingleOrder)
+            last_status (int/DatabaseHandlerUtils.LastStatus)
+            quantity_filled (float)
+            average_price (float)
+        Returns:
+            client_order (ClientOrder)
+        """
+        client_order = cls(order_id=new_single_order.client_order_id,
+                           transaction_time=new_single_order.transaction_time, side=new_single_order.side,
+                           order_type=new_single_order.order_type, order_price=new_single_order.price,
+                           order_quantity=new_single_order.order_quantity, last_status=last_status,
+                           maturity_day=new_single_order.maturity_day, quantity_filled=quantity_filled,
+                           average_price=average_price)
+        return client_order
+
+    @classmethod
+    def create_dummy_client_order(cls):
+        client_order = cls(order_id="client_2016-12-08_05:25:05.577594",
+                           transaction_time=FIXDate.from_mysql_date_stamp_string("2016-12-08"),
+                           side=DatabaseHandlerUtils.Side.BUY,
+                           order_type=DatabaseHandlerUtils.OrderType.LIMIT, order_price=100.,
+                           order_quantity=1000., last_status=0, #TODO
+                           maturity_day=FIXDate.from_mysql_date_stamp_string("2016-12-09"), quantity_filled=0.,
+                           average_price=0.)
+        return client_order
 
 
 ###########################

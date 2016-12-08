@@ -18,7 +18,7 @@ class GUISignal(htmlPy.Object):
     def __init__(self, gui_hadler):
         super(GUISignal, self).__init__()
         self.gui_handler = gui_hadler
-        self.fresh=1;
+        self.fresh = 1;
         # Initialize the class here, if required.
         return
 
@@ -63,18 +63,18 @@ class GUISignal(htmlPy.Object):
         stock_information_json = self.gui_handler.extract_stock_information_json(market_data)
         order_book_json = self.gui_handler.extract_order_book_json(market_data)
 
-        #trading_transaction_json = self.client_logic.gui_handler.extract_trading_transaction_json(trading_transaction)
+        # trading_transaction_json = self.client_logic.gui_handler.extract_trading_transaction_json(trading_transaction)
         result = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
-        htmlPy_app.evaluate_javascript("freshChart('"+result+"')")
+        htmlPy_app.evaluate_javascript("freshChart('" + result + "')")
 
-    @htmlPy.Slot(str,str,str)
-    def orderSell(self,price, quantity, type):
-        print "sell:\n"+"price:"+price+"; quantity:"+quantity+"; type:"+type
+    @htmlPy.Slot(str, str, str)
+    def orderSell(self, price, quantity, type):
+        print "sell:\n" + "price:" + price + "; quantity:" + quantity + "; type:" + type
 
     @htmlPy.Slot(str, str, str)
     def orderBuy(self, price, quantity, order_type):
-        #TODO yelinsheng need stock_ticker string from one field
-        #self.gui_handler.process_new_single_order_request(stock_ticker, TradingClass.FIXHandlerUtils.Side.BUY, order_type, price, quantity)
+        # TODO yelinsheng need stock_ticker string from one field
+        # self.gui_handler.process_new_single_order_request(stock_ticker, TradingClass.FIXHandlerUtils.Side.BUY, order_type, price, quantity)
         pass
 
     @htmlPy.Slot(str, result=str)
@@ -151,8 +151,9 @@ class ClientFIXApplication(fix.Application):
 class ClientFIXHandler:
     def __init__(self, client_logic, client_config_file_name):
         self.client_logic = client_logic
-        self.client_database_handler = ClientDatabaseHandler(user_name="root", user_password="root", database_name="BrokerDatabase", database_port=3306,
-                 init_database_script_path="./database/init_client_database.sql")
+        self.client_database_handler = ClientDatabaseHandler(user_name="root", user_password="root",
+                                                             database_name="BrokerDatabase", database_port=3306,
+                                                             init_database_script_path="./database/init_client_database.sql")
         self.client_config_file_name = client_config_file_name
         self.fix_application = None
         self.socket_initiator = None
@@ -260,7 +261,7 @@ class ClientFIXHandler:
         md_req_id_fix = fix.MDReqID()
         no_md_entries_fix = fix.NoMDEntries()
         symbol_fix = fix.Symbol()
-        total_volume_traded_fix= fix.TotalVolumeTraded()
+        total_volume_traded_fix = fix.TotalVolumeTraded()
         md_entry_type_fix = fix.MDEntryType()
         md_entry_px_fix = fix.MDEntryPx()
         md_entry_size_fix = fix.MDEntrySize()
@@ -296,9 +297,11 @@ class ClientFIXHandler:
             md_entry_time_list.append(a_time)
 
         # Encapsulate data into market data response object
-        market_data = TradingClass.MarketDataResponse(md_req_id_fix.getValue(), no_md_entries_fix.getValue(), symbol_fix.getValue()
-                                         , md_entry_type_list, md_entry_px_list, md_entry_size_list, md_entry_date_list,
-                                         md_entry_time_list,total_volume_traded_fix.getValue())
+        market_data = TradingClass.MarketDataResponse(md_req_id_fix.getValue(), no_md_entries_fix.getValue(),
+                                                      symbol_fix.getValue()
+                                                      , md_entry_type_list, md_entry_px_list, md_entry_size_list,
+                                                      md_entry_date_list,
+                                                      md_entry_time_list, total_volume_traded_fix.getValue())
 
         self.client_logic.process_market_data_respond(market_data)
         pass
@@ -340,27 +343,28 @@ class ClientFIXHandler:
         return
 
     def handle_execution_report(self, message):
-        order_id = self.get_field_value(fix.OrderID(),message)
-        cl_ord_id = self.get_field_value(fix.ClOrdID(),message)
-        orig_cl_ord_id = self.get_field_value(fix.OrigClOrdID(),message)
-        exec_id = self.get_field_value(fix.ExecID(),message)
-        exec_trans_type = self.get_field_value(fix.ExecTransType(),message)
-        exec_type = self.get_field_value(fix.ExecType(),message)
-        ord_status = self.get_field_value(fix.OrdStatus(),message)
-        symbol = self.get_field_value(fix.Symbol(),message)
-        side = self.get_field_value(fix.Side(),message)
-        leaves_qty = self.get_field_value(fix.LeavesQty(),message)
-        cum_qty = self.get_field_value(fix.CumQty(),message)
-        avg_px = self.get_field_value(fix.AvgPx(),message)
-        price = self.get_field_value(fix.Price(),message)
-        stop_px = self.get_field_value(fix.StopPx(),message)
+        order_id = self.get_field_value(fix.OrderID(), message)
+        cl_ord_id = self.get_field_value(fix.ClOrdID(), message)
+        orig_cl_ord_id = self.get_field_value(fix.OrigClOrdID(), message)
+        exec_id = self.get_field_value(fix.ExecID(), message)
+        exec_trans_type = self.get_field_value(fix.ExecTransType(), message)
+        exec_type = self.get_field_value(fix.ExecType(), message)
+        ord_status = self.get_field_value(fix.OrdStatus(), message)
+        symbol = self.get_field_value(fix.Symbol(), message)
+        side = self.get_field_value(fix.Side(), message)
+        leaves_qty = self.get_field_value(fix.LeavesQty(), message)
+        cum_qty = self.get_field_value(fix.CumQty(), message)
+        avg_px = self.get_field_value(fix.AvgPx(), message)
+        price = self.get_field_value(fix.Price(), message)
+        stop_px = self.get_field_value(fix.StopPx(), message)
 
         # Encapsulate result of receiving execution report into order execution report
         if ord_status == '4':
-            self.client_logic.process_order_cancel_respond(orig_cl_ord_id, ord_status, leaves_qty, cum_qty )
+            self.client_logic.process_order_cancel_respond(orig_cl_ord_id, ord_status, leaves_qty, cum_qty)
         else:
-            order_execution = TradingClass.OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type, ord_status, symbol
-                                         , side, leaves_qty, cum_qty,avg_px, price, stop_px)
+            order_execution = TradingClass.OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type,
+                                                          ord_status, symbol
+                                                          , side, leaves_qty, cum_qty, avg_px, price, stop_px)
             self.client_logic.process_order_execution_respond(order_execution)
 
         return
@@ -404,7 +408,6 @@ class ClientLogic():
         self.gui_handler = GUIHandler(self)
         self.gui_signal = GUISignal(self.gui_handler)
 
-
     def start_client(self):
         # start some gui stuff and other things, for now only gui
         self.gui_handler.start_gui()
@@ -447,22 +450,22 @@ class ClientLogic():
 
         offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, \
         closing_price, day_high, day_low = self.extract_market_data_information(market_data)
-        #TODO tobefixed not working comment it out to avoid error
+        # TODO tobefixed not working comment it out to avoid error
         """
         five_smallest_offers_price, five_smallest_offers_quantity = self.extract_five_smallest_offers(offers_price,
                                                                                                       offers_quantity)
         five_biggest_bids_price, five_biggest_bids_quantity = self.extract_five_biggest_bids(bids_price, bid_quantity)
         """
         print offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, closing_price, day_high, day_low
-        #TODO here should be some database interaction
+        # TODO here should be some database interaction
 
-        #TODO tobefixed not working comment it out to avoid error
+        # TODO tobefixed not working comment it out to avoid error
         """
         order_book_buy = TradingClass.OrderBookBuy(five_biggest_bids_price, five_biggest_bids_quantity)
         order_book_sell = TradingClass.OrderBookBuy(five_smallest_offers_price, five_smallest_offers_quantity)
         """
-        order_book_buy = TradingClass.OrderBookBuy([100,200,300,400,500], [10,20,30,40,50])
-        order_book_sell = TradingClass.OrderBookBuy([100,90,80,70,60], [10,11,12,13,15,16])
+        order_book_buy = TradingClass.OrderBookBuy([100, 200, 300, 400, 500], [10, 20, 30, 40, 50])
+        order_book_sell = TradingClass.OrderBookBuy([100, 90, 80, 70, 60], [10, 11, 12, 13, 15, 16])
         stock_information = TradingClass.StockInformation(current_price, day_high, day_low)
 
         # TODO how todo date
@@ -487,24 +490,33 @@ class ClientLogic():
         maturity_month_year, maturity_day = self.get_tomorrows_maturity_date()
         handling_instruction = TradingClass.FIXHandlerUtils.HandlingInstruction.AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION
         sending_time = TradingClass.FIXDateTimeUTC.create_for_current_time()
-        new_single_order = TradingClass.NewSingleOrder(client_order_id=client_order_id, symbol=stock_ticker, side=side, price=price, order_quantity=quantity, transaction_time=sending_time, order_type=order_type, handling_instruction=handling_instruction, maturity_month_year=maturity_month_year, maturity_day=maturity_day)
+        new_single_order = TradingClass.NewSingleOrder(client_order_id=client_order_id, symbol=stock_ticker, side=side,
+                                                       price=price, order_quantity=quantity,
+                                                       transaction_time=sending_time, order_type=order_type,
+                                                       handling_instruction=handling_instruction,
+                                                       maturity_month_year=maturity_month_year,
+                                                       maturity_day=maturity_day)
+        client_order = TradingClass.ClientOrder.from_new_single_order(new_single_order,
+                                                                      last_status=TradingClass.DatabaseHandlerUtils.LastStatus.NOT_YET_ACKNOWLEDGED,
+                                                                      average_price=0, quantity_filled=0)
+        self.client_database_handler.insert_order(client_order)
         self.client_fix_handler.send_new_single_order(new_single_order)
         return
 
     def process_order_execution_respond(self, order_execution):
         # process execution respond from server
 
-        if order_execution.ord_status=='0':
+        if order_execution.ord_status == '0':
             print("Receive ACK")
-        elif order_execution.ord_status=='1':
+        elif order_execution.ord_status == '1':
             print("Order Status Partially Filled")
-        elif order_execution.ord_status=='2':
+        elif order_execution.ord_status == '2':
             print("Order Status Filled")
-        elif order_execution.ord_status=='4':
+        elif order_execution.ord_status == '4':
             print("Cancel Order Success")
-        elif order_execution.ord_status=='5':
+        elif order_execution.ord_status == '5':
             print("Replace Order Success")
-        elif order_execution.ord_status=='8':
+        elif order_execution.ord_status == '8':
             print("Do Rejected Order")
 
         print("exec_id_fix, exec_trans_type_fix,exec_type_fix,ord_status_fix,symbol_fix,side_fix,eaves_qty_fix,"
@@ -525,23 +537,23 @@ class ClientLogic():
 
     def process_order_cancel_request(self, order_id):
         # Construct Fix Order Object to be sent to the fix handler
-        orig_cl_ord_id=order_id
+        orig_cl_ord_id = order_id
         cl_ord_id = '1'  # self.client_fix_handler.fix_application.gen_order_id()
-        #should be retrieved from database
+        # should be retrieved from database
         symbol = 'TSLA'
         side = TradingClass.FIXHandlerUtils.Side.BUY
-        order_qty=100
+        order_qty = 100
         transact_time = TradingClass.FIXDateTimeUTC.create_for_current_time()
-        ocr = TradingClass.OrderCancelRequest(orig_cl_ord_id,cl_ord_id,symbol,side,transact_time,order_qty)
+        ocr = TradingClass.OrderCancelRequest(orig_cl_ord_id, cl_ord_id, symbol, side, transact_time, order_qty)
         self.client_fix_handler.send_order_cancel_request(ocr)
         return
 
     def process_order_cancel_respond(self, order_cl_ord_id, ord_status, leaves_qty, cum_qty):
-        #TODO Database Query Update Order Status in client database
+        # TODO Database Query Update Order Status in client database
         print "process order cancel respond"
 
     def process_order_cancel_reject(self, order_cancel_reject):
-        #TODO Database Query Update Order Cancel Rejected
+        # TODO Database Query Update Order Cancel Rejected
         print "reject the order cancellation"
 
     def request_trading_transactions(self, user_name):
@@ -563,8 +575,8 @@ class ClientLogic():
 
 
 class ClientDatabaseHandler(TradingClass.DatabaseHandler):
-    last_order_id=0
-    last_market_data_request_id=0
+    last_order_id = 0
+    last_market_data_request_id = 0
 
     def insert_order(self, order):
         """Insert a order into the the client database
@@ -573,12 +585,30 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         Returns:
             None
         """
-        #TODO Valentin use execute_nonresponsive_sql_command for this
+        # TODO Valentin use execute_nonresponsive_sql_command for this
         pass
 
     def generate_new_client_order_id(self):
-        #TODO Alex
-        return "client_id_20161206_0"
+        # TODO Alex when the cfg is implemented add account name id into client order id
+        TradingClass.FIXDateTimeUTC.create_for_current_time()
+        return "client_" + str(datetime.datetime.utcnow())
+
+    def insert_order(self, order):
+        """Inserts an order into client database
+        Args:
+            order (TradingClass.ClientOrder): order to be inserted
+
+        Return:
+            None
+        """
+        command = (
+            "INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderQuantity, OrderPrice, LastStatus, "
+            "MaturityDate, QuantityFilled, AveragePrice) VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')"
+            % (order.order_id, order.transaction_time.mysql_date_stamp_string, str(order.side), str(order.order_type),
+               str(order.order_quantity), str(order.order_price), str(order.last_status), order.maturity_day.mysql_date_stamp_string,
+               str(order.quantity_filled), str(order.average_price)))
+        self.execute_nonresponsive_sql_command(command)
+        return
 
     def generate_market_data_request_id(self):
         self.last_market_data_request_id = self.last_market_data_request_id + 1
@@ -628,7 +658,6 @@ class GUIHandler:
             else:
                 continue
 
-
     def button_login_actuated(self, user_name, user_password):
         """This function is activated when the login button is pushed"""
         return self.client_logic.logon()
@@ -658,7 +687,8 @@ class GUIHandler:
     def send_dummy_order(self):
         """For testing"""
         dummy_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
-        self.button_buy_actuated(dummy_order.symbol, dummy_order.side, dummy_order.order_type, dummy_order.price, dummy_order.order_quantity)
+        self.button_buy_actuated(dummy_order.symbol, dummy_order.side, dummy_order.order_type, dummy_order.price,
+                                 dummy_order.order_quantity)
 
     def send_order_cancel_request_option(self, order_id):
         self.client_logic.process_order_cancel_request(order_id)
@@ -690,7 +720,7 @@ class GUIHandler:
             None
         """
         stock_ticker_symbol = str(searching_value)
-        print "Request market data for "+stock_ticker_symbol
+        print "Request market data for " + stock_ticker_symbol
         self.client_logic.process_market_data_request(stock_ticker_symbol)
 
     def refresh_charts(self, market_data):
