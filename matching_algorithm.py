@@ -22,10 +22,10 @@ def pro_rata(buy, sell):
         set buy and sell shares to new amount"""
 
     if (len(buy) == 0):
-        return 0
+        return None
 
     if (len(sell) == 0):
-        return 0
+        return None
     
     
     lenbuy = len(buy)
