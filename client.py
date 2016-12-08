@@ -67,15 +67,13 @@ class GUISignal(htmlPy.Object):
         result = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
         htmlPy_app.evaluate_javascript("freshChart('"+result+"')")
 
-    @htmlPy.Slot(str,str,str)
-    def orderSell(self,price, quantity, type):
-        print "sell:\n"+"price:"+price+"; quantity:"+quantity+"; type:"+type
+    @htmlPy.Slot(str,str,str,str)
+    def orderSell(self, price, quantity, order_type, ticket_code):
+        print "sell:\n"+"price:"+price+"; quantity:"+quantity+"; type:"+order_type+"; ticket code:"+ticket_code
 
-    @htmlPy.Slot(str, str, str)
-    def orderBuy(self, price, quantity, order_type):
-        #TODO yelinsheng need stock_ticker string from one field
-        #self.gui_handler.process_new_single_order_request(stock_ticker, TradingClass.FIXHandlerUtils.Side.BUY, order_type, price, quantity)
-        pass
+    @htmlPy.Slot(str, str, str,str)
+    def orderBuy(self, price, quantity, order_type, ticket_code):
+        print "sell:\n"+"price:"+price+"; quantity:"+quantity+"; type:"+order_type+"; ticket code:"+ticket_code
 
     @htmlPy.Slot(str, result=str)
     def get_form_data(self, json_data):
