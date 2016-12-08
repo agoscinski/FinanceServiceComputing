@@ -44,6 +44,68 @@ class TestServerDatabaseHandler:
         fsc_server_database_handler.teardown_database()
 
     def test_check_if_order_is_valid(self):
+
+        goldman_sachs_order = TradingClass.Order(client_order_id='0', account_company_id='GS',
+                                                 received_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-09'), handling_instruction=1,
+                                                 maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-15'), stock_ticker='TSLA',
+                                                 side=TradingClass.DatabaseHandlerUtils.Side.BUY,
+                                                 order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT,
+                                                 order_quantity=10., price=550.,
+                                                 last_status=TradingClass.DatabaseHandlerUtils.LastStatus.PENDING,
+                                                 cumulative_order_quantity=10.)
+
+        #Accept orders with price in proper range, which means 10% away from last price.  Reject the rest orders with reason.
+          too_expensive_order = TradingClass.Order(client_order_id='0', account_company_id='GS',
+                                                 received_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-09'), handling_instruction=1,
+                                                 maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-15'), stock_ticker='TSLA',
+                                                 side=TradingClass.DatabaseHandlerUtils.Side.BUY,
+                                                 order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT,
+                                                 order_quantity=10., price=606.,
+                                                 last_status=TradingClass.DatabaseHandlerUtils.LastStatus.PENDING,
+                                                 cumulative_order_quantity=10.)
+          assert Server.check_if_order_is_valid(too_expensive_order) == False
+
+          too_cheap_order = TradingClass.Order(client_order_id='0', account_company_id='GS',
+                                                 received_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-09'), handling_instruction=1,
+                                                 maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-15'), stock_ticker='TSLA',
+                                                 side=TradingClass.DatabaseHandlerUtils.Side.BUY,
+                                                 order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT,
+                                                 order_quantity=10., price=494.,
+                                                 last_status=TradingClass.DatabaseHandlerUtils.LastStatus.PENDING,
+                                                 cumulative_order_quantity=10.)
+          assert Server.check_if_order_is_valid(too_cheap_order) == False
+
+        #Accept orders with notional value in proper range, which means within 20% of total tradable value of the target stock.
+          too_big_order = TradingClass.Order(client_order_id='0', account_company_id='GS',
+                                                 received_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-09'), handling_instruction=1,
+                                                 maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-15'), stock_ticker='TSLA',
+                                                 side=TradingClass.DatabaseHandlerUtils.Side.BUY,
+                                                 order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT,
+                                                 order_quantity=34., price=500.,
+                                                 last_status=TradingClass.DatabaseHandlerUtils.LastStatus.PENDING,
+                                                 cumulative_order_quantity=34.)
+          assert Server.check_if_order_is_valid(too_big_order) == False
+          
+        #Accept orders during auction, normal trading session.  Reject orders after close, before open.
+          too_late_order = TradingClass.Order(client_order_id='0', account_company_id='GS',
+                                                 received_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-09'), handling_instruction=1,
+                                                 maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-15'), stock_ticker='TSLA',
+                                                 side=TradingClass.DatabaseHandlerUtils.Side.BUY,
+                                                 order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT,
+                                                 order_quantity=34., price=500.,
+                                                 last_status=TradingClass.DatabaseHandlerUtils.LastStatus.PENDING,
+                                                 cumulative_order_quantity=34.)
+          assert Server.check_if_order_is_valid(too_late_order) == False
         #TODO Valentin
         pass
 
