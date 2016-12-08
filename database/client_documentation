@@ -12,7 +12,7 @@ Side: Describes the type of Order (1: Buy, 2: Sell)
 OrderType: (1: Market, 2: Limit)
 OrderPrice:
 OrderQuantity
-LastStatus: (0:Done, 1:Pending, 2: Canceled, 3:Expired, 4: NOT_ACKNOWLEGED)
+LastStatus: (0:DONE, 1:PENDING, 2: CANCELED, 3:EXPIRED, 4: NOT_YET_ACKNOWLEDGED, 5:REJECTED)
 QuantitiyFilled: the quantity which has been sold
 AveragePrice
 

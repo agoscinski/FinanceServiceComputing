@@ -9,9 +9,9 @@
 
 
 -- -----------------------------------------------------
--- Table `TestFSCDatabase`.`Stock`
+-- Table `TestServerDatabase`.`Stock`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`Stock` (
+CREATE TABLE IF NOT EXISTS `TestServerDatabase`.`Stock` (
   `Ticker` VARCHAR(6) NOT NULL,
   `CompanyName` VARCHAR(45) NULL,
   `LotSize` INT NULL,
@@ -22,9 +22,9 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `TestFSCDatabase`.`AccountRole`
+-- Table `TestServerDatabase`.`AccountRole`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`AccountRole` (
+CREATE TABLE IF NOT EXISTS `TestServerDatabase`.`AccountRole` (
   `RoleID` INT NOT NULL,
   `RoleName` VARCHAR(15) NULL,
   PRIMARY KEY (`RoleID`))
@@ -32,9 +32,9 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `TestFSCDatabase`.`Account`
+-- Table `TestServerDatabase`.`Account`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`Account` (
+CREATE TABLE IF NOT EXISTS `TestServerDatabase`.`Account` (
   `CompanyID` VARCHAR(20) NOT NULL,
   `CompanyName` VARCHAR(30) NULL,
   `Password` VARCHAR(45) NULL,
@@ -43,16 +43,16 @@ CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`Account` (
   INDEX `fk_Account_AccountRole_idx` (`RoleID` ASC),
   CONSTRAINT `fk_Account_AccountRole`
     FOREIGN KEY (`RoleID`)
-    REFERENCES `TestFSCDatabase`.`AccountRole` (`RoleID`)
+    REFERENCES `TestServerDatabase`.`AccountRole` (`RoleID`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `TestFSCDatabase`.`Order`
+-- Table `TestServerDatabase`.`Order`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`Order` (
+CREATE TABLE IF NOT EXISTS `TestServerDatabase`.`Order` (
   `ClientOrderID` VARCHAR(45) NOT NULL,
   `Account_CompanyID` VARCHAR(20) NOT NULL,
   `ReceivedDate` DATE NOT NULL,
@@ -73,21 +73,21 @@ CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`Order` (
   INDEX `fk_Order_Account1_idx` (`Account_CompanyID` ASC),
   CONSTRAINT `fk_Order_Stock1`
     FOREIGN KEY (`Stock_Ticker`)
-    REFERENCES `TestFSCDatabase`.`Stock` (`Ticker`)
+    REFERENCES `TestServerDatabase`.`Stock` (`Ticker`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Order_Account1`
     FOREIGN KEY (`Account_CompanyID`)
-    REFERENCES `TestFSCDatabase`.`Account` (`CompanyID`)
+    REFERENCES `TestServerDatabase`.`Account` (`CompanyID`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `TestFSCDatabase`.`OrderExecution`
+-- Table `TestServerDatabase`.`OrderExecution`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`OrderExecution` (
+CREATE TABLE IF NOT EXISTS `TestServerDatabase`.`OrderExecution` (
   `ExecutionID` INT NOT NULL AUTO_INCREMENT,
   `OrderExecutionQuantity` FLOAT NULL,
   `OrderExecutionPrice` FLOAT NULL,
@@ -104,21 +104,21 @@ CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`OrderExecution` (
   INDEX `fk_OrderExecution_Order2_idx` (`Order_SellClientOrderID` ASC, `Order_SellCompanyID` ASC, `Order_SellReceivedDate` ASC),
   CONSTRAINT `fk_OrderExecution_Order1`
     FOREIGN KEY (`Order_BuyClientOrderID` , `Order_BuyCompanyID` , `Order_BuyReceivedDate`)
-    REFERENCES `TestFSCDatabase`.`Order` (`ClientOrderID` , `Account_CompanyID` , `ReceivedDate`)
+    REFERENCES `TestServerDatabase`.`Order` (`ClientOrderID` , `Account_CompanyID` , `ReceivedDate`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_OrderExecution_Order2`
     FOREIGN KEY (`Order_SellClientOrderID` , `Order_SellCompanyID` , `Order_SellReceivedDate`)
-    REFERENCES `TestFSCDatabase`.`Order` (`ClientOrderID` , `Account_CompanyID` , `ReceivedDate`)
+    REFERENCES `TestServerDatabase`.`Order` (`ClientOrderID` , `Account_CompanyID` , `ReceivedDate`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `TestFSCDatabase`.`OrderCancel`
+-- Table `TestServerDatabase`.`OrderCancel`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`OrderCancel` (
+CREATE TABLE IF NOT EXISTS `TestServerDatabase`.`OrderCancel` (
   `Side` INT NULL,
   `ReceivedTime` TIMESTAMP NULL,
   `LastStatus` INT NULL,
@@ -132,16 +132,16 @@ CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`OrderCancel` (
   PRIMARY KEY (`OrderCancelID`),
   CONSTRAINT `fk_OrderCancel_Order1`
     FOREIGN KEY (`Order_ClientOrderID` , `Order_Account_CompanyID` , `Order_ReceivedDate`)
-    REFERENCES `TestFSCDatabase`.`Order` (`ClientOrderID` , `Account_CompanyID` , `ReceivedDate`)
+    REFERENCES `TestServerDatabase`.`Order` (`ClientOrderID` , `Account_CompanyID` , `ReceivedDate`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `TestFSCDatabase`.`Session`
+-- Table `TestServerDatabase`.`Session`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`Session` (
+CREATE TABLE IF NOT EXISTS `TestServerDatabase`.`Session` (
   `SessionID` INT NOT NULL AUTO_INCREMENT,
   `Account_UserID` VARCHAR(20) NOT NULL,
   `BeginOfSession` TIMESTAMP NULL,
@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS `TestFSCDatabase`.`Session` (
   INDEX `fk_Sessions_Account1_idx` (`Account_UserID` ASC),
   CONSTRAINT `fk_Sessions_Account1`
     FOREIGN KEY (`Account_UserID`)
-    REFERENCES `TestFSCDatabase`.`Account` (`CompanyID`)
+    REFERENCES `TestServerDatabase`.`Account` (`CompanyID`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
