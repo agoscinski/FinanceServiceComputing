@@ -1,7 +1,6 @@
 import TradingClass
 import matching_algorithm
-import timeit
-
+import copy
 
 class TestMatchingAlgorithm:
 
@@ -9,29 +8,15 @@ class TestMatchingAlgorithm:
         buy_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=120, price=200)
         sell_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=120, price=200)
 
-        buy_orders = [buy_order, buy_order, buy_order, buy_order, buy_order]
-        sell_orders = [sell_order, sell_order, sell_order, sell_order, sell_order]
+        buy_orders = [copy.copy(buy_order), copy.copy(buy_order), copy.copy(buy_order), copy.copy(buy_order), copy.copy(buy_order)]
+        sell_orders = [copy.copy(sell_order), copy.copy(sell_order), copy.copy(sell_order), copy.copy(sell_order), copy.copy(sell_order)]
 
         assert matching_algorithm.pro_rata([], []) is None
         assert matching_algorithm.pro_rata([], sell_orders) is None
         assert matching_algorithm.pro_rata(buy_orders, []) is None
         # shape test
-        assert  matching_algorithm.pro_rata(buy_orders, sell_orders).shape == (len(sell_orders), len(buy_orders))
-
-    def test_time_of_matching_algorithm(self):
-        buy_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=12000, price=200)
-        sell_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=12000, price=200)
-
-        buy_orders1 = [buy_order, buy_order, buy_order, buy_order, buy_order]
-        sell_orders1 = [sell_order, sell_order, sell_order, sell_order, sell_order]
-        buy_orders2 = [buy_order for _ in range(100)]
-        sell_orders2 = [sell_order for _ in range(100)]        
-        buy_orders3 = [buy_order for _ in range(1000)]
-        sell_orders3 = [sell_order for _ in range(1000)]
-
-        timeit.timeit("pro_rata(buy_orders1, sell_orders1)", setup = "from_matching_algorithm_import pro_rata")
-        timeit.timeit("pro_rata(buy_orders2, sell_orders2)", setup = "from_matching_algorithm_import pro_rata")
-        timeit.timeit("pro_rata(buy_orders3, sell_orders3)", setup = "from_matching_algorithm_import pro_rata")
+        result_matrix = matching_algorithm.pro_rata(buy_orders, sell_orders)
+        assert result_matrix.shape == (len(sell_orders), len(buy_orders))
 
     def test_extract_buy_and_sell_orders(self):
         dummy_orders = []
@@ -48,41 +33,51 @@ class TestMatchingAlgorithm:
         assert sell_orders[2] == dummy_orders[4]
 
     def test_determine_price_for_match_with_two_market_orders_and_intersection(self):
-        buy_market_order = TradingClass.Order.create_dummy_order(price=10., side=TradingClass.DatabaseHandlerUtils.Side.BUY,
+        buy_market_order = TradingClass.Order.create_dummy_order(price=10.,
+                                                                 side=TradingClass.DatabaseHandlerUtils.Side.BUY,
                                                                  order_type=TradingClass.DatabaseHandlerUtils.OrderType.MARKET)
-        sell_market_order = TradingClass.Order.create_dummy_order(price=8., side=TradingClass.DatabaseHandlerUtils.Side.SELL,
+        sell_market_order = TradingClass.Order.create_dummy_order(price=8.,
+                                                                  side=TradingClass.DatabaseHandlerUtils.Side.SELL,
                                                                   order_type=TradingClass.DatabaseHandlerUtils.OrderType.MARKET)
         matched_price = matching_algorithm.determine_price_for_match(buy_market_order, sell_market_order)
         assert 9. == matched_price
 
     def test_determine_price_for_match_with_two_market_orders_and_no_intersection(self):
-        buy_market_order = TradingClass.Order.create_dummy_order(price=8., side=TradingClass.DatabaseHandlerUtils.Side.BUY,
+        buy_market_order = TradingClass.Order.create_dummy_order(price=8.,
+                                                                 side=TradingClass.DatabaseHandlerUtils.Side.BUY,
                                                                  order_type=TradingClass.DatabaseHandlerUtils.OrderType.MARKET)
-        sell_market_order = TradingClass.Order.create_dummy_order(price=10., side=TradingClass.DatabaseHandlerUtils.Side.SELL,
+        sell_market_order = TradingClass.Order.create_dummy_order(price=10.,
+                                                                  side=TradingClass.DatabaseHandlerUtils.Side.SELL,
                                                                   order_type=TradingClass.DatabaseHandlerUtils.OrderType.MARKET)
         matched_price = matching_algorithm.determine_price_for_match(buy_market_order, sell_market_order)
         assert 9. == matched_price
 
     def test_determine_price_for_match_with_one_market_one_limit_order_and_intersection(self):
-        buy_market_order = TradingClass.Order.create_dummy_order(price=10., side=TradingClass.DatabaseHandlerUtils.Side.BUY,
+        buy_market_order = TradingClass.Order.create_dummy_order(price=10.,
+                                                                 side=TradingClass.DatabaseHandlerUtils.Side.BUY,
                                                                  order_type=TradingClass.DatabaseHandlerUtils.OrderType.MARKET)
-        sell_limit_order = TradingClass.Order.create_dummy_order(price=8., side=TradingClass.DatabaseHandlerUtils.Side.SELL,
+        sell_limit_order = TradingClass.Order.create_dummy_order(price=8.,
+                                                                 side=TradingClass.DatabaseHandlerUtils.Side.SELL,
                                                                  order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT)
         matched_price = matching_algorithm.determine_price_for_match(buy_market_order, sell_limit_order)
         assert 9. == matched_price
 
     def test_determine_price_for_match_with_one_market_one_limit_order_and_no_intersection(self):
-        buy_market_order = TradingClass.Order.create_dummy_order(price=8., side=TradingClass.DatabaseHandlerUtils.Side.BUY,
+        buy_market_order = TradingClass.Order.create_dummy_order(price=8.,
+                                                                 side=TradingClass.DatabaseHandlerUtils.Side.BUY,
                                                                  order_type=TradingClass.DatabaseHandlerUtils.OrderType.MARKET)
-        sell_limit_order = TradingClass.Order.create_dummy_order(price=10., side=TradingClass.DatabaseHandlerUtils.Side.SELL,
+        sell_limit_order = TradingClass.Order.create_dummy_order(price=10.,
+                                                                 side=TradingClass.DatabaseHandlerUtils.Side.SELL,
                                                                  order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT)
         matched_price = matching_algorithm.determine_price_for_match(buy_market_order, sell_limit_order)
         assert 10. == matched_price
 
     def test_determine_price_for_match_with_one_market_one_limit_order_and_intersection(self):
-        buy_limit_order = TradingClass.Order.create_dummy_order(price=10., side=TradingClass.DatabaseHandlerUtils.Side.BUY,
+        buy_limit_order = TradingClass.Order.create_dummy_order(price=10.,
+                                                                side=TradingClass.DatabaseHandlerUtils.Side.BUY,
                                                                 order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT)
-        sell_limit_order = TradingClass.Order.create_dummy_order(price=8., side=TradingClass.DatabaseHandlerUtils.Side.SELL,
+        sell_limit_order = TradingClass.Order.create_dummy_order(price=8.,
+                                                                 side=TradingClass.DatabaseHandlerUtils.Side.SELL,
                                                                  order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT)
         matched_price = matching_algorithm.determine_price_for_match(buy_limit_order, sell_limit_order)
         assert 9. == matched_price
@@ -107,7 +102,8 @@ class TestMatchingAlgorithm:
             buy_order=buy_market_order,
             sell_order=sell_market_order,
             timestamp=timestamp)
-        asserted_execution_order = TradingClass.OrderExecution(execution_id=None, quantity=trading_matrix_entry, price=10.,
+        asserted_execution_order = TradingClass.OrderExecution(execution_id=None, quantity=trading_matrix_entry,
+                                                               price=10.,
                                                                execution_time=timestamp,
                                                                buyer_client_order_id=buy_market_order.client_order_id,
                                                                buyer_company_id=buy_market_order.account_company_id,
@@ -116,4 +112,3 @@ class TestMatchingAlgorithm:
                                                                seller_company_id=sell_market_order.account_company_id,
                                                                seller_received_date=sell_market_order.received_date)
         assert created_execution_order == asserted_execution_order
-
