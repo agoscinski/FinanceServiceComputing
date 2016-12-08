@@ -51,8 +51,8 @@ ON LastExecutedTradeTime.Stock_Ticker = order_execution.Stock_Ticker
 WHERE LastExecutedTradeTime.LastExecutedTradeTime = order_execution.ExecutionTime;
 
 
-CREATE VIEW `OrderCumulativeQuantityAndAveragePrice` AS
-SELECT `Order`.ClientOrderID, `Order`.Account_CompanyID, `Order`.ReceivedDate, IFNULL(grouped_order_execution.CumulativeQuantity,0) AS CumulativeQuantity, IFNULL(grouped_order_execution.AveragePrice,0) AS AveragePrice
+CREATE VIEW `OrderWithCumulativeQuantityAndAveragePrice` AS
+SELECT `Order`.ClientOrderID, `Order`.Account_CompanyID, `Order`.ReceivedDate, `Order`.HandlingInstruction, `Order`.Stock_Ticker, `Order`.Side, `Order`.MaturityDate, `Order`.OrderType, `Order`.OrderQuantity, `Order`.CashOrderQuantity, `Order`.Price, `Order`.LastStatus, `Order`.MsgSeqNum, `Order`.OnBehalfOfCompanyID, `Order`.SenderSubID, IFNULL(grouped_order_execution.CumulativeQuantity,0) AS CumulativeQuantity, IFNULL(grouped_order_execution.AveragePrice,0) AS AveragePrice
 FROM
 	((SELECT Order_BuyClientOrderID AS ClientOrderID, Order_BuyCompanyID AS CompanyID, Order_BuyReceivedDate AS ReceivedDate, SUM(OrderExecutionQuantity) AS CumulativeQuantity, AVG(OrderExecutionPrice) AS AveragePrice
 	FROM OrderExecution

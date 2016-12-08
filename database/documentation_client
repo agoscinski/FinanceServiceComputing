@@ -1,0 +1,25 @@
+StockInformation
+Timestamp (depends which needed to show the graph)
+Price (float)
+Quantity (float)
+High (float)
+Low (float)
+
+Order
+OrderID : 
+TransactionTime
+Side: Describes the type of Order (1: Buy, 2: Sell)
+OrderType: (1: Market, 2: Limit)
+OrderPrice:
+OrderQuantity
+LastStatus: (0:Done, 1:Pending, 2: Canceled, 3:Expired, 4: NOT_ACKNOWLEGED)
+QuantitiyFilled: the quantity which has been sold
+AveragePrice
+
+
+Order_Result
+order_id
+order_transaction_time/order_transaction_date (if it's primary key)
+result_time
+quantity
+price
