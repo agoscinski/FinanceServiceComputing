@@ -577,10 +577,13 @@ class ClientLogic():
         Returns
             maturity_date (FIXYearMonth)
             maturity_day (int): between 1-31
-        """
+        """ 
+        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+        maturity_date = tomorrow.year, tomorrow.month
+        maturity_day = tomorrow.day
         # TODO Valentin
-        maturity_date = TradingClass.FIXYearMonth()
-        maturity_day = 1
+        #maturity_date = TradingClass.FIXYearMonth()
+        #maturity_day = 1
         return maturity_date, maturity_day
 
 
@@ -591,11 +594,22 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
     def insert_order(self, order):
         """Insert a order into the the client database
         Args:
+        
             order (TradingClass.Order)
         Returns:
             None
         """
         #TODO Valentin use execute_nonresponsive_sql_command for this
+        command = (
+            "INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice,"
+            "OrderQuantity, Status, QuantityFilled, AveragePrice) "
+            "VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s', '%s')"
+            % (last_order_id, order.transaction_time, str(order.side),
+               order.order_type, str(order.price), str(order.order_quantity), 
+               str(order.last_status), str(TradingClass.OrderExecution(self)), str(order.price)))
+        self.execute_nonresponsive_sql_command(command)
+        last_order_id=last_order_id+1
+        return
         pass
 
 

@@ -44,6 +44,25 @@ class TestServerDatabaseHandler:
         fsc_server_database_handler.teardown_database()
 
     def test_check_if_order_is_valid(self):
+        """Accept orders with price in proper range, which means 10% away from last price.  Reject the rest orders with reason """
+        last_price = TradingClass.ClientLogicUtils.extract_current_price(market_data_entry_types=1, market_data_entry_prices=100)
+        max_price = last_price*1.1
+        min_price = last_price*0.9
+        assert self.price <= max_price
+        assert self.price >= min_price
+
+        """Accept orders with notional value in proper range, which means within 20% of total tradable value of the target stock """
+        bid_tradable_value = TradingClass.ClientLogicUtils.extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                      market_data_entry_quantity).prices * TradingClass.ClientLogicUtils.extract_bid_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                      market_data_entry_quantity).quantity
+        offers_tradable_value = TradingClass.ClientLogicUtils.extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                      market_data_entry_quantity).prices * TradingClass.ClientLogicUtils.extract_offers_price_quantity(market_data_entry_types, market_data_entry_prices,
+                                      market_data_entry_quantity).quantity
+        tradable_value =  bid_tradable_value + offers_tradable_value  
+        assert self.price <= 0.2*tradable_value
+
+        """Accept orders during auction, normal trading session.  Reject orders after close, before open."""
+
         #TODO Valentin
         pass
 
