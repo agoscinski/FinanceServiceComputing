@@ -2,6 +2,7 @@ import sys
 import quickfix as fix
 import quickfix42 as fix42
 import TradingClass
+import utils
 import datetime
 import htmlPy
 import json
@@ -67,14 +68,17 @@ class GUISignal(htmlPy.Object):
         result = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
         htmlPy_app.evaluate_javascript("freshChart('" + result + "')")
 
-    @htmlPy.Slot(str,str,str,str)
+    @htmlPy.Slot(str, str, str, str)
     def orderSell(self, price, quantity, order_type, ticket_code):
-        print "sell:\n"+"price:"+price+"; quantity:"+quantity+"; type:"+order_type+"; ticket code:"+ticket_code
+        print "sell:\n" + "price:" + price + "; quantity:" + quantity + "; type:" + order_type + "; ticket code:" + ticket_code
 
-    @htmlPy.Slot(str, str, str,str)
+    @htmlPy.Slot(str, str, str, str)
     def orderBuy(self, price, quantity, order_type, ticket_code):
         # TODO check values of order_type
-        self.gui_handler.process_new_single_order_request(stock_ticker, TradingClass.FIXHandlerUtils.Side.BUY, , float(price), float(quantity))
+        self.gui_handler.process_new_single_order_request(stock_ticker=ticket_code,
+                                                          side=TradingClass.FIXHandlerUtils.Side.BUY,
+                                                          order_type=order_type, price=float(price),
+                                                          quantity=float(quantity))
 
     @htmlPy.Slot(str, result=str)
     def get_form_data(self, json_data):
@@ -148,12 +152,12 @@ class ClientFIXApplication(fix.Application):
 
 
 class ClientFIXHandler:
-    def __init__(self, client_logic, client_config_file_name):
+    def __init__(self, client_logic, client_database_handler):
         self.client_logic = client_logic
-        self.client_database_handler = ClientDatabaseHandler(user_name="root", user_password="root",
-                                                             database_name="ClientDatabase", database_port=3306,
-                                                             init_database_script_path="./database/init_client_database.sql")
-        self.client_config_file_name = client_config_file_name
+        self.client_database_handler = client_database_handler
+        self.client_config_file_name = utils.ClientConfigFileHandler(application_id=self.client_logic.application_id,
+                                                                     start_time=str(self.client_logic.start_time),
+                                                                     end_time=str(self.client_logic.end_time)).create_config_file()
         self.fix_application = None
         self.socket_initiator = None
         self.storeFactory = None
@@ -362,7 +366,8 @@ class ClientFIXHandler:
             self.client_logic.process_order_cancel_respond(orig_cl_ord_id, ord_status, leaves_qty, cum_qty)
         else:
             order_execution = TradingClass.OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type,
-                                                          ord_status, symbol, side, leaves_qty, cum_qty, avg_px, price, stop_px)
+                                                          ord_status, symbol, side, leaves_qty, cum_qty, avg_px, price,
+                                                          stop_px)
             self.client_logic.process_order_execution_respond(order_execution)
 
         return
@@ -400,14 +405,28 @@ class ClientFIXHandler:
 
 
 class ClientLogic():
-    def __init__(self, client_config_file_name):
-        self.client_fix_handler = ClientFIXHandler(self, client_config_file_name)
-        self.client_database_handler = ClientDatabaseHandler()
+    """
+    Attributes:
+        application_id (string)
+        start_time (datetime.time)
+        end_time (datetime.time)
+        client_fix_handler (
+
+    """
+
+    def __init__(self, application_id):
+        self.client_database_handler = ClientDatabaseHandler(user_name="root", user_password="root",
+                                                             database_name="ClientDatabase", database_port=3306,
+                                                             init_database_script_path="./database/client/init_client_database.sql")
+        self.application_id = application_id
+        self.start_time = datetime.datetime.strptime("08:00:00", "%H:%M:%S").time()
+        self.end_time = datetime.datetime.strptime("17:00:00", "%H:%M:%S").time()
+        self.client_fix_handler = ClientFIXHandler(self, self.client_database_handler)
         self.gui_handler = GUIHandler(self)
         self.gui_signal = GUISignal(self.gui_handler)
 
     def start_client(self):
-        # start some gui stuff and other things, for now only gui
+        self.client_database_handler.init_database()
         self.gui_handler.start_gui()
 
     def logon(self):
@@ -603,7 +622,8 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
             "INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderQuantity, OrderPrice, LastStatus, "
             "MaturityDate, QuantityFilled, AveragePrice) VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')"
             % (order.order_id, order.transaction_time.mysql_date_stamp_string, str(order.side), str(order.order_type),
-               str(order.order_quantity), str(order.order_price), str(order.last_status), order.maturity_day.mysql_date_stamp_string,
+               str(order.order_quantity), str(order.order_price), str(order.last_status),
+               order.maturity_day.mysql_date_stamp_string,
                str(order.quantity_filled), str(order.average_price)))
         self.execute_nonresponsive_sql_command(command)
         return

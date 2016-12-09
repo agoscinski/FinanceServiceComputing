@@ -1,8 +1,8 @@
 import client
 import TradingClass
 
-client_config_file_name = "client.cfg"
-fsc_client_logic = client.ClientLogic(client_config_file_name)
+client_application_id = "test"
+fsc_client_logic = client.ClientLogic(client_application_id)
 fsc_client_database_handler = client.ClientDatabaseHandler(user_name="root", user_password="root",
                                                            database_name="TestClientDatabase", database_port=3306,
                                                            init_database_script_path="./tests/database/client/init_test_client_database.sql")

@@ -1,14 +1,11 @@
 import server
 import TradingClass
 
-nasdaq_stock_ticker = "TESTTICKER"
-nasdaq_stock = server.Stock(nasdaq_stock_ticker)
-
 fsc_server_database_handler = server.ServerDatabaseHandler(user_name="root", user_password="root",
                                                            database_name="TestServerDatabase", database_port=3306,
                                                            init_database_script_path="./tests/database/server/init_test_server_database.sql")
-server_config_file_name = "server.cfg"
-fsc_server_logic = server.ServerLogic(server_config_file_name, fsc_server_database_handler)
+server_application_id = "test"
+fsc_server_logic = server.ServerLogic(server_application_id, fsc_server_database_handler)
 
 
 def setup_module(module):

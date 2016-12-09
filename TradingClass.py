@@ -427,7 +427,7 @@ class ClientDatabaseHandlerUtils:
         EXPIRED = 3
 
 class DatabaseHandler:
-    def __init__(self, user_name="root", user_password="root", database_name="Database", database_port=3306,
+    def __init__(self, database_host="localhost", user_name="root", user_password="root", database_name="Database", database_port=3306,
                  init_database_script_path="./database/init_database.sql"):
         """
         Args:
@@ -437,6 +437,7 @@ class DatabaseHandler:
             database_port (int)
             init_database_script_path (string)
         """
+        self.database_host = database_host
         self.user_name = user_name
         self.user_password = user_password
         self.database_name = database_name
@@ -459,7 +460,7 @@ class DatabaseHandler:
     def create_schema(self):
         sql_command = "CREATE SCHEMA IF NOT EXISTS `" + self.database_name + "` DEFAULT CHARACTER SET utf8 ;"
         try:
-            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password)
+            connection = MySQLdb.connect(host=self.database_host, user=self.user_name, passwd=self.user_password)
             cursor = connection.cursor()
             cursor.execute(sql_command)
             connection.commit()
@@ -494,7 +495,7 @@ class DatabaseHandler:
         """
         fetched_database_rows = []
         try:
-            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+            connection = MySQLdb.connect(host=self.database_host, user=self.user_name, passwd=self.user_password,
                                          db=self.database_name, port=self.database_port)
             cursor = connection.cursor()
             execution = (sql_command)
@@ -514,7 +515,7 @@ class DatabaseHandler:
             None
         """
         try:
-            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+            connection = MySQLdb.connect(host=self.database_host, user=self.user_name, passwd=self.user_password,
                                          db=self.database_name, port=self.database_port)
             cursor = connection.cursor()
             cursor.execute(sql_command)
@@ -532,7 +533,7 @@ class DatabaseHandler:
             id_of_inserted_row (ID type in database): the ID of the object inserted
         """
         try:
-            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+            connection = MySQLdb.connect(host=self.database_host, user=self.user_name, passwd=self.user_password,
                                          db=self.database_name, port=self.database_port)
             cursor = connection.cursor()
             cursor.execute(insert_sql_command)
