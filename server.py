@@ -424,6 +424,10 @@ class ServerLogic:
         self.server_fix_handler.send_reject_order_execution_respond(reject_order_execution)
 
     def check_if_order_is_valid(self, requested_order):
+
+        if(self.current_server_time>=self.end_time or self.current_server_time<=self.start_time):
+            return False
+
         stock_total_volume = self.server_database_handler.fetch_stock_total_volume(requested_order.stock_ticker)
         stock_information = self.server_database_handler.fetch_stock_information(requested_order.stock_ticker)
         current_price = stock_information.current_price
