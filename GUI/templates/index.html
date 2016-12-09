@@ -440,13 +440,15 @@
       var type=$("#sellT").val();
       var q=$("#sellQ").val();
       var p=$("#sellP").val();
-      GUISignal.orderSell(p,q,type);
+      var c=$("#stockCode").val();
+      GUISignal.orderSell(p,q,type,c);
     }
     function orderBuy(){
       var type=$("#buyT").val();
       var q=$("#buyQ").val();
       var p=$("#buyP").val();
-      GUISignal.orderBuy(p,q,type);
+      var c=$("#stockCode").val();
+      GUISignal.orderBuy(p,q,type,c);
     }
 
 
