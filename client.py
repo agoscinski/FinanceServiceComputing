@@ -579,7 +579,8 @@ class ClientLogic():
             maturity_day (int): between 1-31
         """ 
         tomorrow = datetime.date.today() + datetime.timedelta(days=1)
-        maturity_date = tomorrow.year, tomorrow.month
+        maturity_date.year(tomorrow.year)
+        maturity_date.month(tomorrow.month)
         maturity_day = tomorrow.day
         # TODO Valentin
         #maturity_date = TradingClass.FIXYearMonth()
