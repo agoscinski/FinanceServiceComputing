@@ -10,6 +10,6 @@ def run_pro_rata(number_of_orders):
     matching_algorithm.pro_rata(buy_orders, sell_orders)
 
 def time_tests():
-    timeit.timeit("run_pro_rata(n)", number=3, setup="from matching_algorithm_time_test import run_pro_rata")
+    timeit.timeit("run_pro_rata(n)", number=3, setup="from matching_algorithm_time_test import run_pro_rata", number=1)
 
 run_pro_rata(3)
