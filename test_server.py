@@ -138,8 +138,14 @@ class TestServerDatabaseHandler:
 
     def test_update_order_status(self):
         #TODO Yelinsheng
+        test_order=TradingClass.Order.create_dummy_order()
+        test_order_status=TradingClass.DatabaseHandlerUtils.LastStatus.DONE
+        assert fsc_server_database_handler.update_order_status(test_order,test_order_status) == None
         pass
 
     def test_insert_order_cancel(self):
         #TODO Yelinsheng
+        test_requested_order_cancel=TradingClass.OrderCancel.from_order_cancel_request(TradingClass.OrderCancelRequest.create_dummy_order_cancel_request())
+        test_order=TradingClass.Order.create_dummy_order()
+        assert fsc_server_database_handler.insert_order_cancel(test_requested_order_cancel,test_order,1000) == None
         pass
