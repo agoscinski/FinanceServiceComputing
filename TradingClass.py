@@ -911,6 +911,13 @@ class OrderCancelRequest(object):
                    sending_time,
                    on_behalf_of_comp_id, sender_sub_id)
 
+    @classmethod
+    def create_dummy_order_cancel_request(cls,orig_cl_ord_id="0",cl_ord_id="0",symbol="TSLA",side=FIXHandlerUtils.Side.BUY,
+                                          transact_time=FIXDateTimeUTC.from_date_fix_time_stamp_string("20161120-10:00:00"),
+                                          order_qty=1000,sender_comp_id="GS"):
+        dummy_new_order_cancel_request=cls(orig_cl_ord_id, cl_ord_id, symbol, side, transact_time, order_qty)
+        return dummy_new_order_cancel_request
+
 
 class OrderCancelReject(object):
     """Constructor of class OrderCancelReject represents a quickfix order cancel reject (message type 9):
@@ -1214,13 +1221,13 @@ class Order(object):
         self.average_price = average_price
 
     @classmethod
-    def create_dummy_order(cls, client_order_id="20161120-001", account_company_id="client",
-                           received_date=FIXDate.from_fix_date_stamp_string("20161120"), handling_instruction=1,
+    def create_dummy_order(cls, client_order_id="0", account_company_id="GS",
+                           received_date=FIXDate.from_fix_date_stamp_string("20161109"), handling_instruction=1,
                            stock_ticker="TSLA", side=DatabaseHandlerUtils.Side.BUY,
-                           maturity_date=FIXDate.from_fix_date_stamp_string("20161125"),
-                           order_type=DatabaseHandlerUtils.OrderType.MARKET, order_quantity=100.00, price=10.00,
-                           last_status=DatabaseHandlerUtils.LastStatus.PENDING, msg_seq_num=0,
-                           cumulative_order_quantity=50., average_price=12.):
+                           maturity_date=FIXDate.from_fix_date_stamp_string("20161105"),
+                           order_type=DatabaseHandlerUtils.OrderType.LIMIT, order_quantity=10000.00, price=1000.00,
+                           last_status=DatabaseHandlerUtils.LastStatus.PENDING, msg_seq_num=None,
+                           cumulative_order_quantity=None, average_price=None):
         """For testing"""
         dummy_order = cls(client_order_id=client_order_id, account_company_id=account_company_id,
                           received_date=received_date, handling_instruction=handling_instruction,
@@ -1514,6 +1521,18 @@ class OrderCancel(object):
                            side, order_quantity, last_status, received_time, message_sequence_number,
                            on_behalf_of_company_id, sender_sub_id, cancel_quantity, execution_time)
         return order_cancel
+
+    @classmethod
+    def create_dummy_order_cancel(cls, client_order_id="0",order_cancel_id="20161220-001", account_company_id="GS",
+                                  order_received_date=FIXDate.from_fix_date_stamp_string("20161120"), stock_ticker="TSLA",
+                                  side=DatabaseHandlerUtils.Side.BUY, order_quantity=100.00, last_status=DatabaseHandlerUtils.LastStatus.CANCELED,
+                                  received_time=FIXDateTimeUTC.create_for_current_time()):
+
+        dummy_order_cancel = cls(client_order_id, order_cancel_id, account_company_id, order_received_date, stock_ticker,
+                 side,
+                 order_quantity, last_status, received_time, msg_seq_num=None, on_behalf_of_company_id=None,
+                 sender_sub_id=None, cancel_quantity=None, execution_time=None)
+        return dummy_order_cancel
 
 
 class ClientOrder:
