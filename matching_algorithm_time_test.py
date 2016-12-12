@@ -10,5 +10,5 @@ def run_pro_rata(number_of_orders):
     matching_algorithm.pro_rata(buy_orders, sell_orders)
 
 def time_tests():
-    t = timeit.Timer("run_pro_rata(n)", number=1, setup="from matching_algorithm_time_test import run_pro_rata")
+    t = timeit.Timer("run_pro_rata(1)", number=1, setup="from matching_algorithm_time_test import run_pro_rata")
     t.timeit()
