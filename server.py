@@ -519,7 +519,7 @@ class ServerLogic:
         order_id = str(self.gen_order_cancel_id())
         orig_cl_ord_id = requested_order_cancel.client_order_id
         cl_ord_id = requested_order_cancel.order_cancel_id
-        exec_id = str(self.gen_exec_id())
+        exec_id = str(self.gen_exec_id()) #
         receiver_comp_id = requested_order_cancel.account_company_id
         exec_trans_type =  TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW
         exec_type = TradingClass.FIXHandlerUtils.ExecutionType.CANCELED
@@ -712,6 +712,17 @@ class ServerLogic:
 
 class ServerDatabaseHandler(TradingClass.DatabaseHandler):
 
+    def fetch_order_cancel(self, order_cancel_id):
+        """Returns an order cancel for an order cancel id
+        Args:
+            order_cancel_id (int): the id for which the cancel is fetched
+
+        Return:
+            order_cancel (TradingClass.OrderCancel)
+        """
+        #TODO Husein
+        return TradingClass.OrderCancel.create_dummy_order_cancel()
+
     def insert_execution_report(self, execution_report):
         # MAYBETODO
         return 0
@@ -833,9 +844,9 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         Args:
             requested_order_cancel (TradingClass.OrderCancel): The order cancel to be inserted
         Returns:
-            None
+            order_cancel_id (int)
         """
-        last_status=0
+        last_status = 0 #TODO Husein is this status correct
         executed_time = FIXDateTimeUTC.create_for_current_time()
         sql_command = ("INSERT INTO OrderCancel(Order_ClientOrderID, OrderCancelID, Order_Account_CompanyID, " \
                       "Order_ReceivedDate, LastStatus, ReceivedTime, MsgSeqNum, CancelQuantity, ExecutionTime) " \
@@ -843,7 +854,7 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
             requested_order_cancel.order_cancel_id,requested_order_cancel.account_company_id,
             requested_order_cancel.order_received_date, last_status, requested_order_cancel.received_time.date_time,
             requested_order_cancel.msg_seq_num,requested_order_cancel.cancel_quantity, executed_time.date_time))
-        self.execute_nonresponsive_sql_command(sql_command)
+        self.execute_nonresponsive_sql_command(sql_command) #TODO Husein use execute_responsive_insert_sql_command
 
     def update_order_status(self, order, order_status):
         """Update TradingClass.Order status into database

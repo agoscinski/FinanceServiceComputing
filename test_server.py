@@ -6,8 +6,8 @@ nasdaq_stock_ticker = "TESTTICKER"
 nasdaq_stock = server.Stock(nasdaq_stock_ticker)
 
 fsc_server_database_handler = server.ServerDatabaseHandler(user_name="root", user_password="root",
-                                                           database_name="TestFSCDatabase", database_port=3306,
-                                                           init_database_script_path="./tests/database/init_test_database.sql")
+                                                           database_name="TestServerDatabase", database_port=3306,
+                                                           init_database_script_path="./tests/database/server/init_test_server_database.sql")
 server_config_file_name = "server.cfg"
 fsc_server_logic = server.ServerLogic(server_config_file_name, fsc_server_database_handler)
 
@@ -44,9 +44,23 @@ class TestServerLogic:
         # TODO Emely
         pass
 
+    def test_fetch_latest_order_by_client_information(self):
+        #TODO Husein
+        pass
 
+    def test_update_order_status(self):
+        #TODO Husein
+        pass
+
+    def test_fetch_order_cancel(self):
+        #TODO Husein
+        pass
+
+    """
     def test_process_valid_order_cancel_request(self):
         # TODO Husein
+
+        # TODO use for test_update_order_status {
         order_cancel= TradingClass.OrderCancel.create_dummy_order_cancel()
         order =fsc_server_database_handler.fetch_latest_order_by_client_information(
             order_cancel.client_order_id, order_cancel.account_company_id)
@@ -55,7 +69,10 @@ class TestServerLogic:
         order = fsc_server_database_handler.fetch_latest_order_by_client_information(
             order_cancel.client_order_id, order_cancel.account_company_id)
         assert order.last_status == TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED
+        # } TODO use for test_update_order_status
 
+        # TODO test_insert_order_cancel {{
+        # TODO write the function fetch_order_cancel for this and use this here {
         sql_command = ("select Order_ClientOrderID, OrderCancelID, Order_Account_CompanyID, Order_ReceivedDate, "
                        "stock??, Side, order_quantity??, LastStatus, received_time??, MsgSeqNum, "
                        "CancelQuantity, ExecutionTime from OrderCancel"
@@ -66,13 +83,14 @@ class TestServerLogic:
 
         order_cancel_rows = self.execute_select_sql_command(sql_command)
         if len(order_cancel_rows) < 1: return None
-        order_cancel_row = list(order_cancel_rows[0])
+        order_cancel_row = list(order_cancel_rows
         order_cancel_db = TradingClass.OrderCancel(order_cancel_row[0],order_cancel_row[1],order_cancel_row[2],
                                                 TradingClass.FIXDate.from_mysql_date_stamp_string(order_cancel_row[3]),
                                                 stock_ticker, order_cancel_row[4], order_quantity, order_cancel_row[5], received_time,
                                                 order_cancel_row[6],order_cancel_row[7],
                                                 TradingClass.FIXDateTimeUTC.from_date_fix_time_stamp_string(order_cancel_row[8]))
-
+        #} TODO write the function fetch_order_cancel for this and use this here
+        # TODO write a __eq__ and __neq__ function in TradingClass and then just use order_cancel_db == order_cancel {
         assert order_cancel_db.client_order_id == order_cancel.client_order_id
         assert order_cancel_db.order_cancel_id == order_cancel.order_cancel_id
         assert order_cancel_db.account_company_id == order_cancel.account_company_id
@@ -83,12 +101,11 @@ class TestServerLogic:
         assert order_cancel_db.cancel_quantity == order_cancel.cancel_quantity
         assert order_cancel_db.execution_time == order_cancel.execution_time
         assert order_cancel_db.cancel_quantity == order_cancel.cancel_quantity
-
-        pass
-
+        #} TODO write a __eq__ and __neq__ function in TradingClass and then just use order_cancel_db == order_cancel
+        #}} TODO test_insert_order_cancel
+    """
 
     def test_check_if_order_cancel_is_valid(self):
-        # TODO Husein
         order = fsc_server_database_handler.fetch_latest_order_by_client_information('2', 'XX')
         valid = fsc_server_logic.check_if_order_cancel_is_valid(order)
         assert valid == False
@@ -101,13 +118,14 @@ class TestServerLogic:
         valid = fsc_server_logic.check_if_order_cancel_is_valid(order)
         assert valid == True
 
-        pass
 
+    """
     def test_process_invalid_order_cancel_request(self):
-        # TODO Husein
+        # TODO DO ISSUE #57 BEFORE STARTING THIS TEST FUNCTION
         order_cancel= TradingClass.OrderCancel.create_dummy_order_cancel()
         fsc_server_logic.process_invalid_order_cancel_request(order_cancel)
         pass
+    """
 
 class TestServerDatabaseHandler:
 
@@ -195,5 +213,4 @@ class TestServerDatabaseHandler:
         pass
 
     def test_insert_order_cancel(self):
-        #TODO Yelinsheng
         pass
