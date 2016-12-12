@@ -29,4 +29,19 @@ def test_pro_rata():
         assert (matching_algorithm.pro_rata([], s)) == 0
         assert (matching_algorithm.pro_rata(b, [])) == 0
 
-        print(matching_algorithm.pro_rata(b,s))
+        M = matching_algorithm.pro_rata(b,s)
+        
+        volume_of_buy = 0
+        volume_of_sell = 0
+        
+        for i in range(len(b)):
+            volume_of_buy += b[i].cumulative_order_quantity
+
+        for i in range(len(s)):
+           volume_of_sell += s[i].cumulative_order_quantity
+
+        assert(volume_of_buy==1010)
+        assert(volume_of_sell==1100)               
+           
+
+        print(M)
