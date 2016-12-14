@@ -915,7 +915,7 @@ class OrderCancelRequest(object):
     def create_dummy_order_cancel_request(cls,orig_cl_ord_id="0",cl_ord_id="0",symbol="TSLA",side=FIXHandlerUtils.Side.BUY,
                                           transact_time=FIXDateTimeUTC.from_date_fix_time_stamp_string("20161120-10:00:00"),
                                           order_qty=1000,sender_comp_id="GS"):
-        dummy_new_order_cancel_request=cls(orig_cl_ord_id, cl_ord_id, symbol, side, transact_time, order_qty)
+        dummy_new_order_cancel_request=cls(orig_cl_ord_id, cl_ord_id, symbol, side, transact_time, order_qty, sender_comp_id)
         return dummy_new_order_cancel_request
 
 
