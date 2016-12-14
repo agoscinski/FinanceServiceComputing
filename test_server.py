@@ -8,8 +8,8 @@ nasdaq_stock = server.Stock(nasdaq_stock_ticker)
 fsc_server_database_handler = server.ServerDatabaseHandler(user_name="root", user_password="root",
                                                            database_name="TestServerDatabase", database_port=3306,
                                                            init_database_script_path="./tests/database/server/init_test_server_database.sql")
-server_config_file_name = "server.cfg"
-fsc_server_logic = server.ServerLogic(server_config_file_name, fsc_server_database_handler)
+server_application_id = "test"
+fsc_server_logic = server.ServerLogic(server_application_id, fsc_server_database_handler)
 
 
 def setup_module(module):
@@ -209,8 +209,12 @@ class TestServerDatabaseHandler:
         assert fsc_server_database_handler.insert_order_execution(order_execution) == 3
 
     def test_update_order_status(self):
-        #TODO Yelinsheng
-        pass
+        test_order=TradingClass.Order.create_dummy_order()
+        test_order_status=TradingClass.DatabaseHandlerUtils.LastStatus.DONE
+        assert fsc_server_database_handler.update_order_status(test_order,test_order_status) == None
 
     def test_insert_order_cancel(self):
-        pass
+        #TODO Yelinsheng why does insert_order_cancel hase 3 inputs ? "test_requested_order_cancel,test_order,1000" it should have only one
+        test_requested_order_cancel=TradingClass.OrderCancel.from_order_cancel_request(TradingClass.OrderCancelRequest.create_dummy_order_cancel_request())
+        test_order=TradingClass.Order.create_dummy_order()
+        assert fsc_server_database_handler.insert_order_cancel(test_requested_order_cancel,test_order,1000) == None

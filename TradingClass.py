@@ -215,15 +215,6 @@ class FIXDateTimeUTC(object):
     @classmethod
     def from_date_fix_time_stamp_string(cls, date_time_stamp_string):
         """Constructor from date stamp strings
-    @staticmethod
-    def parse_file_names_from_init_script(init_script_file_path):
-        file_names = []
-        pattern_for_line_with_file = re.compile("(?<=source ).+")
-        for line in open(init_script_file_path):
-            for match in re.finditer(pattern_for_line_with_file, line):
-                file_name = match.group(0)
-                file_names.append(file_name)
-        return file_names
 
         Args:
             date_time_stamp_string (string): string in format YYYYMMDD-HH:MM:SS
@@ -421,16 +412,18 @@ class DatabaseHandlerUtils:
 
 class DatabaseHandler:
 
-    def __init__(self, user_name="root", user_password="root", database_name="FSCDatabase", database_port=3306,
-                 init_database_script_path="./database/init_fsc_database.sql"):
+    def __init__(self, database_host="localhost", user_name="root", user_password="root", database_name="Database", database_port=3306,
+                 init_database_script_path="./database/init_database.sql"):
         """
         Args:
+            database_host (string)
             user_name (string)
             user_password (string)
             database_name (string)
             database_port (int)
             init_database_script_path (string)
         """
+        self.database_host = database_host
         self.user_name = user_name
         self.user_password = user_password
         self.database_name = database_name
@@ -488,7 +481,7 @@ class DatabaseHandler:
         """
         fetched_database_rows = []
         try:
-            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+            connection = MySQLdb.connect(host=self.database_host, user=self.user_name, passwd=self.user_password,
                                          db=self.database_name, port=self.database_port)
             cursor = connection.cursor()
             execution = (sql_command)
@@ -508,7 +501,7 @@ class DatabaseHandler:
             None
         """
         try:
-            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+            connection = MySQLdb.connect(host=self.database_host, user=self.user_name, passwd=self.user_password,
                                          db=self.database_name, port=self.database_port)
             cursor = connection.cursor()
             cursor.execute(sql_command)
@@ -526,7 +519,7 @@ class DatabaseHandler:
             id_of_inserted_row (ID type in database): the ID of the object inserted
         """
         try:
-            connection = MySQLdb.connect(host='localhost', user=self.user_name, passwd=self.user_password,
+            connection = MySQLdb.connect(host=self.database_host, user=self.user_name, passwd=self.user_password,
                                          db=self.database_name, port=self.database_port)
             cursor = connection.cursor()
             cursor.execute(insert_sql_command)
@@ -903,6 +896,14 @@ class OrderCancelRequest(object):
         return cls(orig_cl_ord_id, cl_ord_id, symbol, side, transaction_time, order_quantity, sender_company_id, sending_time,
                    on_behalf_of_comp_id, sender_sub_id)
 
+    @classmethod
+    def create_dummy_order_cancel_request(cls,orig_cl_ord_id="0",cl_ord_id="0",symbol="TSLA",side=FIXHandlerUtils.Side.BUY,
+                                          transact_time=FIXDateTimeUTC.from_date_fix_time_stamp_string("20161120-10:00:00"),
+                                          order_qty=1000,sender_comp_id="GS"):
+        dummy_new_order_cancel_request=cls(orig_cl_ord_id, cl_ord_id, symbol, side, transact_time, order_qty, sender_comp_id)
+        return dummy_new_order_cancel_request
+
+
 class OrderCancelReject(object):
     """Constructor of class OrderCancelReject represents a quickfix order cancel reject (message type 9):
     Args:
@@ -1204,13 +1205,13 @@ class Order(object):
         self.average_price = average_price
 
     @classmethod
-    def create_dummy_order(cls, client_order_id="20161120-001", account_company_id="client",
-                           received_date=FIXDate.from_fix_date_stamp_string("20161120"), handling_instruction=1,
+    def create_dummy_order(cls, client_order_id="0", account_company_id="GS",
+                           received_date=FIXDate.from_fix_date_stamp_string("20161109"), handling_instruction=1,
                            stock_ticker="TSLA", side=DatabaseHandlerUtils.Side.BUY,
-                           maturity_date=FIXDate.from_fix_date_stamp_string("20161125"),
-                           order_type=DatabaseHandlerUtils.OrderType.MARKET, order_quantity=100.00, price=10.00,
-                           last_status=DatabaseHandlerUtils.LastStatus.PENDING, msg_seq_num=0,
-                           cumulative_order_quantity=50., average_price=12.):
+                           maturity_date=FIXDate.from_fix_date_stamp_string("20161105"),
+                           order_type=DatabaseHandlerUtils.OrderType.LIMIT, order_quantity=10000.00, price=1000.00,
+                           last_status=DatabaseHandlerUtils.LastStatus.PENDING, msg_seq_num=None,
+                           cumulative_order_quantity=None, average_price=None):
         """For testing"""
         dummy_order = cls(client_order_id=client_order_id, account_company_id=account_company_id,
                           received_date=received_date, handling_instruction=handling_instruction,
@@ -1464,6 +1465,7 @@ class OrderCancel(object):
                            side, order_quantity, last_status, received_time, message_sequence_number, cancel_quantity,
                            execution_time, on_behalf_of_company_id, sender_sub_id)
         return order_cancel
+    
 
     @classmethod
     def create_dummy_order_cancel(cls, client_order_id = '0', order_cancel_id = '1', account_company_id = 'MS',
@@ -1475,8 +1477,39 @@ class OrderCancel(object):
         dummy_order_cancel = cls(client_order_id, order_cancel_id, account_company_id, order_received_date,
                                  stock_ticker, side, order_quantity, last_status, received_time, msg_seq_num,
                                  cancel_quantity,execution_time)
-
         return dummy_order_cancel
+
+
+
+class ClientOrder:
+    """This class is designed after the Order table of the client database"""
+
+    def __init__(self, order_id, transaction_time, side, order_type, order_price, order_quantity, last_status,
+                 maturity_day, quantity_filled, average_price):
+        """
+        Args:
+            order_id (string)
+            transaction_time (FIXDate)
+            order_type (int / DatabaseHandlerUtils.OrderType)
+            order_price (float)
+            order_quantity (float)
+            last_status (int / DatabaseHandlerUtils.LastStatus)
+            maturity_day (FIXDate)
+            quantity_filled(float)
+            average_price(float)
+        """
+        self.order_id = order_id
+        self.transaction_time = transaction_time
+        self.side = side
+        self.order_type = order_type
+        self.order_price = order_price
+        self.order_quantity = order_quantity
+        self.last_status = last_status
+        self.maturity_day = maturity_day
+        self.quantity_filled = quantity_filled
+        self.average_price = average_price
+
+
 ###########################
 ### GUI related classes ###
 ###########################
