@@ -78,7 +78,7 @@ class ServerConfigFileHandler():
                  validate_user_defined_fields="N", validate_incoming_message="N",
                  refresh_on_logon="Y", reset_on_logon="Y", reset_on_logout="Y",
                  http_accept_port="9911", reconnect_interval="60", begin_string="FIX.4.2",
-                 target_comp_id="server", socket_connect_host="localhost",
+                 target_comp_id="client", socket_connect_host="localhost",
                  socket_connect_port="5501"):
         self.file_name = "server_"+application_id+".cfg"
         self.application_id = application_id
@@ -101,6 +101,7 @@ class ServerConfigFileHandler():
 
         self.begin_string = begin_string
         self.target_comp_id = target_comp_id
+        self.sender_comp_id = application_id
         self.socket_connect_host = socket_connect_host
         self.socket_connect_port = socket_connect_port
         # TODO the rest attributes
@@ -130,6 +131,7 @@ class ServerConfigFileHandler():
                             \nEndTime=" + self.end_time + "\
                             \nHeartBtInt=" + self.heart_bt_int + "\
                             \nSocketAcceptPort=" + self.socket_accept_port + "\
+                            \nSenderCompID = " + self.sender_comp_id +"\
                             \nUseDataDictionary=" + self.use_data_dictionary + "\
                             \nDataDictionary=" + self.data_dictionary + "\
                             \nValidateUserDefinedFields=" + self.validate_user_defined_fields + "\
@@ -142,8 +144,7 @@ class ServerConfigFileHandler():
                             \n\n\n# standard config elements"
                 for row in results:
                     outString = outString + "\n\n[SESSION]\
-                                            \nSenderCompID=" + row[0] + "\
-                                            \nTargetCompID=" + self.target_comp_id + ""
+                                            \nTargetCompID=" + row[0] + ""
 
                 client_cfg.write(outString)
                 return self.file_name

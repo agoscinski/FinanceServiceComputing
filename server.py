@@ -95,8 +95,8 @@ class ServerFIXHandler:
         """
         self.server_logic = server_logic
         server_configuration_handler = utils.ServerConfigFileHandler(application_id=self.server_logic.application_id,
-                                                                     start_time=str(self.server_logic.start_time),
-                                                                     end_time=str(self.server_logic.end_time))
+            start_time=str(self.server_logic.start_time), end_time=str(self.server_logic.end_time),
+            socket_accept_port="5520")
         self.server_config_file_name = server_configuration_handler.create_config_file(self.server_logic.server_database_handler)
         self.fix_application = None
         self.socket_acceptor = None
@@ -292,8 +292,8 @@ class ServerLogic:
     cancel_order_id = 0
     def __init__(self, application_id, server_database_handler=None):
         self.application_id = application_id
-        self.start_time = datetime.datetime.strptime("08:00:00", "%H:%M:%S").time()
-        self.end_time = datetime.datetime.strptime("17:00:00", "%H:%M:%S").time()
+        self.start_time = datetime.datetime.strptime("00:00:01", "%H:%M:%S").time()
+        self.end_time = datetime.datetime.strptime("23:59:59", "%H:%M:%S").time()
         if server_database_handler is None:
             self.server_database_handler = ServerDatabaseHandler(user_name="root", user_password="root",
                                                 database_name="ServerDatabase", database_port=3306,

@@ -155,9 +155,12 @@ class ClientFIXHandler:
     def __init__(self, client_logic, client_database_handler):
         self.client_logic = client_logic
         self.client_database_handler = client_database_handler
-        self.client_config_file_name = utils.ClientConfigFileHandler(application_id=self.client_logic.application_id,
-                                                                     start_time=str(self.client_logic.start_time),
-                                                                     end_time=str(self.client_logic.end_time)).create_config_file()
+        self.client_config_file_name = utils.ClientConfigFileHandler(
+            application_id=self.client_logic.application_id, start_time=str(self.client_logic.start_time),
+            end_time=str(self.client_logic.end_time),
+            file_store_path="storage/client_"+self.client_logic.application_id+"_messages",
+            file_log_path = "log/client_" + self.client_logic.application_id + "_messages",
+            socket_connect_port="5020", target_comp_id="main_server").create_config_file()
         self.fix_application = None
         self.socket_initiator = None
         self.storeFactory = None
@@ -415,8 +418,8 @@ class ClientLogic():
                                                              database_name="ClientDatabase", database_port=3306,
                                                              init_database_script_path="./database/client/init_client_database.sql")
         self.application_id = application_id
-        self.start_time = datetime.datetime.strptime("08:00:00", "%H:%M:%S").time()
-        self.end_time = datetime.datetime.strptime("17:00:00", "%H:%M:%S").time()
+        self.start_time = datetime.datetime.strptime("00:00:01", "%H:%M:%S").time()
+        self.end_time = datetime.datetime.strptime("23:59:59", "%H:%M:%S").time()
         self.client_fix_handler = ClientFIXHandler(self, self.client_database_handler)
         self.gui_handler = GUIHandler(self)
         self.gui_signal = GUISignal(self.gui_handler)
