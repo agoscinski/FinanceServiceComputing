@@ -46,7 +46,6 @@ class ServerFIXApplication(fix.Application):
         """React to admin level messages
 
         This function is invoked when administrative message is received. For example: Logon, Logout, Heartbeat.
-        TODO what is a administrative message?
 
         Args:
             message (Swig Object of type 'FIX::Message *'): The received message
@@ -61,9 +60,7 @@ class ServerFIXApplication(fix.Application):
         if msg_type.getString() == fix.MsgType_Logon:
             self.server_fix_handler.handle_logon_request(message)
         else:
-            # TODO send error: MsgType not understand
-            pass
-
+            self.server_fix_handler.handle_uncovered_message_type_message(message)
         return
 
     def toApp(self, message, session_id):
@@ -85,13 +82,10 @@ class ServerFIXApplication(fix.Application):
         # beginString = message.getHeader().getField(fix.BeginString())
         msg_Type = message.getHeader().getField(fix.MsgType())
         if msg_Type.getString() == fix.MsgType_MarketDataRequest:
-            print '''IN MarketDataRequest'''
             self.server_fix_handler.handle_market_data_request(message)
         elif msg_Type.getString() == fix.MsgType_NewOrderSingle:
-            print '''IN NewSingleOrder'''
             self.server_fix_handler.handle_order_request(message)
         elif msg_Type.getString() == fix.MsgType_OrderCancelRequest:
-            print '''IN OrderCancelRequest'''
             self.server_fix_handler.handle_order_cancel_request(message)
 
 class ServerFIXHandler:
@@ -117,15 +111,18 @@ class ServerFIXHandler:
         self.socket_acceptor = fix.SocketAcceptor(self.fix_application, self.storeFactory, settings, self.logFactory)
 
     def handle_logon_request(self, message):
-        password = message.getField(fix.RawData())
-        user_id = message.getHeader().getField(fix.SenderSubID())
-        logon_respond = self.server_logic.process_logon(user_id, password)
+        user_id = message.getHeader().getField(fix.SenderCompID())
+        logon_respond = self.server_logic.process_logon(user_id)
         if logon_respond == ServerRespond.AUTHENTICATION_FAILED:
-            # TODO reject client AUTHENTICATION_FAILED
-            pass
-
+            self.process_logon_reject()
         return
 
+    def send_logon_reject(self):
+        #OPTIONAL TODO
+        pass
+
+    def handle_uncovered_message_type_message(self, message):
+        pass
     def handle_market_data_request(self, message):
         """Process market data request
 
@@ -308,23 +305,21 @@ class ServerLogic:
         self.cancel_order_id = self.cancel_order_id + 1
         return self.cancel_order_id
 
-    def authenticate_user(self, user_id, password):
+    def authenticate_user(self, user_id):
         """Authenticates user
 
-        Checks if user with the given id and password exists in database
+        Checks if user with the given id exists in database
 
         Args:
             user_id (string): The user id
-            password (string): The password
-
         Returns:
             success (ServerRespond): success of authentication
         """
-        # TODO #29 add authentication
+        # OPTIONALTODO #29 add authentication
         return ServerRespond.AUTHENTICATION_SUCCESS
 
-    def process_logon(self, user_id, password):
-        respond = self.authenticate_user(user_id, password)
+    def process_logon(self, user_id):
+        respond = self.authenticate_user(user_id)
         return respond
 
     def process_market_data_request(self, md_request):
@@ -632,7 +627,7 @@ class ServerLogic:
         market_date_entry_time_list = []
 
         for pending_order in pending_stock_orders:
-            # TODO make this more beautiful
+            # OPTIONALTODO make this more beautiful
             order_entry_type = 0
             if pending_order.side == 1:
                 order_entry_type = 0
@@ -640,12 +635,12 @@ class ServerLogic:
                 order_entry_type = 1
 
             if order_entry_type in market_data_entry_types:
-                # TODO show how with property this can be done better
+                # OPTIONALTODO show how with property this can be done better
                 pending_order_date_time = pending_order.received_date.date
                 pending_order_fix_date = TradingClass.FIXDate.from_year_month_day(pending_order_date_time.year,
                                                                                   pending_order_date_time.month,
                                                                                   pending_order_date_time.day)
-                # TODO there should be not time anymore isn it?
+                # OPTIONALTODO there should be not time anymore isn it?
                 # pending_order_fix_time = TradingClass.TimeFix(pending_order_date_time.hour, pending_order_date_time.minute,
                 #                                           pending_order_date_time.second)
 
@@ -667,7 +662,7 @@ class ServerLogic:
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
-        # TODO Not Finished! Filled with dummy only to not cause error in client side
+        # OPTIONALTODO Not Finished! Filled with dummy only to not cause error in client side
         # if TradingClass.FIXHandler.MarketDataEntryType.OPENING in market_data_entry_types_integer:
         # if 5 in market_data_entry_types_integer:
         # if 7 in market_data_entry_types_integer:
@@ -701,7 +696,7 @@ class ServerLogic:
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
-        # TODO Add Total Volume Traded but not readed from database yet!
+        # OPTIONALTODO Add Total Volume Traded but not readed from database yet!
         market_data = MarketDataResponse(market_data_required_id, len(market_data_entry_type_list), symbol,
                                          market_data_entry_type_list, market_data_entry_price_list,
                                          market_data_entry_size_list, market_data_entry_date_list,

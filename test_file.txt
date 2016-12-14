@@ -1,4 +1,0 @@
-Command starts here
-  and ends here;
-
-one command;

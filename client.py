@@ -174,13 +174,6 @@ class ClientFIXHandler:
         self.logFactory = fix.FileLogFactory(settings)
         self.socket_initiator = fix.SocketInitiator(self.fix_application, self.storeFactory, settings, self.logFactory)
 
-    def send_logon_request(self, user_id, password):
-        self.user_id = user_id
-        self.password = password
-        self.init_fix_settings()
-        self.socket_initiator.start()
-        return
-
     def connect_to_server(self):
         self.init_fix_settings()
         self.socket_initiator.start()
@@ -193,6 +186,9 @@ class ClientFIXHandler:
 
         Args:
             message (Swig Object of type 'FIX::Message *'): the message to be sent
+
+        Returns:
+            None
         """
         pass
 
@@ -431,13 +427,7 @@ class ClientLogic():
 
     def logon(self):
         self.client_fix_handler.connect_to_server()
-
-        # TODO block mechanism
-        self.block_gui()
         return
-
-    def block_gui(self):
-        pass
 
     def logout(self):
         self.client_fix_handler.send_logout_request()
