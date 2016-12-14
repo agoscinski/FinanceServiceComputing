@@ -214,7 +214,5 @@ class TestServerDatabaseHandler:
         assert fsc_server_database_handler.update_order_status(test_order,test_order_status) == None
 
     def test_insert_order_cancel(self):
-        #TODO Yelinsheng why does insert_order_cancel hase 3 inputs ? "test_requested_order_cancel,test_order,1000" it should have only one
-        test_requested_order_cancel=TradingClass.OrderCancel.from_order_cancel_request(TradingClass.OrderCancelRequest.create_dummy_order_cancel_request())
-        test_order=TradingClass.Order.create_dummy_order()
-        assert fsc_server_database_handler.insert_order_cancel(test_requested_order_cancel,test_order,1000) == None
+        test_requested_order_cancel=TradingClass.OrderCancel.create_dummy_order_cancel()
+        assert fsc_server_database_handler.insert_order_cancel(test_requested_order_cancel) == None
