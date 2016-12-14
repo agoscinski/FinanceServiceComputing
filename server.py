@@ -1,14 +1,13 @@
 from tarfile import _section
 import quickfix as fix
 import quickfix42 as fix42
-import re
 import time
 import datetime
 import yahoo_finance
-import MySQLdb
 from enum import Enum
 import matching_algorithm
 import TradingClass
+import utils
 from TradingClass import MarketDataResponse
 from TradingClass import NewSingleOrder
 from TradingClass import OrderCancelRequest
@@ -89,9 +88,16 @@ class ServerFIXApplication(fix.Application):
             self.server_fix_handler.handle_order_cancel_request(message)
 
 class ServerFIXHandler:
-    def __init__(self, server_logic, server_config_file_name):
+    def __init__(self, server_logic):
+        """
+        Args:
+            server_logic (ServerLogic)
+        """
         self.server_logic = server_logic
-        self.server_config_file_name = server_config_file_name
+        server_configuration_handler = utils.ServerConfigFileHandler(application_id=self.server_logic.application_id,
+                                                                     start_time=str(self.server_logic.start_time),
+                                                                     end_time=str(self.server_logic.end_time))
+        self.server_config_file_name = server_configuration_handler.create_config_file(self.server_logic.server_database_handler)
         self.fix_application = None
         self.socket_acceptor = None
 
@@ -272,30 +278,42 @@ class ServerFIXHandler:
 
 
 class ServerLogic:
+    """
+    Attributes:
+        application_id (string): used to identify the server and used for creation for the config file
+        start_time (datetime.time): the starting time for trading
+        end_time (datetime.time): the ending time for trading
+        server_database_handler (ServerDatabaseHandler)
+        current_server_time (datetime.time): current time of the server
+        server_fix_handler
+    """
     exec_id = 0
     order_id = 0
     cancel_order_id = 0
+    def __init__(self, application_id, server_database_handler=None):
+        self.application_id = application_id
+        self.start_time = datetime.datetime.strptime("08:00:00", "%H:%M:%S").time()
+        self.end_time = datetime.datetime.strptime("17:00:00", "%H:%M:%S").time()
+        if server_database_handler is None:
+            self.server_database_handler = ServerDatabaseHandler(user_name="root", user_password="root",
+                                                database_name="ServerDatabase", database_port=3306,
+                                                init_database_script_path="./database/server/init_server_database.sql")
+        else:
+            self.server_database_handler = server_database_handler
+        self.server_database_handler.init_database()
+        self.server_fix_handler = ServerFIXHandler(self)
 
-    def __init__(self, server_config_file_name, server_database_handler=None):
-        self.server_fix_handler = ServerFIXHandler(self, server_config_file_name)
-        self.server_database_handler = ServerDatabaseHandler() if server_database_handler == None else server_database_handler
-        self.market_simulation_handler = MarketSimulationHandler()
-        self.initialize_new_database = False
+    @property
+    def current_server_time(self):
+        return datetime.datetime.utcnow()
 
     def start_server(self):
-        if self.initialize_new_database:
-            self.server_database_handler.create_database()
-            self.market_simulation_handler.init_market()
         self.server_fix_handler.start()
         while 1: time.sleep(1)
         self.stop_server()
 
     def stop_server(self):
         self.server_fix_handler.stop()
-
-    def gen_exec_id(self):
-        self.exec_id = self.exec_id + 1
-        return self.exec_id
 
     def gen_order_id(self):
         self.order_id = self.order_id + 1
