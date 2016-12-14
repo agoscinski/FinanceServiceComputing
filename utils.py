@@ -135,16 +135,16 @@ class ServerConfigFileHandler():
                             \nUseDataDictionary=" + self.use_data_dictionary + "\
                             \nDataDictionary=" + self.data_dictionary + "\
                             \nValidateUserDefinedFields=" + self.validate_user_defined_fields + "\
-                            \nValidateIncomingMessage=" + self.validate_incoming_message + "\
+                            \n#ValidateIncomingMessage=" + self.validate_incoming_message + "\
                             \nRefreshOnLogon=" + self.refresh_on_logon + "\
-                            \nResetOnLogon=" + self.reset_on_logon + "\
                             \n#ResetOnLogout=" + self.reset_on_logout + "\
                             \n#HttpAcceptPort=" + self.http_accept_port + "\
                             \n#ReconnectInterval=" + self.reconnect_interval + "\
                             \n\n\n# standard config elements"
                 for row in results:
                     outString = outString + "\n\n[SESSION]\
-                                            \nTargetCompID=" + row[0] + ""
+                                            \nTargetCompID=" + row[0] + "\
+                                            \nAcceptorTemplate=N" + ""
 
                 client_cfg.write(outString)
                 return self.file_name

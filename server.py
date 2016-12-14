@@ -96,7 +96,7 @@ class ServerFIXHandler:
         self.server_logic = server_logic
         server_configuration_handler = utils.ServerConfigFileHandler(application_id=self.server_logic.application_id,
             start_time=str(self.server_logic.start_time), end_time=str(self.server_logic.end_time),
-            socket_accept_port="5520")
+            socket_accept_port="5501")
         self.server_config_file_name = server_configuration_handler.create_config_file(self.server_logic.server_database_handler)
         self.fix_application = None
         self.socket_acceptor = None

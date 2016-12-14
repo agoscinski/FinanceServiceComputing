@@ -160,7 +160,7 @@ class ClientFIXHandler:
             end_time=str(self.client_logic.end_time),
             file_store_path="storage/client_"+self.client_logic.application_id+"_messages",
             file_log_path = "log/client_" + self.client_logic.application_id + "_messages",
-            socket_connect_port="5020", target_comp_id="main_server").create_config_file()
+            socket_connect_port="5501", target_comp_id="main_server").create_config_file()
         self.fix_application = None
         self.socket_initiator = None
         self.storeFactory = None
