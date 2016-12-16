@@ -1225,11 +1225,11 @@ class Order(object):
 
     @classmethod
     def from_new_single_order(cls, new_single_order):
-        """Creates a order from a TradingClass.NewSingleOrder
+        """Creates a order from a NewSingleOrder
         Args:
-            new_single_order (TradingClass.NewSingleOrder):
+            new_single_order (NewSingleOrder):
         Returns:
-            order (TradingClass.Order): The order object
+            order (Order): The order object
         """
 
         client_order_id = new_single_order.client_order_id
@@ -1522,7 +1522,20 @@ class ClientOrder:
                                      last_status, maturity_day, quantity_filled, average_price)
         return dummy_new_client_order
 
-
+    @classmethod
+    def from_new_single_order(cls, new_single_order, last_status, average_price, quantity_filled):
+        """Creates a order from a NewSingleOrder
+        Args:
+            new_single_order (NewSingleOrder):
+            last_status (int/DatabaseHandlerUtils.LastStatus)
+            average_price (float): the average price of a client order
+            quantity_filled (float): the quantity filled of the client order
+        Returns:
+            client_order (ClientOrder): The order object
+        """
+        # just ignore the fields in NewSingleOrder which are are not in the ClientOrder
+        # TODO yelinsheng
+        pass
 
 ###########################
 ### GUI related classes ###
