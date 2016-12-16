@@ -92,3 +92,10 @@ class TestGlobalFunctions:
 
     def test_get_fix_group_field(self):
         pass
+
+class TestClientOrder:
+    def test_from_new_single_order(self):
+        dummy_new_single_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
+        test_client_order=TradingClass.ClientOrder.from_new_single_order(dummy_new_single_order,2,101.,5)
+        pass
+

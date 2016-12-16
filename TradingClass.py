@@ -1535,7 +1535,43 @@ class ClientOrder:
         """
         # just ignore the fields in NewSingleOrder which are are not in the ClientOrder
         # TODO yelinsheng
-        pass
+        order_id = new_single_order.client_order_id
+        transaction_time = new_single_order.transaction_time
+        side = new_single_order.side
+        order_type = new_single_order.order_type
+        order_price = new_single_order.price
+        order_quantity = new_single_order.order_quantity
+        last_status = last_status
+        maturity_day = FIXDate.from_year_month_day(new_single_order.maturity_month_year.year,
+                                                   new_single_order.maturity_month_year.month,
+                                                   new_single_order.maturity_day)
+        quantity_filled = quantity_filled
+        average_price = average_price
+
+        client_order = cls(order_id, transaction_time, side, order_type, order_price, order_quantity, last_status,
+                           maturity_day, quantity_filled, average_price)
+        return client_order
+
+
+
+def __init__(self, client_order_id, handling_instruction, symbol, maturity_month_year,
+                 maturity_day, side, transaction_time, order_quantity, order_type, price, stop_price=None,
+                 sender_company_id=None, sending_time=None, on_behalf_of_comp_id=None, sender_sub_id=None):
+        self.client_order_id = client_order_id
+        self.handling_instruction = handling_instruction
+        self.symbol = symbol
+        self.maturity_month_year = maturity_month_year
+        self.maturity_day = maturity_day
+        self.side = side
+        self.transaction_time = transaction_time
+        self.order_quantity = order_quantity
+        self.order_type = order_type
+        self.price = price
+        self.stop_price = stop_price
+        self.sender_company_id = sender_company_id
+        self.sending_time = sending_time
+        self.on_behalf_of_comp_id = on_behalf_of_comp_id
+        self.sender_sub_id = sender_sub_id
 
 ###########################
 ### GUI related classes ###
