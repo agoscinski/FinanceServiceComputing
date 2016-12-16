@@ -579,8 +579,11 @@ class ClientLogic():
             maturity_day (int): between 1-31
         """
         # TODO Valentin
-        maturity_date = TradingClass.FIXYearMonth.from_date_stamp_string("201612")
-        maturity_day = 1
+        # DONE and tested by Yelinsheng
+
+        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+        maturity_date = TradingClass.FIXYearMonth.from_year_month(tomorrow.year, tomorrow.month)
+        maturity_day = tomorrow.day
         return maturity_date, maturity_day
 
 
@@ -591,12 +594,22 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
     def insert_order(self, order):
         """Insert a order into the the client database
         Args:
-            order (TradingClass.Order)
+            order (TradingClass.ClientOrder)
         Returns:
             None
         """
         # TODO Valentin use execute_nonresponsive_sql_command for this
-        pass
+        # what is OrderID, TransactionTime, QuantityFilled
+
+        command = (
+            "INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice,"
+            "OrderQuantity, LastStatus, MaturityDate, QuantityFilled, AveragePrice) "
+            "VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')"
+            % (order.order_id, str(order.transaction_time), str(order.side),
+               str(order.order_type), str(order.order_price), str(order.order_quantity),
+               str(order.last_status), str(order.maturity_day), str(order.quantity_filled), str(order.average_price)))
+        self.execute_nonresponsive_sql_command(command)
+        return
 
     def generate_new_client_order_id(self):
         # TODO Alex when the cfg is implemented add account name id into client order id

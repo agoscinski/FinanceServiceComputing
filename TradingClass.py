@@ -55,6 +55,9 @@ class FIXYearMonth(object):
     def __str__(self):
         return self.date.strftime("%Y%m")
 
+    def __eq__(self, other):
+        return self.date.year == other.date.year and self.date.month == other.date.month
+
 
 class FIXDate(object):
     """The FixDate object encapsulates a date object
@@ -1490,6 +1493,7 @@ class ClientOrder:
         Args:
             order_id (string)
             transaction_time (FIXDate)
+            side (int/DatabaseHandlerUtils.Side)
             order_type (int / DatabaseHandlerUtils.OrderType)
             order_price (float)
             order_quantity (float)
@@ -1508,6 +1512,16 @@ class ClientOrder:
         self.maturity_day = maturity_day
         self.quantity_filled = quantity_filled
         self.average_price = average_price
+
+    @classmethod
+    def create_dummy_client_order(cls,order_id="0", transaction_time=FIXDate.from_fix_date_stamp_string("20161109"),
+                                  side=1, order_type=1, order_price=12, order_quantity=1000, last_status=1,
+                                  maturity_day=FIXDate.from_fix_date_stamp_string("20161110"), quantity_filled=50,
+                                  average_price=12.3):
+        dummy_new_client_order = cls(order_id, transaction_time, side, order_type, order_price, order_quantity,
+                                     last_status, maturity_day, quantity_filled, average_price)
+        return dummy_new_client_order
+
 
 
 ###########################
