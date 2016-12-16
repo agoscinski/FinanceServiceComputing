@@ -1,4 +1,5 @@
 import client
+import datetime
 import TradingClass
 
 client_application_id = "test"
@@ -24,6 +25,12 @@ class TestClientLogic:
     def test_process_new_single_order_request(self):
         pass
 
+    def test_get_tomorrows_maturity_date(self):
+        test_date,test_day = fsc_client_logic.get_tomorrows_maturity_date()
+        tomorrow_datetime=datetime.date.today() + datetime.timedelta(days=1)
+        assert test_date == TradingClass.FIXYearMonth(tomorrow_datetime)
+        assert test_day == tomorrow_datetime.day
+
     #def test_process_new_single_order_request(self):
     #    dummy_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
     #    fsc_client_logic.process_new_single_order_request(dummy_order.symbol, dummy_order.side, dummy_order.order_type, dummy_order.price, dummy_order.order_quantity)
@@ -33,4 +40,5 @@ class TestClientDatabaseHandler:
 
     def test_insert_order(self):
         dummy_order = TradingClass.ClientOrder.create_dummy_client_order()
-        fsc_client_database_handler.insert_order(dummy_order)
+        assert fsc_client_database_handler.insert_order(dummy_order) == None
+        pass
