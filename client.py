@@ -414,9 +414,9 @@ class ClientLogic():
     """
 
     def __init__(self, application_id):
-        self.client_database_handler = ClientDatabaseHandler(user_name="root", user_password="root",
-                                                             database_name="ClientDatabase", database_port=3306,
-                                                             init_database_script_path="./database/client/init_client_database.sql")
+        self.client_database_handler = ClientDatabaseHandler(database_host="localhost",
+            user_name="root", user_password="root", database_name="ClientDatabase", database_port=3306,
+            init_database_script_path="./database/client/init_client_database.sql", application_id=application_id)
         self.application_id = application_id
         self.start_time = datetime.datetime.strptime("00:00:01", "%H:%M:%S").time()
         self.end_time = datetime.datetime.strptime("23:59:59", "%H:%M:%S").time()
@@ -578,9 +578,6 @@ class ClientLogic():
             maturity_date (FIXYearMonth)
             maturity_day (int): between 1-31
         """
-        # TODO Valentin
-        # DONE and tested by Yelinsheng
-
         tomorrow = datetime.date.today() + datetime.timedelta(days=1)
         maturity_date = TradingClass.FIXYearMonth.from_year_month(tomorrow.year, tomorrow.month)
         maturity_day = tomorrow.day
@@ -588,8 +585,18 @@ class ClientLogic():
 
 
 class ClientDatabaseHandler(TradingClass.DatabaseHandler):
+    """
+    Attributes:
+        application_id (string): the id used from the client, used to create an order id
+    """
     last_order_id = 0
     last_market_data_request_id = 0
+
+    def __init__(self, database_host, user_name, user_password, database_name,
+                 database_port, init_database_script_path, application_id="client"):
+        super(ClientDatabaseHandler, self).__init__(database_host, user_name, user_password, database_name,
+                                                    database_port, init_database_script_path)
+        self.application_id = application_id
 
     def insert_order(self, order):
         """Insert a order into the the client database
@@ -598,9 +605,6 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         Returns:
             None
         """
-        # TODO Valentin use execute_nonresponsive_sql_command for this
-        # what is OrderID, TransactionTime, QuantityFilled
-
         command = (
             "INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice,"
             "OrderQuantity, LastStatus, MaturityDate, QuantityFilled, AveragePrice) "
@@ -612,9 +616,8 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         return
 
     def generate_new_client_order_id(self):
-        # TODO Alex when the cfg is implemented add account name id into client order id
         TradingClass.FIXDateTimeUTC.create_for_current_time()
-        return "client_" + str(datetime.datetime.utcnow())
+        return self.application_id+"_" + str(datetime.datetime.utcnow())
 
     def insert_order(self, order):
         """Inserts an order into client database

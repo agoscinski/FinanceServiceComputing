@@ -413,7 +413,7 @@ class DatabaseHandlerUtils:
         return sql_commands
 
 
-class DatabaseHandler:
+class DatabaseHandler(object):
 
     def __init__(self, database_host="localhost", user_name="root", user_password="root", database_name="Database", database_port=3306,
                  init_database_script_path="./database/init_database.sql"):
