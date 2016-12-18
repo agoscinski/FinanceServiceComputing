@@ -1,4 +1,3 @@
-import sys
 import quickfix as fix
 import server
 

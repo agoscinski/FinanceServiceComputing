@@ -378,7 +378,7 @@ class ServerLogic:
 
         pass
 
-    def process_order_request(self, requested_fix_order):
+    def process_new_single_order_request(self, requested_fix_order):
         """Process an order request from the FIX Handler
 
         Args:

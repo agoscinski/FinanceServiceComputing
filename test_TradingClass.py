@@ -93,6 +93,31 @@ class TestGlobalFunctions:
     def test_get_fix_group_field(self):
         pass
 
+class TestOrderCancelRequest:
+
+    def test_from_fix_message(self):
+        #TODO yelinsheng test if the types are correct, similar to TestNewSingleOrder.test_from_fix_message
+        pass
+
+class TestNewSingleOrder:
+
+    def test_from_fix_message(self):
+        dummy_new_single_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
+        fix_message = dummy_new_single_order.to_fix_message()
+        new_single_order = TradingClass.NewSingleOrder.from_fix_message(fix_message)
+        assert type(new_single_order.client_order_id) is str
+        assert type(new_single_order.handling_instruction) is str
+        assert type(new_single_order.symbol) is str
+        assert type(new_single_order.side) is str
+        assert type(new_single_order.maturity_month_year) is TradingClass.FIXYearMonth
+        assert type(new_single_order.maturity_day) is int
+        assert type(new_single_order.transaction_time) is TradingClass.FIXDateTimeUTC
+        assert type(new_single_order.order_quantity) is float
+        assert type(new_single_order.order_type) is str
+        assert type(new_single_order.price) is float
+
+
+
 class TestClientOrder:
     def test_from_new_single_order(self):
         dummy_new_single_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
