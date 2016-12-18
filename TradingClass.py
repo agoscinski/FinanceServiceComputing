@@ -811,7 +811,7 @@ class OrderCancelRequest(object):
         symbol = FIXHandlerUtils.get_field_value(fix.Symbol(), fix_message)
         side = FIXHandlerUtils.get_field_value(fix.Side(), fix_message)
         # TODO yelinsheng this should be FIXDateTimeUTC and not string
-        transaction_time = FIXHandlerUtils.get_field_string(fix.TransactTime(), fix_message)
+        transaction_time = FIXDateTimeUTC.from_date_fix_time_stamp_string(fix.TransactTime().getString())
         order_quantity = FIXHandlerUtils.get_field_value(fix.OrderQty(), fix_message)
         sender_company_id = FIXHandlerUtils.get_header_field_value(fix.SenderCompID(), fix_message)
         sending_time = FIXHandlerUtils.get_header_field_string(fix.SendingTime(), fix_message)
@@ -879,6 +879,31 @@ class OrderCancelReject(object):
         Returns:
             message (quickfix.Message)"""
         #TODO yelinsheng
+
+        message = fix.Message()
+        header = message.getHeader()
+        if self.sender_company_id is not None: header.setField(fix.SenderCompID(self.sender_company_id()))
+        header.setField(fix.MsgType(fix.MsgType_NewOrderSingle))
+        header.setField(fix.SendingTime())
+
+        # Set Fix Message fix_order object
+        maturity_month_year_fix = fix.MaturityMonthYear()
+        maturity_month_year_fix.setString(str(self.maturity_month_year))
+        transact_time_fix = fix.TransactTime()
+        transact_time_fix.setString(str(self.transaction_time))
+
+        message.setField(fix.ClOrdID(self.client_order_id))
+        message.setField(fix.HandlInst(self.handling_instruction))
+        message.setField(fix.Symbol(self.symbol))
+        message.setField(maturity_month_year_fix)
+        message.setField(fix.MaturityDay(str(self.maturity_day)))
+        message.setField(fix.Side(self.side))
+        message.setField(transact_time_fix)
+        message.setField(fix.OrderQty(self.order_quantity))
+        message.setField(fix.OrdType(self.order_type))
+        message.setField(fix.Price(self.price))
+        return message
+
         pass
 
 
@@ -1461,8 +1486,7 @@ class ClientOrder:
         Returns:
             client_order (ClientOrder): The order object
         """
-        # just ignore the fields in NewSingleOrder which are are not in the ClientOrder
-        # TODO yelinsheng
+
         order_id = new_single_order.client_order_id
         transaction_time = new_single_order.transaction_time
         side = new_single_order.side
