@@ -97,7 +97,10 @@ class TestOrderCancelRequest:
 
     def test_from_fix_message(self):
         #TODO yelinsheng test if the types are correct, similar to TestNewSingleOrder.test_from_fix_message
-        dummy_order_cancel_request=TradingClass.OrderCancelRequest.create_dummy_order_cancel_request(orig_cl_ord_id="0")
+        dummy_order_cancel_request=TradingClass.OrderCancelRequest.\
+            create_dummy_order_cancel_request(orig_cl_ord_id="0", cl_ord_id="0", symbol="TSLA",
+                                              side=TradingClass.FIXHandlerUtils.Side.BUY,
+                                              transact_time=TradingClass.FIXDateTimeUTC.from_date_fix_time_stamp_string("20161120-10:00:00"))
         fix_message = dummy_order_cancel_request.to_fix_message()
         order_cancel_request=TradingClass.OrderCancelRequest.from_fix_message(fix_message)
 
@@ -113,7 +116,9 @@ class TestOrderCancelReject:
 
     def test_from_fix_message(self):
         #TODO yelinsheng
-        dummy_order_cancel_reject=TradingClass.OrderCancelReject.create_dummy_order_cancel_reject()
+        dummy_order_cancel_reject=TradingClass.OrderCancelReject.\
+            create_dummy_order_cancel_reject(orig_cl_ord_id="0", cl_ord_id="0", order_id="0", ord_status="0",
+                                             receiver_comp_id="GS")
         fix_message = dummy_order_cancel_reject.to_fix_message()
         order_cancel_reject=TradingClass.OrderCancelReject.from_fix_message(fix_message)
 
