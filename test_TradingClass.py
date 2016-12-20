@@ -97,8 +97,8 @@ class TestOrderCancelRequest:
 
     def test_from_fix_message(self):
         #TODO yelinsheng test if the types are correct, similar to TestNewSingleOrder.test_from_fix_message
-        dummy_order_cancel_request=TradingClass.OrderCancelRequest.create_dummy_order_cancel_request()
-        fix_message=dummy_order_cancel_request.to_fix_message()
+        dummy_order_cancel_request=TradingClass.OrderCancelRequest.create_dummy_order_cancel_request(orig_cl_ord_id="0")
+        fix_message = dummy_order_cancel_request.to_fix_message()
         order_cancel_request=TradingClass.OrderCancelRequest.from_fix_message(fix_message)
 
         assert order_cancel_request.orig_cl_ord_id == "0"
@@ -114,7 +114,7 @@ class TestOrderCancelReject:
     def test_from_fix_message(self):
         #TODO yelinsheng
         dummy_order_cancel_reject=TradingClass.OrderCancelReject.create_dummy_order_cancel_reject()
-        fix_message=dummy_order_cancel_reject.to_fix_message()
+        fix_message = dummy_order_cancel_reject.to_fix_message()
         order_cancel_reject=TradingClass.OrderCancelReject.from_fix_message(fix_message)
 
         assert order_cancel_reject.orig_cl_ord_id == "0"

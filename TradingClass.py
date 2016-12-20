@@ -805,7 +805,6 @@ class OrderCancelRequest(object):
         cl_ord_id = FIXHandlerUtils.get_field_value(fix.ClOrdID(), fix_message)
         symbol = FIXHandlerUtils.get_field_value(fix.Symbol(), fix_message)
         side = FIXHandlerUtils.get_field_value(fix.Side(), fix_message)
-        # TODO yelinsheng this should be FIXDateTimeUTC and not string
         transaction_time = FIXDateTimeUTC.from_date_fix_time_stamp_string(fix.TransactTime().getString())
         order_quantity = FIXHandlerUtils.get_field_value(fix.OrderQty(), fix_message)
         sender_company_id = FIXHandlerUtils.get_header_field_value(fix.SenderCompID(), fix_message)
@@ -828,15 +827,9 @@ class OrderCancelRequest(object):
         header.setField(fix.SendingTime())
         if self.on_behalf_of_comp_id is not None: header.setField(fix.OnBehalfOfCompID(self.on_behalf_of_comp_id))
         if self.sender_sub_id is not None: header.setField(fix.SenderSubID(self.sender_sub_id))
-
-        # TODO yelinsheng: I'm not sure about it
         header.setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
-
-        # Set Fix Message fix_order object
-        # TODO yelinsheng: I'm not sure about it
         transact_time_fix = fix.TransactTime()
         transact_time_fix.setString(str(self.transact_time))
-
         message.setField(fix.OrigClOrdID(self.orig_cl_ord_id))
         message.setField(fix.ClOrdID(self.cl_ord_id))
         message.setField(fix.Symbol(self.symbol))
@@ -907,15 +900,12 @@ class OrderCancelReject(object):
         """Creates from a new single order object a fix message
         Returns:
             message (quickfix.Message)"""
-        #TODO yelinsheng
 
         message = fix.Message()
         header = message.getHeader()
-        # TODO yelinsheng: I'm not sure about it
+
         header.setField(fix.TargetCompID(self.receiver_comp_id))
         if self.cxl_rej_reason is not None: header.setField(fix.CxlRejReason(self.cxl_rej_reason))
-
-        # TODO yelinsheng: I'm not sure about it
         header.setField(fix.MsgType(fix.MsgType_OrderCancelReject))
 
         message.setField(fix.OrigClOrdID(self.orig_cl_ord_id))
