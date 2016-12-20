@@ -789,14 +789,9 @@ class OrderCancelRequest(object):
         self.transact_time = transact_time
         self.order_qty = order_qty
         self.sender_comp_id = sender_comp_id
-        if sending_time is not None:
-            self.sending_time = sending_time
-        if sender_comp_id is not None:
-            self.sender_comp_id = sender_comp_id
-        if on_behalf_of_comp_id is not None:
-            self.on_behalf_of_comp_id = on_behalf_of_comp_id
-        if sender_sub_id is not None:
-            self.sender_sub_id = sender_sub_id
+        self.sending_time = sending_time
+        self.on_behalf_of_comp_id = on_behalf_of_comp_id
+        self.sender_sub_id = sender_sub_id
 
     @classmethod
     def from_fix_message(cls, fix_message):
@@ -821,6 +816,37 @@ class OrderCancelRequest(object):
         return cls(orig_cl_ord_id, cl_ord_id, symbol, side, transaction_time, order_quantity, sender_company_id,
                    sending_time, on_behalf_of_comp_id, sender_sub_id)
 
+    def to_fix_message(self):
+        """Creates from a new single order object a fix message
+        Returns:
+            message (quickfix.Message)"""
+        #
+        message = fix.Message()
+
+        header = message.getHeader()
+        if self.sender_comp_id is not None: header.setField(fix.SenderCompID(self.sender_comp_id))
+        header.setField(fix.SendingTime())
+        if self.on_behalf_of_comp_id is not None: header.setField(fix.OnBehalfOfCompID(self.on_behalf_of_comp_id))
+        if self.sender_sub_id is not None: header.setField(fix.SenderSubID(self.sender_sub_id))
+
+        # TODO yelinsheng: I'm not sure about it
+        header.setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
+
+        # Set Fix Message fix_order object
+        # TODO yelinsheng: I'm not sure about it
+        transact_time_fix = fix.TransactTime()
+        transact_time_fix.setString(str(self.transact_time))
+
+        message.setField(fix.OrigClOrdID(self.orig_cl_ord_id))
+        message.setField(fix.ClOrdID(self.cl_ord_id))
+        message.setField(fix.Symbol(self.symbol))
+        message.setField(fix.Side(self.side))
+        message.setField(transact_time_fix)
+        message.setField(fix.OrderQty(self.order_qty))
+
+        return message
+
+
     @classmethod
     def create_dummy_order_cancel_request(cls, orig_cl_ord_id="0", cl_ord_id="0", symbol="TSLA",
                                           side=FIXHandlerUtils.Side.BUY,
@@ -844,18 +870,15 @@ class OrderCancelReject(object):
 
     """
 
-    def __init__(self, orig_cl_ord_id, cl_ord_id, order_id, ord_status, cxl_rej_response_to, receiver_comp_id,
-                 cxl_rej_reason=None):
+    def __init__(self, orig_cl_ord_id, cl_ord_id, order_id, ord_status, receiver_comp_id, cxl_rej_reason=None,
+                 cxl_rej_response_to=None):
         self.orig_cl_ord_id = orig_cl_ord_id
         self.cl_ord_id = cl_ord_id
         self.order_id = order_id
         self.ord_status = ord_status
-        self.cxl_rej_response_to = cxl_rej_response_to
         self.receiver_comp_id = receiver_comp_id
-        if cxl_rej_reason is not None:
-            self.cxl_rej_reason = cxl_rej_reason
-        else:
-            self.cxl_rej_reason = None
+        self.cxl_rej_reason = cxl_rej_reason
+        self.cxl_rej_response_to = cxl_rej_response_to
 
     @classmethod
     def from_fix_message(cls, fix_message):
@@ -874,6 +897,12 @@ class OrderCancelReject(object):
 
         return cls(orig_cl_ord_id, cl_ord_id, order_id, ord_status, receiver_comp_id, cxl_rej_reason)
 
+    @classmethod
+    def create_dummy_order_cancel_reject(cls, orig_cl_ord_id="0", cl_ord_id="0", order_id="0", ord_status="0",
+                                         receiver_comp_id="GS"):
+        dummy_order_cancel_reject = cls(orig_cl_ord_id, cl_ord_id, order_id, ord_status, receiver_comp_id)
+        return dummy_order_cancel_reject
+
     def to_fix_message(self):
         """Creates from a new single order object a fix message
         Returns:
@@ -882,29 +911,19 @@ class OrderCancelReject(object):
 
         message = fix.Message()
         header = message.getHeader()
-        if self.sender_company_id is not None: header.setField(fix.SenderCompID(self.sender_company_id()))
-        header.setField(fix.MsgType(fix.MsgType_NewOrderSingle))
-        header.setField(fix.SendingTime())
+        # TODO yelinsheng: I'm not sure about it
+        header.setField(fix.TargetCompID(self.receiver_comp_id))
+        if self.cxl_rej_reason is not None: header.setField(fix.CxlRejReason(self.cxl_rej_reason))
 
-        # Set Fix Message fix_order object
-        maturity_month_year_fix = fix.MaturityMonthYear()
-        maturity_month_year_fix.setString(str(self.maturity_month_year))
-        transact_time_fix = fix.TransactTime()
-        transact_time_fix.setString(str(self.transaction_time))
+        # TODO yelinsheng: I'm not sure about it
+        header.setField(fix.MsgType(fix.MsgType_OrderCancelReject))
 
-        message.setField(fix.ClOrdID(self.client_order_id))
-        message.setField(fix.HandlInst(self.handling_instruction))
-        message.setField(fix.Symbol(self.symbol))
-        message.setField(maturity_month_year_fix)
-        message.setField(fix.MaturityDay(str(self.maturity_day)))
-        message.setField(fix.Side(self.side))
-        message.setField(transact_time_fix)
-        message.setField(fix.OrderQty(self.order_quantity))
-        message.setField(fix.OrdType(self.order_type))
-        message.setField(fix.Price(self.price))
+        message.setField(fix.OrigClOrdID(self.orig_cl_ord_id))
+        message.setField(fix.ClOrdID(self.cl_ord_id))
+        message.setField(fix.OrderID(self.order_id))
+        message.setField(fix.OrdStatus(self.ord_status))
+
         return message
-
-        pass
 
 
 class NewSingleOrder(object):
