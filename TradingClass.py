@@ -157,11 +157,95 @@ class FIXTime(object):
             minute : minutes in int
             second : second in int
     """
+
+   	"""
+   		The FIXTime object encapsulates a time object
+    	Attributes:
+        	time (datetime.time): the time
+    """
     #TODO Valentin change this class like FIXDate: so it receives a datetime object as contstructor and has an
-    #TODO additional constructur from hour, minute, second, then find all usages of constructor of this object
-    #TODO and change the constructor so it works with this one (with Pycharm Edit->Find->Find Usages
+    #TODO additional constructor from hour, minute, second, then find all usages of constructor of this object
+    #TODO and change the constructor so it works with this one (with Pycharm Edit->Find->Find Usages)
+
+    def __init__(self, time_object):
+        self.time = time_object
+
+    @classmethod
+    def from_fix_time_stamp_string(cls, time_stamp_string):
+        """Constructor for mysql time stamp strings
+        Args:
+            time_stamp_string (string): string in format 111111
+        Returns:
+            (FIXTime object)
+        """
+        time_object = datetime.datetime.strptime(time_stamp_string, "%H%M%S").time()
+        return cls(time_object)
+
+    @classmethod
+    def from_mysql_time_stamp_string(cls, time_stamp_string):
+        """Constructor for mysql time stamp strings
+        Args:
+            time_stamp_string (string): string in format HH:MM:SS
+        Returns:
+            (FIXTime object)
+        """
+        time_object = datetime.datetime.strptime(time_stamp_string, "%H:%M:%S").time()
+        return cls(time_object)
+
+    @classmethod
+    def from_hour_minute_second(cls, hour, minute, second):
+        """Constructor from time stamp strings
+	        Args:
+	            hour (int): an integer representing the hour
+	            minute (int): an integer representing the minutes
+	            second (int): an integer representing the seconds
+	        Returns:
+	            (FIXTime object)
+        """
+        time_object = datetime.time(hour, minute, second)
+        return cls(date_object)
+
     #TODO Valentin add @property and @setter for hour, minute and second
-    #TODO Valentin add __eq__ and __neq__ function
+    @property
+    def mysql_time_stamp_string(self):
+        return self.date.strftime("%H:%M:%S")
+
+    @mysql_time_stamp_string.setter
+    def year(self, time_stamp_string):
+        self.time = datetime.datetime.strptime(time_stamp_string, "%H:%M:%S").time()
+
+    @property
+    def hour(self):
+        return self.time.hour
+
+    @hour.setter
+    def hour(self, hour):
+        self.time.hour = hour
+
+    @property
+    def minute(self):
+        return self.time.minute
+
+    @minute.setter
+    def minute(self, minute):
+        self.time.minute = minute
+
+    @property
+    def second(self):
+        return self.time.second
+
+    @second.setter
+    def day(self, second):
+        self.time.second = second
+
+    #TODO Valentin add __eq__ and __ne__ function
+    def __eq__(self, other):
+        return self.time.hour == other.time.hour and self.time.minute == other.time.minute and self.time.second == other.time.second
+
+    def __ne__(self, other):
+        return not __eq__(self, other)
+
+
     def __init__(self, hour, minute, second):
         self.time = datetime.time(hour, minute, second, 0)
 
@@ -169,10 +253,14 @@ class FIXTime(object):
         return self.time.strftime("%H:%M:%S")
 
 
+
+
+
+
+
+
 class FIXDateTimeUTC(object):
     #TODO Valentin change this class like FIXDate:
-    #TODO Valentin add @property and @setter for hour, minute and second
-    #TODO Valentin add __eq__ and __neq__ function
 
     def __init__(self, datetime_object):
         """Constructor of FIXDateTimeUTC from
@@ -215,13 +303,46 @@ class FIXDateTimeUTC(object):
     def __str__(self):
         return self.date_time.strftime("%Y%m%d-%H:%M:%S")
 
-    @property
-    def mysql_date_stamp_string(self):
-        return self.date_time.strftime("%Y-%m-%d %H:%M:%S")
+    #TODO Valentin add @property and @setter for hour, minute and second
 
-    @mysql_date_stamp_string.setter
-    def year(self, date_stamp_string):
-        self.date = datetime.datetime.strptime(date_stamp_string, "%Y-%m-%d %H:%M:%S").date()
+    @property
+    def hour(self):
+        return self.date_time.hour
+
+    @hour.setter
+    def hour(self, hour):
+        self.date_time.hour = hour
+
+    @property
+    def minute(self):
+        return self.date_time.minute
+
+    @minute.setter
+    def minute(self, minute):
+        self.date_time.minute = minute
+
+    @property
+    def second(self):
+        return self.date_time.second
+
+    @second.setter
+    def day(self, second):
+        self.date_time.second = second
+
+    #TODO Valentin add __eq__ and __ne__ function
+    def __eq__(self, other):
+        return self.date_time.year == other.date_time.year 
+        	and self.date_time.month == other.date_time.month 
+        	and self.date_time.day == other.date_time.day
+        	and self.date_time.hour == other.date_time.hour 
+        	and self.date_time.minute == other.date_time.minute 
+        	and self.date_time.second == other.date_time.second
+
+    def __ne__(self, other):
+        return not __eq__(self, other)
+
+
+
 
 
 ###################################
