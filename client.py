@@ -361,7 +361,7 @@ class ClientFIXHandler:
         stop_px = self.get_field_value(fix.StopPx(), message)
 
         # Encapsulate result of receiving execution report into order execution report
-        if ord_status == '4':
+        if ord_status == TradingClass.FIXHandlerUtils.ExecutionType.CANCELED:
             self.client_logic.process_order_cancel_respond(orig_cl_ord_id, ord_status, leaves_qty, cum_qty)
         else:
             order_execution = TradingClass.OrderExecution(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type,
@@ -679,8 +679,14 @@ class GUIHandler:
             elif input == '4':
                 self.send_dummy_order()
             elif input == '5':
-                self.send_order_cancel_request_option("1")
+                self.scenario_1()
             elif input == '6':
+                self.scenario_2()
+            elif input == '7':
+                self.scenario_3()
+            elif input == '8':
+                self.scenario_4()
+            elif input == '9':
                 break
             else:
                 continue
@@ -734,6 +740,14 @@ class GUIHandler:
         pass
 
     def button_sell_actuated(self, stock_ticker, price, quantity):
+        """
+        Args:
+            stock_ticker (string)
+            side (int/FIXHandlerUtils.Side)
+            order_type (int/FIXHandlerUtils.OrderType)
+            price (float)
+            quantity (float)
+        """
         # TODO alex
         pass
 
@@ -823,3 +837,23 @@ class GUIHandler:
             tmp["side"] = ("buy" if trading_transaction.side[i] else "sell")
             data["content"].append(tmp)
         return demjson.encode(data)
+
+
+    #TODO use the function self.client_logic.process_new_single_order_request(stock_ticker, side, order_type, price, quantity)
+    def scenario_1(self):
+        #TODO Valentin
+        pass
+
+    def scenario_2(self):
+        #TODO Valentin
+        pass
+
+    def scenario_3(self):
+        #TODO Yelinsheng
+        pass
+
+    def scenario_4(self):
+        #TODO Yelinsheng
+        pass
+
+

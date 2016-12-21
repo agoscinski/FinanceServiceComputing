@@ -305,7 +305,7 @@ class ServerLogic:
 
     @property
     def current_server_time(self):
-        return datetime.datetime.utcnow()
+        return datetime.datetime.utcnow().time()
 
     def start_server(self):
         self.server_fix_handler.start()
@@ -415,7 +415,7 @@ class ServerLogic:
 
     def process_invalid_order_request(self, requested_order):
         order_id = str(self.gen_order_id())
-        exec_id = str(self.gen_exec_id())
+        exec_id = str(self.server_database_handler.insert_execution_report(None))
         cl_ord_id = requested_order.client_order_id
         receiver_comp_id = requested_order.account_company_id
         exec_trans_type = TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW
@@ -737,7 +737,12 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         return TradingClass.OrderCancel.create_dummy_order_cancel()
 
     def insert_execution_report(self, execution_report):
-        # MAYBETODO
+        """
+        Args:
+            execution_report (TradingClass.ExecutionReport)
+        Returns:
+            execution_id
+        """
         return 0
 
     def insert_order_execution(self, order_execution):

@@ -122,7 +122,7 @@ class FIXDate(object):
         return self.date.strftime("%Y-%m-%d")
 
     @mysql_date_stamp_string.setter
-    def year(self, date_stamp_string):
+    def mysql_date_stamp_string(self, date_stamp_string):
         self.date = datetime.datetime.strptime(date_stamp_string, "%Y-%m-%d").date()
 
     @property
@@ -314,6 +314,14 @@ class FIXDateTimeUTC(object):
     @second.setter
     def second(self, second):
         self.date_time.second = second
+
+    @property
+    def mysql_date_stamp_string(self):
+        return self.date_time.strftime("%Y%m%d %H:%M:%S")
+
+    @mysql_date_stamp_string.setter
+    def mysql_date_stamp_string(self, date_stamp_string):
+        self.date_timeF = datetime.datetime.strptime(date_stamp_string, "%Y%m%d %H:%M:%S").date()
 
 
 ###################################
@@ -1117,8 +1125,8 @@ class NewSingleOrder(object):
 
 
 class ExecutionReport(object):
-    """Constructor
-    Args:
+    """
+    Attributes:
         order_id (string): order id
         client_order_id (string): client order id (if it's cancellation response it will be client cancel order id)
         execution_id (string): execution id
