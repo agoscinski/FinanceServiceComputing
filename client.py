@@ -862,10 +862,35 @@ class GUIHandler:
     #TODO use the function self.client_logic.process_new_single_order_request(stock_ticker, side, order_type, price, quantity)
     def scenario_1(self):
         #TODO Valentin
+        """ 
+        A client wants to send an order (more than) 10% more expensive than the last price
+        """
+        self.client_logic.process_new_single_order_request(stock_ticker=str(TSLA),
+                                                          side=TradingClass.FIXHandlerUtils.Side.BUY,
+                                                          order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT, 
+                                                          price=float(606),
+                                                          quantity=float(10))
+        """ 
+        A client wants to send an order (more than) 10% less expensive than the last price
+        """
+        self.client_logic.process_new_single_order_request(stock_ticker=str(TSLA),
+                                                          side=TradingClass.FIXHandlerUtils.Side.BUY,
+                                                          order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT, 
+                                                          price=float(494),
+                                                          quantity=float(10))
         pass
 
     def scenario_2(self):
         #TODO Valentin
+
+        '''
+		A client wants to send an order that represents more than 20% of the total tradable value
+        '''
+        self.client_logic.process_new_single_order_request(stock_ticker=str(TSLA),
+                                                          side=TradingClass.FIXHandlerUtils.Side.BUY,
+                                                          order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT, 
+                                                          price=float(500),
+                                                          quantity=float(34))
         pass
 
     def scenario_3(self):
