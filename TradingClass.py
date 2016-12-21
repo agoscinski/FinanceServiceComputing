@@ -151,24 +151,23 @@ class FIXDate(object):
 
 
 class FIXTime(object):
-    """Constructor of FIXTime
-        @Parameter:
-            hour : hour in int
-            minute : minutes in int
-            second : second in int
     """
-
-   	"""
-   		The FIXTime object encapsulates a time object
-    	Attributes:
-        	time (datetime.time): the time
+    The FIXTime object encapsulates a time object
+     Attributes:
+         time (datetime.time): the time
     """
-    #TODO Valentin change this class like FIXDate: so it receives a datetime object as contstructor and has an
-    #TODO additional constructor from hour, minute, second, then find all usages of constructor of this object
-    #TODO and change the constructor so it works with this one (with Pycharm Edit->Find->Find Usages)
 
     def __init__(self, time_object):
         self.time = time_object
+
+    def __eq__(self, other):
+        return self.time.hour == other.time.hour and self.time.minute == other.time.minute and self.time.second == other.time.second
+
+    def __ne__(self, other):
+        return not __eq__(self, other)
+
+    def __str__(self):
+        return self.time.strftime("%H:%M:%S")
 
     @classmethod
     def from_fix_time_stamp_string(cls, time_stamp_string):
@@ -195,17 +194,16 @@ class FIXTime(object):
     @classmethod
     def from_hour_minute_second(cls, hour, minute, second):
         """Constructor from time stamp strings
-	        Args:
-	            hour (int): an integer representing the hour
-	            minute (int): an integer representing the minutes
-	            second (int): an integer representing the seconds
-	        Returns:
-	            (FIXTime object)
+        Args:
+            hour (int): an integer representing the hour
+            minute (int): an integer representing the minutes
+            second (int): an integer representing the seconds
+        Returns:
+            (FIXTime object)
         """
         time_object = datetime.time(hour, minute, second)
-        return cls(date_object)
+        return cls(time_object)
 
-    #TODO Valentin add @property and @setter for hour, minute and second
     @property
     def mysql_time_stamp_string(self):
         return self.date.strftime("%H:%M:%S")
@@ -238,29 +236,8 @@ class FIXTime(object):
     def day(self, second):
         self.time.second = second
 
-    #TODO Valentin add __eq__ and __ne__ function
-    def __eq__(self, other):
-        return self.time.hour == other.time.hour and self.time.minute == other.time.minute and self.time.second == other.time.second
-
-    def __ne__(self, other):
-        return not __eq__(self, other)
-
-
-    def __init__(self, hour, minute, second):
-        self.time = datetime.time(hour, minute, second, 0)
-
-    def __str__(self):
-        return self.time.strftime("%H:%M:%S")
-
-
-
-
-
-
-
 
 class FIXDateTimeUTC(object):
-    #TODO Valentin change this class like FIXDate:
 
     def __init__(self, datetime_object):
         """Constructor of FIXDateTimeUTC from
@@ -268,6 +245,20 @@ class FIXDateTimeUTC(object):
             datetime_object (datetime.datetime object)
         """
         self.date_time = datetime_object
+
+    def __eq__(self, other):
+        return (self.date_time.year == other.date_time.year
+                and self.date_time.month == other.date_time.month
+                and self.date_time.day == other.date_time.day
+                and self.date_time.hour == other.date_time.hour
+                and self.date_time.minute == other.date_time.minute
+                and self.date_time.second == other.date_time.second)
+
+    def __ne__(self, other):
+        return not __eq__(self, other)
+
+    def __str__(self):
+        return self.date_time.strftime("%Y%m%d-%H:%M:%S")
 
     @classmethod
     def from_year_month_date_hour_minute_second(cls, year, month, date, hour, minute, second):
@@ -300,11 +291,6 @@ class FIXDateTimeUTC(object):
         date_object = datetime.datetime.strptime(date_time_stamp_string, "%Y%m%d-%H:%M:%S").date()
         return cls(date_object)
 
-    def __str__(self):
-        return self.date_time.strftime("%Y%m%d-%H:%M:%S")
-
-    #TODO Valentin add @property and @setter for hour, minute and second
-
     @property
     def hour(self):
         return self.date_time.hour
@@ -326,23 +312,8 @@ class FIXDateTimeUTC(object):
         return self.date_time.second
 
     @second.setter
-    def day(self, second):
+    def second(self, second):
         self.date_time.second = second
-
-    #TODO Valentin add __eq__ and __ne__ function
-    def __eq__(self, other):
-        return self.date_time.year == other.date_time.year 
-        	and self.date_time.month == other.date_time.month 
-        	and self.date_time.day == other.date_time.day
-        	and self.date_time.hour == other.date_time.hour 
-        	and self.date_time.minute == other.date_time.minute 
-        	and self.date_time.second == other.date_time.second
-
-    def __ne__(self, other):
-        return not __eq__(self, other)
-
-
-
 
 
 ###################################
@@ -890,7 +861,7 @@ class OrderCancelRequest(object):
     """Constructor of class OrderCancelRequest:
     Args:
         orig_cl_ord_id (string): original client order id which is to be cancelled
-        cl_ord_id (string): client order id
+        cl_ord_id (gid): client order id
         symbol (string)
         side (char)
         transact_time (FIXDateTimeUTC)
@@ -959,7 +930,6 @@ class OrderCancelRequest(object):
         message.setField(fix.OrderQty(self.order_qty))
 
         return message
-
 
     @classmethod
     def create_dummy_order_cancel_request(cls, orig_cl_ord_id="0", cl_ord_id="0", symbol="TSLA",
@@ -1100,10 +1070,12 @@ class NewSingleOrder(object):
         client_order_id = FIXHandlerUtils.get_field_value(fix.ClOrdID(), fix_message)
         handling_instruction = FIXHandlerUtils.get_field_value(fix.HandlInst(), fix_message)
         symbol = FIXHandlerUtils.get_field_value(fix.Symbol(), fix_message)
-        maturity_month_year = FIXYearMonth.from_date_stamp_string(FIXHandlerUtils.get_field_value(fix.MaturityMonthYear(), fix_message))
+        maturity_month_year = FIXYearMonth.from_date_stamp_string(
+            FIXHandlerUtils.get_field_value(fix.MaturityMonthYear(), fix_message))
         maturity_day = int(FIXHandlerUtils.get_field_value(fix.MaturityDay(), fix_message))
         side = FIXHandlerUtils.get_field_value(fix.Side(), fix_message)
-        transact_time = FIXDateTimeUTC.from_date_fix_time_stamp_string(FIXHandlerUtils.get_field_string(fix.TransactTime(), fix_message))
+        transact_time = FIXDateTimeUTC.from_date_fix_time_stamp_string(
+            FIXHandlerUtils.get_field_string(fix.TransactTime(), fix_message))
         order_quantity = FIXHandlerUtils.get_field_value(fix.OrderQty(), fix_message)
         order_type = FIXHandlerUtils.get_field_value(fix.OrdType(), fix_message)
         price = FIXHandlerUtils.get_field_value(fix.Price(), fix_message)
