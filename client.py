@@ -850,10 +850,20 @@ class GUIHandler:
 
     def scenario_3(self):
         #TODO Yelinsheng
-        pass
+
+        self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
+                                                          side=TradingClass.FIXHandlerUtils.Side.SELL,
+                                                          order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT, price=float(1000),
+                                                          quantity=float(1000))
 
     def scenario_4(self):
         #TODO Yelinsheng
+
+        self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
+                                                           side=TradingClass.FIXHandlerUtils.Side.SELL,
+                                                           order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
+                                                           price=float(1000),
+                                                           quantity=float(1000))
         pass
 
 
