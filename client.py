@@ -871,7 +871,7 @@ class GUIHandler:
     def scenario_3(self):
         #TODO Yelinsheng
 
-        self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
+        self.client_logic.process_new_single_order_request(stock_ticker="MS",
                                                           side=TradingClass.FIXHandlerUtils.Side.SELL,
                                                           order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT, price=float(1000),
                                                           quantity=float(1000))
