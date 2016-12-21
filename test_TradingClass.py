@@ -96,7 +96,6 @@ class TestGlobalFunctions:
 class TestOrderCancelRequest:
 
     def test_from_fix_message(self):
-        #TODO yelinsheng test if the types are correct, similar to TestNewSingleOrder.test_from_fix_message
         dummy_order_cancel_request=TradingClass.OrderCancelRequest.\
             create_dummy_order_cancel_request(orig_cl_ord_id="0", cl_ord_id="0", symbol="TSLA",
                                               side=TradingClass.FIXHandlerUtils.Side.BUY,
@@ -104,29 +103,28 @@ class TestOrderCancelRequest:
         fix_message = dummy_order_cancel_request.to_fix_message()
         order_cancel_request=TradingClass.OrderCancelRequest.from_fix_message(fix_message)
 
-        assert order_cancel_request.orig_cl_ord_id == "0"
-        assert order_cancel_request.cl_ord_id == "0"
-        assert order_cancel_request.symbol == "TSLA"
-        assert order_cancel_request.side == TradingClass.FIXHandlerUtils.Side.BUY
-        assert type(str(order_cancel_request.transact_time)) is str
-        assert order_cancel_request.order_qty == 1000
-        assert order_cancel_request.sender_comp_id == "GS"
+        assert type(order_cancel_request.orig_cl_ord_id) is str
+        assert type(order_cancel_request.cl_ord_id) is str
+        assert type(order_cancel_request.symbol) is str
+        assert type(order_cancel_request.side) is str
+        assert type(order_cancel_request.transact_time) is TradingClass.FIXDateTimeUTC
+        assert type(order_cancel_request.order_qty) is float
+        assert type(order_cancel_request.sender_comp_id) is str
 
 class TestOrderCancelReject:
 
     def test_from_fix_message(self):
-        #TODO yelinsheng
         dummy_order_cancel_reject=TradingClass.OrderCancelReject.\
             create_dummy_order_cancel_reject(orig_cl_ord_id="0", cl_ord_id="0", order_id="0", ord_status="0",
                                              receiver_comp_id="GS")
         fix_message = dummy_order_cancel_reject.to_fix_message()
         order_cancel_reject=TradingClass.OrderCancelReject.from_fix_message(fix_message)
 
-        assert order_cancel_reject.orig_cl_ord_id == "0"
-        assert order_cancel_reject.cl_ord_id == "0"
-        assert order_cancel_reject.order_id == "0"
-        assert order_cancel_reject.ord_status == "0"
-        assert order_cancel_reject.receiver_comp_id == "GS"
+        assert type(order_cancel_reject.orig_cl_ord_id) is str
+        assert type(order_cancel_reject.cl_ord_id) is str
+        assert type(order_cancel_reject.order_id) is str
+        assert type(order_cancel_reject.ord_status) is str
+        assert type(order_cancel_reject.receiver_comp_id) is str
 
 class TestNewSingleOrder:
 
