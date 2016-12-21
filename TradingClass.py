@@ -387,15 +387,13 @@ class FIXHandlerUtils:
         CANCEL = '1'
         CORRECT = '2'
         STATUS = '3'
-        """
-        NEW = '0'
-        PARTIAL_FILL = '1'
-        FILL = '2'
-        CANCELED = '4'
-        REPLACE = '5'
-        REJECTED = '8'
-        EXPIRED = 'C'
-        """
+        #NEW = '0'
+        #PARTIAL_FILL = '1'
+        #FILL = '2'
+        #CANCELED = '4'
+        #REPLACE = '5'
+        #REJECTED = '8'
+        #EXPIRED = 'C'
 
     class HandlingInstruction:
         AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION = fix.HandlInst_AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION
@@ -570,6 +568,8 @@ class DatabaseHandlerUtils:
         CANCELED = 2
         EXPIRED = 3
         NOT_YET_ACKNOWLEDGED = 4
+        REJECTED = 5
+
 
     class HandlingInstruction:
         AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION = 1
@@ -1359,8 +1359,7 @@ class Order(object):
 
 class DatabaseStockInformation:
     def __init__(self, current_price=None, current_volume=None, opening_price=None, closing_price=None,
-                 day_high=None,
-                 day_low=None):
+                 day_high=None, day_low=None):
         self.current_price = current_price
         self.current_volume = current_volume
         self.opening_price = opening_price

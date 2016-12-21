@@ -532,7 +532,7 @@ class ServerLogic:
         order_id = str(self.gen_order_cancel_id())
         orig_cl_ord_id = requested_order_cancel.client_order_id
         cl_ord_id = requested_order_cancel.order_cancel_id
-        exec_id = str(self.gen_exec_id()) #
+        exec_id = str(self.server_database_handler.insert_execution_report(None))
         receiver_comp_id = requested_order_cancel.account_company_id
         exec_trans_type =  TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW
         exec_type = TradingClass.FIXHandlerUtils.ExecutionType.CANCELED
