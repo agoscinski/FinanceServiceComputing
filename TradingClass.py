@@ -1030,6 +1030,7 @@ class NewSingleOrder(object):
         order_quantity (float)
         order_type (char/FIXHandlerUtils.OrderType)
         price (float)
+
     """
 
     def __init__(self, client_order_id, handling_instruction, symbol, maturity_month_year,

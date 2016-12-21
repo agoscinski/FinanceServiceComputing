@@ -1,5 +1,0 @@
-INSERT INTO StockInformation(current_price, current_volume, opening_price, closing_price, day_high) VALUES(120, 15700, 115, 122, 124)
-INSERT INTO StockInformation(current_price, current_volume, opening_price, closing_price, day_high) VALUES(90, 1700, 89, 85, 90)
-INSERT INTO StockInformation(current_price, current_volume, opening_price, closing_price, day_high) VALUES(86, 10300, 85, 84, 87)
-INSERT INTO StockInformation(current_price, current_volume, opening_price, closing_price, day_high) VALUES(40, 680, 42, 39, 42)
-INSERT INTO StockInformation(current_price, current_volume, opening_price, closing_price, day_high) VALUES(189, 5900, 188, 191, 193)

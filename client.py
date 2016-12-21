@@ -70,12 +70,22 @@ class GUISignal(htmlPy.Object):
 
     @htmlPy.Slot(str, str, str, str)
     def orderSell(self, price, quantity, order_type, ticket_code):
-        print "sell:\n" + "price:" + price + "; quantity:" + quantity + "; type:" + order_type + "; ticket code:" + ticket_code
+        if order_type == 'limit':
+            order_type = TradingClass.FIXHandlerUtils.OrderType.LIMIT
+        elif order_type == 'market':
+            order_type = TradingClass.FIXHandlerUtils.OrderType.MARKET
+        self.gui_handler.client_logic.process_new_single_order_request(stock_ticker=str(ticket_code),
+                                                          side=TradingClass.FIXHandlerUtils.Side.SELL,
+                                                          order_type=order_type, price=float(price),
+                                                          quantity=float(quantity))
 
     @htmlPy.Slot(str, str, str, str)
     def orderBuy(self, price, quantity, order_type, ticket_code):
-        # TODO check values of order_type
-        self.gui_handler.client_logic.process_new_single_order_request(stock_ticker=ticket_code,
+        if order_type == 'limit':
+            order_type = TradingClass.FIXHandlerUtils.OrderType.LIMIT
+        elif order_type == 'market':
+            order_type = TradingClass.FIXHandlerUtils.OrderType.MARKET
+        self.gui_handler.client_logic.process_new_single_order_request(stock_ticker=str(ticket_code),
                                                           side=TradingClass.FIXHandlerUtils.Side.BUY,
                                                           order_type=order_type, price=float(price),
                                                           quantity=float(quantity))
@@ -668,7 +678,7 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         Return:
             order (TradingClass.ClientOrder)
         """
-        #TODO Valentin
+        #TODO Yelinsheng and write test in test_client.py
         return TradingClass.ClientOrder.create_dummy_client_order()
 
     def generate_market_data_request_id(self):
@@ -865,15 +875,4 @@ class GUIHandler:
                                                           side=TradingClass.FIXHandlerUtils.Side.SELL,
                                                           order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT, price=float(1000),
                                                           quantity=float(1000))
-
-    def scenario_4(self):
-        #TODO Yelinsheng
-
-        self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
-                                                           side=TradingClass.FIXHandlerUtils.Side.SELL,
-                                                           order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
-                                                           price=float(1000),
-                                                           quantity=float(1000))
-        pass
-
 
