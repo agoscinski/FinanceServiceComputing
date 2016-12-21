@@ -1578,8 +1578,8 @@ class ClientOrder:
 
     @classmethod
     def create_dummy_client_order(cls, order_id="0", transaction_time=FIXDate.from_fix_date_stamp_string("20161109"),
-                                  side=1, order_type=1, order_price=12, order_quantity=1000, last_status=1,
-                                  maturity_day=FIXDate.from_fix_date_stamp_string("20161110"), quantity_filled=50,
+                                  side=1, order_type=1, order_price=12.0, order_quantity=1000.0, last_status=1,
+                                  maturity_day=FIXDate.from_fix_date_stamp_string("20161110"), quantity_filled=50.0,
                                   average_price=12.3):
         dummy_new_client_order = cls(order_id, transaction_time, side, order_type, order_price, order_quantity,
                                      last_status, maturity_day, quantity_filled, average_price)

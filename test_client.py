@@ -42,3 +42,23 @@ class TestClientDatabaseHandler:
         dummy_order = TradingClass.ClientOrder.create_dummy_client_order()
         assert fsc_client_database_handler.insert_order(dummy_order) == None
         pass
+
+    def test_update_order(self):
+        dummy_order = TradingClass.ClientOrder.create_dummy_client_order()
+        assert fsc_client_database_handler.update_order(dummy_order.order_id, average_price=11.0,  order_status=4, quantity_filled=None) == None
+        assert fsc_client_database_handler.update_order(dummy_order.order_id, dummy_order.last_status, dummy_order.average_price, dummy_order.quantity_filled) == None
+        pass
+
+    def test_fetch_order(self):
+        dummy_order = TradingClass.ClientOrder.create_dummy_client_order()
+        fetch_order = fsc_client_database_handler.fetch_order(dummy_order.order_id)
+        assert fetch_order.order_id == dummy_order.order_id
+        assert str(fetch_order.average_price) == str(dummy_order.average_price)
+        assert str(fetch_order.last_status) == str(dummy_order.last_status)
+        assert str(fetch_order.maturity_day) == str(dummy_order.maturity_day)
+        assert str(fetch_order.order_price) == str(dummy_order.order_price)
+        assert str(fetch_order.order_quantity) == str(dummy_order.order_quantity)
+        assert str(fetch_order.order_type) == str(dummy_order.order_type)
+        assert str(fetch_order.quantity_filled) == str(dummy_order.quantity_filled)
+        assert str(fetch_order.side) == str(dummy_order.side)
+        assert str(fetch_order.transaction_time) == str(dummy_order.transaction_time)

@@ -669,6 +669,27 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         """
         #TODO Yelinsheng and write test in test_client.py
         #TODO if the value is None, the value is not updated
+        sql_command = "UPDATE `Order` SET"
+        set_part=[]
+
+        if order_status is not None: set_part.append(" LastStatus ='" + str(order_status) + "'")
+        if average_price is not None: set_part.append(" AveragePrice ='" + str(average_price) + "'")
+        if quantity_filled is not None: set_part.append(" QuantityFilled ='" + str(quantity_filled) + "'")
+
+        if len(set_part) == 0:
+            return
+
+        for s in set_part:
+            sql_command += s + ","
+
+        # delete the last character: ","
+        sql_command = sql_command[:len(sql_command)-1]
+
+        sql_command += (" where OrderID='%s'" % (order_id))
+
+        print sql_command
+
+        self.execute_nonresponsive_sql_command(sql_command)
         pass
 
     def fetch_order(self, order_id):
@@ -679,7 +700,28 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
             order (TradingClass.ClientOrder)
         """
         #TODO Yelinsheng and write test in test_client.py
-        return TradingClass.ClientOrder.create_dummy_client_order()
+        sql_command = ("select TransactionTime, Side, OrderType, OrderQuantity, OrderPrice,"
+                       "LastStatus, MaturityDate, QuantityFilled, AveragePrice from "
+                       "`Order` where OrderID='%s'") % ( order_id)
+
+        order_rows = self.execute_select_sql_command(sql_command)
+        order_row_list = list(order_rows[0])
+
+
+        transaction_time = TradingClass.FIXDate(order_row_list[0])
+        side = int(order_row_list[1])
+        order_type = int(order_row_list[2])
+        order_quantity = float(order_row_list[3])
+        order_price = float(order_row_list[4])
+        last_status = int(order_row_list[5])
+        maturity_day = TradingClass.FIXDate(order_row_list[6])
+        quantity_filled = float(order_row_list[7])
+        average_price = float(order_row_list[8])
+
+        client_order = TradingClass.ClientOrder(order_id,transaction_time,side,order_type,
+                                                order_price,order_quantity,last_status,maturity_day,
+                                                quantity_filled,average_price)
+        return client_order
 
     def generate_market_data_request_id(self):
         self.last_market_data_request_id = self.last_market_data_request_id + 1
