@@ -309,12 +309,10 @@ class ServerLogic(object):
         return datetime.datetime.utcnow().time()
 
     def start_server(self):
-        if self.initialize_new_database:
-            self.server_database_handler.create_database()
-            self.market_simulation_handler.init_market()
         self.server_fix_handler.start()
         while 1: time.sleep(1)
         self.stop_server()
+
 
     def stop_server(self):
         self.server_fix_handler.stop()
