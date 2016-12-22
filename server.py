@@ -408,7 +408,7 @@ class ServerLogic(object):
         return None
 
     def process_invalid_order_request(self, requested_order):
-        order_id = str(self.gen_order_id())
+        order_id = "0"
         exec_id = str(self.server_database_handler.insert_execution_report(None))
         cl_ord_id = requested_order.client_order_id
         receiver_comp_id = requested_order.account_company_id
