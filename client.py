@@ -907,7 +907,7 @@ class GUIHandler:
         """ 
         A client wants to send an order (more than) 10% more expensive than the last price
         """
-        self.client_logic.process_new_single_order_request(stock_ticker=str(TSLA),
+        self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
                                                           side=TradingClass.FIXHandlerUtils.Side.BUY,
                                                           order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT, 
                                                           price=float(606),
@@ -915,7 +915,7 @@ class GUIHandler:
         """ 
         A client wants to send an order (more than) 10% less expensive than the last price
         """
-        self.client_logic.process_new_single_order_request(stock_ticker=str(TSLA),
+        self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
                                                           side=TradingClass.FIXHandlerUtils.Side.BUY,
                                                           order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT, 
                                                           price=float(494),
@@ -923,12 +923,10 @@ class GUIHandler:
         pass
 
     def scenario_2(self):
-        #TODO Valentin
-
-        '''
+        """
 		A client wants to send an order that represents more than 20% of the total tradable value
-        '''
-        self.client_logic.process_new_single_order_request(stock_ticker=str(TSLA),
+        """
+        self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
                                                           side=TradingClass.FIXHandlerUtils.Side.BUY,
                                                           order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT, 
                                                           price=float(500),
@@ -937,7 +935,6 @@ class GUIHandler:
 
     def scenario_3(self):
         #TODO Yelinsheng
-
         self.client_logic.process_new_single_order_request(stock_ticker="MS",
                                                           side=TradingClass.FIXHandlerUtils.Side.SELL,
                                                           order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT, price=float(1000),

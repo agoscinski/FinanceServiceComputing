@@ -1551,7 +1551,7 @@ class ClientOrder:
     """This class is designed after the Order table of the client database"""
 
     def __init__(self, order_id, transaction_time, side, order_type, order_price, order_quantity, last_status,
-                 maturity_day, quantity_filled, average_price):
+                 maturity_day, quantity_filled, average_price, stock_ticker):
         """
         Args:
             order_id (string)
@@ -1564,6 +1564,7 @@ class ClientOrder:
             maturity_day (FIXDate)
             quantity_filled(float)
             average_price(float)
+            stock_ticker (string)
         """
         self.order_id = order_id
         self.transaction_time = transaction_time
@@ -1580,9 +1581,9 @@ class ClientOrder:
     def create_dummy_client_order(cls, order_id="0", transaction_time=FIXDate.from_fix_date_stamp_string("20161109"),
                                   side=1, order_type=1, order_price=12.0, order_quantity=1000.0, last_status=1,
                                   maturity_day=FIXDate.from_fix_date_stamp_string("20161110"), quantity_filled=50.0,
-                                  average_price=12.3):
+                                  average_price=12.3, stock_ticker="TSLA"):
         dummy_new_client_order = cls(order_id, transaction_time, side, order_type, order_price, order_quantity,
-                                     last_status, maturity_day, quantity_filled, average_price)
+                                     last_status, maturity_day, quantity_filled, average_price, stock_ticker)
         return dummy_new_client_order
 
     @classmethod
@@ -1609,9 +1610,9 @@ class ClientOrder:
                                                    new_single_order.maturity_day)
         quantity_filled = quantity_filled
         average_price = average_price
-
+        stock_ticker = new_single_order.symbol
         client_order = cls(order_id, transaction_time, side, order_type, order_price, order_quantity, last_status,
-                           maturity_day, quantity_filled, average_price)
+                           maturity_day, quantity_filled, average_price, stock_ticker)
         return client_order
 
 

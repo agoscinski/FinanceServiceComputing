@@ -37,6 +37,15 @@ class TestClientLogic:
 
 
 class TestClientDatabaseHandler:
+    def setup_module(module):
+        """ setup any state specific to the execution of the given module."""
+        fsc_client_database_handler.init_database()
+
+    def teardown_module(module):
+        """ teardown any state that was previously setup with a setup_module
+        method.
+        """
+        fsc_client_database_handler.teardown_database()
 
     def test_insert_order(self):
         dummy_order = TradingClass.ClientOrder.create_dummy_client_order()
@@ -47,7 +56,6 @@ class TestClientDatabaseHandler:
         dummy_order = TradingClass.ClientOrder.create_dummy_client_order()
         assert fsc_client_database_handler.update_order(dummy_order.order_id, average_price=11.0,  order_status=4, quantity_filled=None) == None
         assert fsc_client_database_handler.update_order(dummy_order.order_id, dummy_order.last_status, dummy_order.average_price, dummy_order.quantity_filled) == None
-        pass
 
     def test_fetch_order(self):
         dummy_order = TradingClass.ClientOrder.create_dummy_client_order()

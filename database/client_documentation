@@ -15,6 +15,7 @@ OrderQuantity: The quantity of an order
 LastStatus: (0:DONE, 1:PENDING, 2: CANCELED, 3:EXPIRED, 4: NOT_YET_ACKNOWLEDGED, 5:REJECTED)
 QuantitiyFilled: The quantity of this order which has been already sold to other clients
 AveragePrice: The average price the order was sold. This field is 0, if no quantity has been sold yet.
+StockTicker
 
 
 Order_Result
