@@ -806,7 +806,7 @@ class GUIHandler:
     def send_dummy_order(self):
         """For testing"""
         dummy_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
-        self.button_buy_actuated(dummy_order.symbol, dummy_order.side, dummy_order.order_type, dummy_order.price,
+        self.client_logic.process_new_single_order_request(dummy_order.symbol, dummy_order.side, dummy_order.order_type, dummy_order.price,
                                  dummy_order.order_quantity)
 
     def send_order_cancel_request_option(self, order_id):
