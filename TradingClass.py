@@ -288,7 +288,7 @@ class FIXDateTimeUTC(object):
         Returns:
             (FIXDate object)
         """
-        date_object = datetime.datetime.strptime(date_time_stamp_string, "%Y%m%d-%H:%M:%S").date()
+        date_object = datetime.datetime.strptime(date_time_stamp_string, "%Y%m%d-%H:%M:%S")
         return cls(date_object)
 
     @property
@@ -321,7 +321,7 @@ class FIXDateTimeUTC(object):
 
     @mysql_date_stamp_string.setter
     def mysql_date_stamp_string(self, date_stamp_string):
-        self.date_timeF = datetime.datetime.strptime(date_stamp_string, "%Y-%m-%d %H:%M:%S").date()
+        self.date_time = datetime.datetime.strptime(date_stamp_string, "%Y-%m-%d %H:%M:%S")
 
 
 ###################################

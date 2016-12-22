@@ -209,25 +209,28 @@ class TestServerDatabaseHandler:
         assert db_order == test_order
         pass
 
-    # TODO Yelinsheng these tests fail, can you check why and fix it?
     def test_update_order_status(self):
         test_order=TradingClass.Order.create_dummy_order()
         test_order_status=TradingClass.DatabaseHandlerUtils.LastStatus.DONE
-        assert fsc_server_database_handler.update_order_status(test_order,test_order_status) == None
+        assert fsc_server_database_handler.update_order_status(test_order,test_order_status) is not None
+        db_order = fsc_server_database_handler.fetch_order_by_order_id(
+            test_order.client_order_id,test_order.account_company_id,test_order.received_date)
+        assert db_order.last_status == test_order_status
 
     def test_insert_order_cancel(self):
         test_requested_order_cancel=TradingClass.OrderCancel.create_dummy_order_cancel()
-        assert fsc_server_database_handler.insert_order_cancel(test_requested_order_cancel) == None
+        assert fsc_server_database_handler.insert_order_cancel(test_requested_order_cancel) is not None
 
     def test_fetch_order_cancel(self):
         test_order_cancel=TradingClass.OrderCancel.create_dummy_order_cancel()
+        fsc_server_database_handler.insert_order_cancel(test_order_cancel)
         db_order_cancel = fsc_server_database_handler.fetch_order_cancel(test_order_cancel.client_order_cancel_id)
-        assert db_order_cancel == test_order_cancel
-
         #Notes: side in database not retrieved, stock_ticker & order_quantity not in database not retrieved
         db_order_cancel.side = 2
         db_order_cancel.stock_ticker = "TSLA"
-        db_order_cancel.order_quantity = 10
+        db_order_cancel.order_quantity = 100
+        #Executed time is generated when inserting database so it will not be the same to dummy created one
+        test_order_cancel.execution_time = db_order_cancel.execution_time
         assert db_order_cancel == test_order_cancel
         pass
 

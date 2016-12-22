@@ -738,8 +738,8 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
                               account_company_id = first_row[2], order_received_date = TradingClass.FIXDate(first_row[3]),
                               stock_ticker = None , side = None, order_quantity = None, last_status = first_row[4],
                               received_time = TradingClass.FIXDateTimeUTC(first_row[5]),
-                              msg_seq_num = first_row[6], cancel_quantity = first_row[7],
-                              execution_time = TradingClass.FIXDateTimeUTC(first_row[7]))
+                              msg_seq_num = first_row[6], cancel_quantity = float(first_row[7]),
+                              execution_time = TradingClass.FIXDateTimeUTC(first_row[8]))
 
         return order_cancel_fetched
 
@@ -830,16 +830,19 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         Returns:
             order (TradingClass.Order): the order object
         """
-        sql_command = ("select ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
-                       "Side, MaturityDate, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
-                       "CashOrderQuantity from `Order` where ClientOrderID='%s' and Account_CompanyID='%s' "
+        command = ("select ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
+                       "Side, MaturityDate, OrderType, OrderQuantity, Price, LastStatus "
+                        "from `Order` where ClientOrderID='%s' and Account_CompanyID='%s' "
                        "ORDER BY ReceivedDate DESC LIMIT 1") % (client_order_id, account_company_id)
-        order_arguments_rows = self.execute_select_sql_command(sql_command)
-        if len(order_arguments_rows) < 1: return None
-        order_argument_row = list(order_arguments_rows[0])
-        #TODO yelinsheng the dates/times MaturityDate and ReceivedDate have to be encapsulated into a TradingClass FIXDate object
-        order = Order(*order_argument_row)
-        return order
+        order_rows = self.execute_select_sql_command(command)
+        first_row = order_rows[0] if len(order_rows) == 1 else None
+        if first_row is None: return None
+        order_fetched = Order(client_order_id=first_row[0], account_company_id=first_row[1],
+                              received_date=TradingClass.FIXDate(first_row[2]), handling_instruction=first_row[3],
+                              stock_ticker=first_row[4], side=first_row[5],
+                              maturity_date=TradingClass.FIXDate(first_row[6]), order_type=first_row[7],
+                              order_quantity=first_row[8], price=first_row[9], last_status=first_row[10])
+        return order_fetched
 
     def insert_order(self, order):
         """Inserts a TradingClass.Order into the database
@@ -893,7 +896,7 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         sql_command = ("UPDATE `Order` SET LastStatus ='%s' where ClientOrderID='%s' AND Account_CompanyID='%s' "
                        "AND ReceivedDate ='%s'"
                        % (order_status, order.client_order_id, order.account_company_id, order.received_date))
-        update_id = self.execute_responsive_sql_command(sql_command)
+        update_id = self.execute_responsive_insert_sql_command(sql_command)
         return update_id
 
     def fetch_pending_order_with_cumulative_quantity_by_stock_ticker(self, symbol):
