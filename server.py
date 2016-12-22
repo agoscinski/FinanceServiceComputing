@@ -1,14 +1,13 @@
 from tarfile import _section
 import quickfix as fix
 import quickfix42 as fix42
-import re
 import time
 import datetime
 import yahoo_finance
-import MySQLdb
 from enum import Enum
 import matching_algorithm
 import TradingClass
+import utils
 from TradingClass import MarketDataResponse
 from TradingClass import NewSingleOrder
 from TradingClass import OrderCancelRequest
@@ -89,9 +88,16 @@ class ServerFIXApplication(fix.Application):
             self.server_fix_handler.handle_order_cancel_request(message)
 
 class ServerFIXHandler:
-    def __init__(self, server_logic, server_config_file_name):
+    def __init__(self, server_logic):
+        """
+        Args:
+            server_logic (ServerLogic)
+        """
         self.server_logic = server_logic
-        self.server_config_file_name = server_config_file_name
+        server_configuration_handler = utils.ServerConfigFileHandler(application_id=self.server_logic.application_id,
+            start_time=str(self.server_logic.start_time), end_time=str(self.server_logic.end_time),
+            socket_accept_port="5501")
+        self.server_config_file_name = server_configuration_handler.create_config_file(self.server_logic.server_database_handler)
         self.fix_application = None
         self.socket_acceptor = None
 
@@ -271,7 +277,7 @@ class ServerFIXHandler:
         return
 
 
-class ServerLogic:
+class ServerLogic(object):
     """
     Attributes:
         application_id (string): used to identify the server and used for creation for the config file
@@ -281,9 +287,7 @@ class ServerLogic:
         current_server_time (datetime.time): current time of the server
         server_fix_handler
     """
-    exec_id = 0
-    order_id = 0
-    cancel_order_id = 0
+
     def __init__(self, application_id, server_database_handler=None):
         self.application_id = application_id
         self.start_time = datetime.datetime.strptime("00:00:01", "%H:%M:%S").time()
@@ -296,6 +300,9 @@ class ServerLogic:
             self.server_database_handler = server_database_handler
         self.server_database_handler.init_database()
         self.server_fix_handler = ServerFIXHandler(self)
+        self.exec_id = 0
+        self.order_id = 0
+        self.cancel_order_id = 0
         
     @property
     def current_server_time(self):
@@ -757,8 +764,6 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
             order_execution_id (int): The ID of the order execution when inserted
 
         """
-        # TODO use the execute_responsive_insert_sql_command function for this, this function is similar to insert_order
-
         command = (
             "INSERT INTO OrderExecution(OrderExecutionQuantity, OrderExecutionPrice, ExecutionTime, Order_BuyClientOrderID,"
             "Order_BuyCompanyID, Order_BuyReceivedDate, Order_SellClientOrderID, Order_SellCompanyID, Order_SellReceivedDate)"
@@ -825,7 +830,7 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
             client_order_id (string): first part of client_information
             account_company_id (string: second part of client_information
         Returns:
-            order quantity (TradingClass.Order): the order object
+            order (TradingClass.Order): the order object
         """
         sql_command = ("select ClientOrderID,Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
                        "Side, MaturityDate, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID, SenderSubID,"
@@ -834,6 +839,7 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         order_arguments_rows = self.execute_select_sql_command(sql_command)
         if len(order_arguments_rows) < 1: return None
         order_argument_row = list(order_arguments_rows[0])
+        #TODO yelinsheng the dates/times MaturityDate and ReceivedDate have to be encapsulated into a TradingClass FIXDate object
         order = Order(*order_argument_row)
         return order
 

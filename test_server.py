@@ -1,5 +1,4 @@
 import server
-import datetime
 import TradingClass
 
 nasdaq_stock_ticker = "TESTTICKER"
@@ -9,8 +8,7 @@ fsc_server_database_handler = server.ServerDatabaseHandler(user_name="root", use
                                                            database_name="TestServerDatabase", database_port=3306,
                                                            init_database_script_path="./tests/database/server/init_test_server_database.sql")
 server_application_id = "test"
-fsc_server_logic = server.ServerLogic(server_application_id, fsc_server_database_handler)
-
+fsc_server_logic = server.ServerLogic(server_application_id, server_database_handler=fsc_server_database_handler)
 
 def setup_module(module):
     """ setup any state specific to the execution of the given module."""
@@ -194,7 +192,8 @@ class TestServerDatabaseHandler:
 
     def test_insert_order_execution(self):
         order_execution = TradingClass.OrderExecution.create_dummy_order_execution(execution_id=None)
-        assert fsc_server_database_handler.insert_order_execution(order_execution) == 3
+        order_id = fsc_server_database_handler.insert_order_execution(order_execution)
+        assert order_id == 3
 
     def test_fetch_latest_order_by_client_information(self):
         db_order = fsc_server_database_handler.fetch_latest_order_by_client_information('0','MS')
@@ -210,6 +209,7 @@ class TestServerDatabaseHandler:
         assert db_order == test_order
         pass
 
+    # TODO Yelinsheng these tests fail, can you check why and fix it?
     def test_update_order_status(self):
         test_order=TradingClass.Order.create_dummy_order()
         test_order_status=TradingClass.DatabaseHandlerUtils.LastStatus.DONE
