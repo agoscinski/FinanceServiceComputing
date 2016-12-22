@@ -529,11 +529,11 @@ class ClientLogic():
             self.process_order_canceled_respond(execution_report)
         elif execution_report.execution_type == TradingClass.FIXHandlerUtils.ExecutionType.NEW:
             self.process_order_acknowlegded_respond(execution_report)
-        elif execution_report.ord_status == TradingClass.FIXHandlerUtils.ExecutionType.REJECTED:
+        elif execution_report.execution_type == TradingClass.FIXHandlerUtils.ExecutionType.REJECTED:
             self.process_order_rejected_respond(execution_report)
-        elif execution_report.ord_status == TradingClass.FIXHandlerUtils.ExecutionType.PARTIAL_FILL:
+        elif execution_report.execution_type == TradingClass.FIXHandlerUtils.ExecutionType.PARTIAL_FILL:
             self.process_order_partial_filled_respond(execution_report)
-        elif execution_report.ord_status == TradingClass.FIXHandlerUtils.ExecutionType.FILL:
+        elif execution_report.execution_type == TradingClass.FIXHandlerUtils.ExecutionType.FILL:
             self.process_order_filled_respond(execution_report)
         return
 
@@ -686,9 +686,6 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         sql_command = sql_command[:len(sql_command)-1]
 
         sql_command += (" where OrderID='%s'" % (order_id))
-
-        print sql_command
-
         self.execute_nonresponsive_sql_command(sql_command)
         pass
 
