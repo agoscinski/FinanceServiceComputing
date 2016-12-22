@@ -272,15 +272,34 @@ class ServerFIXHandler:
 
 
 class ServerLogic:
+    """
+    Attributes:
+        application_id (string): used to identify the server and used for creation for the config file
+        start_time (datetime.time): the starting time for trading
+        end_time (datetime.time): the ending time for trading
+        server_database_handler (ServerDatabaseHandler)
+        current_server_time (datetime.time): current time of the server
+        server_fix_handler
+    """
     exec_id = 0
     order_id = 0
     cancel_order_id = 0
-
-    def __init__(self, server_config_file_name, server_database_handler=None):
-        self.server_fix_handler = ServerFIXHandler(self, server_config_file_name)
-        self.server_database_handler = ServerDatabaseHandler() if server_database_handler == None else server_database_handler
-        self.market_simulation_handler = MarketSimulationHandler()
-        self.initialize_new_database = False
+    def __init__(self, application_id, server_database_handler=None):
+        self.application_id = application_id
+        self.start_time = datetime.datetime.strptime("00:00:01", "%H:%M:%S").time()
+        self.end_time = datetime.datetime.strptime("23:59:59", "%H:%M:%S").time()
+        if server_database_handler is None:
+            self.server_database_handler = ServerDatabaseHandler(user_name="root", user_password="root",
+                                                database_name="ServerDatabase", database_port=3306,
+                                                init_database_script_path="./database/server/init_server_database.sql")
+        else:
+            self.server_database_handler = server_database_handler
+        self.server_database_handler.init_database()
+        self.server_fix_handler = ServerFIXHandler(self)
+        
+    @property
+    def current_server_time(self):
+        return datetime.datetime.utcnow().time()
 
     def start_server(self):
         if self.initialize_new_database:
@@ -348,7 +367,7 @@ class ServerLogic:
 
         pass
 
-    def process_order_request(self, requested_fix_order):
+    def process_new_single_order_request(self, requested_fix_order):
         """Process an order request from the FIX Handler
 
         Args:
@@ -384,8 +403,8 @@ class ServerLogic:
         return None
 
     def process_invalid_order_request(self, requested_order):
-        order_id = requested_order.order_id
-        exec_id = requested_order.order_id
+        order_id = str(self.gen_order_id())
+        exec_id = str(self.server_database_handler.insert_execution_report(None))
         cl_ord_id = requested_order.client_order_id
         receiver_comp_id = requested_order.account_company_id
         exec_trans_type = TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW
@@ -500,8 +519,9 @@ class ServerLogic:
 
         order_id = order_cancel_id
         orig_cl_ord_id = requested_order_cancel.client_order_id
-        cl_ord_id = requested_order_cancel.client_order_cancel_id
-        exec_id = order_cancel_id
+
+        cl_ord_id = requested_order_cancel.order_cancel_id
+        exec_id = str(self.server_database_handler.insert_execution_report(None))
         receiver_comp_id = requested_order_cancel.account_company_id
         exec_trans_type =  TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW
         exec_type = TradingClass.FIXHandlerUtils.ExecutionType.CANCELED
@@ -719,7 +739,12 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         return order_cancel_fetched
 
     def insert_execution_report(self, execution_report):
-        # MAYBETODO
+        """
+        Args:
+            execution_report (TradingClass.ExecutionReport)
+        Returns:
+            execution_id
+        """
         return 0
 
     def insert_order_execution(self, order_execution):

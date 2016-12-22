@@ -92,3 +92,62 @@ class TestGlobalFunctions:
 
     def test_get_fix_group_field(self):
         pass
+
+class TestOrderCancelRequest:
+
+    def test_from_fix_message(self):
+        dummy_order_cancel_request=TradingClass.OrderCancelRequest.\
+            create_dummy_order_cancel_request(orig_cl_ord_id="0", cl_ord_id="0", symbol="TSLA",
+                                              side=TradingClass.FIXHandlerUtils.Side.BUY,
+                                              transact_time=TradingClass.FIXDateTimeUTC.from_date_fix_time_stamp_string("20161120-10:00:00"))
+        fix_message = dummy_order_cancel_request.to_fix_message()
+        order_cancel_request=TradingClass.OrderCancelRequest.from_fix_message(fix_message)
+
+        assert type(order_cancel_request.orig_cl_ord_id) is str
+        assert type(order_cancel_request.cl_ord_id) is str
+        assert type(order_cancel_request.symbol) is str
+        assert type(order_cancel_request.side) is str
+        assert type(order_cancel_request.transact_time) is TradingClass.FIXDateTimeUTC
+        assert type(order_cancel_request.order_qty) is float
+        assert type(order_cancel_request.sender_comp_id) is str
+
+class TestOrderCancelReject:
+
+    def test_from_fix_message(self):
+        dummy_order_cancel_reject=TradingClass.OrderCancelReject.\
+            create_dummy_order_cancel_reject(orig_cl_ord_id="0", cl_ord_id="0", order_id="0", ord_status="0",
+                                             receiver_comp_id="GS")
+        fix_message = dummy_order_cancel_reject.to_fix_message()
+        order_cancel_reject=TradingClass.OrderCancelReject.from_fix_message(fix_message)
+
+        assert type(order_cancel_reject.orig_cl_ord_id) is str
+        assert type(order_cancel_reject.cl_ord_id) is str
+        assert type(order_cancel_reject.order_id) is str
+        assert type(order_cancel_reject.ord_status) is str
+        assert type(order_cancel_reject.receiver_comp_id) is str
+
+class TestNewSingleOrder:
+
+    def test_from_fix_message(self):
+        dummy_new_single_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
+        fix_message = dummy_new_single_order.to_fix_message()
+        new_single_order = TradingClass.NewSingleOrder.from_fix_message(fix_message)
+        assert type(new_single_order.client_order_id) is str
+        assert type(new_single_order.handling_instruction) is str
+        assert type(new_single_order.symbol) is str
+        assert type(new_single_order.side) is str
+        assert type(new_single_order.maturity_month_year) is TradingClass.FIXYearMonth
+        assert type(new_single_order.maturity_day) is int
+        assert type(new_single_order.transaction_time) is TradingClass.FIXDateTimeUTC
+        assert type(new_single_order.order_quantity) is float
+        assert type(new_single_order.order_type) is str
+        assert type(new_single_order.price) is float
+
+
+
+class TestClientOrder:
+    def test_from_new_single_order(self):
+        dummy_new_single_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
+        test_client_order=TradingClass.ClientOrder.from_new_single_order(dummy_new_single_order,2,101.,5)
+        pass
+
