@@ -1,13 +1,14 @@
 from tarfile import _section
 import quickfix as fix
 import quickfix42 as fix42
+import re
 import time
 import datetime
 import yahoo_finance
+import MySQLdb
 from enum import Enum
 import matching_algorithm
 import TradingClass
-import utils
 from TradingClass import MarketDataResponse
 from TradingClass import NewSingleOrder
 from TradingClass import OrderCancelRequest
@@ -88,16 +89,9 @@ class ServerFIXApplication(fix.Application):
             self.server_fix_handler.handle_order_cancel_request(message)
 
 class ServerFIXHandler:
-    def __init__(self, server_logic):
-        """
-        Args:
-            server_logic (ServerLogic)
-        """
+    def __init__(self, server_logic, server_config_file_name):
         self.server_logic = server_logic
-        server_configuration_handler = utils.ServerConfigFileHandler(application_id=self.server_logic.application_id,
-            start_time=str(self.server_logic.start_time), end_time=str(self.server_logic.end_time),
-            socket_accept_port="5501")
-        self.server_config_file_name = server_configuration_handler.create_config_file(self.server_logic.server_database_handler)
+        self.server_config_file_name = server_config_file_name
         self.fix_application = None
         self.socket_acceptor = None
 
@@ -302,26 +296,21 @@ class ServerLogic:
             self.server_database_handler = server_database_handler
         self.server_database_handler.init_database()
         self.server_fix_handler = ServerFIXHandler(self)
-
+        
     @property
     def current_server_time(self):
         return datetime.datetime.utcnow().time()
 
     def start_server(self):
+        if self.initialize_new_database:
+            self.server_database_handler.create_database()
+            self.market_simulation_handler.init_market()
         self.server_fix_handler.start()
         while 1: time.sleep(1)
         self.stop_server()
 
     def stop_server(self):
         self.server_fix_handler.stop()
-
-    def gen_order_id(self):
-        self.order_id = self.order_id + 1
-        return self.order_id
-
-    def gen_order_cancel_id(self):
-        self.cancel_order_id = self.cancel_order_id + 1
-        return self.cancel_order_id
 
     def authenticate_user(self, user_id):
         """Authenticates user
@@ -460,8 +449,8 @@ class ServerLogic:
         Returns:
             None
         """
-        order_id = str(self.gen_order_cancel_id())
-        cl_ord_id = requested_order_cancel.order_cancel_id
+        order_id = requested_order_cancel.order_cancel_id
+        cl_ord_id = requested_order_cancel.client_order_cancel_id
         orig_cl_ord_id = requested_order_cancel.client_order_id
         receiver_comp_id = requested_order_cancel.account_company_id
         ord_status = '8'
@@ -523,14 +512,14 @@ class ServerLogic:
             order.client_order_id, order.account_company_id, order.received_date)
         requested_order_cancel.cancel_quantity = order.price-cumulative_quantity
         requested_order_cancel.last_status = TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED
-        requested_order_cancel.msg_seq_num = self.gen_order_cancel_id()
 
-        self.server_database_handler.insert_order_cancel(requested_order_cancel)
+        order_cancel_id= self.server_database_handler.insert_order_cancel(requested_order_cancel)
         # self.server_database_handler.update_order_cancel_success(requested_order_cancel.client_order_id,
         #        requested_order_cancel.account_company_id, OrderCancelStatus.CANCELED, cumulative_quantity, executed_time)
 
-        order_id = str(self.gen_order_cancel_id())
+        order_id = order_cancel_id
         orig_cl_ord_id = requested_order_cancel.client_order_id
+
         cl_ord_id = requested_order_cancel.order_cancel_id
         exec_id = str(self.server_database_handler.insert_execution_report(None))
         receiver_comp_id = requested_order_cancel.account_company_id
@@ -725,16 +714,29 @@ class ServerLogic:
 
 class ServerDatabaseHandler(TradingClass.DatabaseHandler):
 
-    def fetch_order_cancel(self, order_cancel_id):
-        """Returns an order cancel for an order cancel id
+    def fetch_order_cancel(self, client_order_cancel_id):
+        """Returns an order cancel for an client_order cancel id
         Args:
-            order_cancel_id (int): the id for which the cancel is fetched
+            client_order_cancel_id (int): the id for which the cancel is fetched
 
         Return:
             order_cancel (TradingClass.OrderCancel)
         """
-        #TODO Husein
-        return TradingClass.OrderCancel.create_dummy_order_cancel()
+
+        #Notes: side in database not retrieved, stock_ticker & order_quantity not in database not retrieved
+        command = ("select Order_ClientOrderID, OrderCancelID, Order_Account_CompanyID, Order_ReceivedDate, "
+                       "LastStatus, ReceivedTime, MsgSeqNum, CancelQuantity, ExecutionTime from OrderCancel"
+                       " where OrderCancelID='%s'") % (client_order_cancel_id)
+        order_cancel_rows = self.execute_select_sql_command(command)
+        first_row = order_cancel_rows[0] if len(order_cancel_rows) == 1 else None
+        order_cancel_fetched = TradingClass.OrderCancel(client_order_id = first_row[0], client_order_cancel_id = first_row[1],
+                              account_company_id = first_row[2], order_received_date = TradingClass.FIXDate(first_row[3]),
+                              stock_ticker = None , side = None, order_quantity = None, last_status = first_row[4],
+                              received_time = TradingClass.FIXDateTimeUTC(first_row[5]),
+                              msg_seq_num = first_row[6], cancel_quantity = first_row[7],
+                              execution_time = TradingClass.FIXDateTimeUTC(first_row[7]))
+
+        return order_cancel_fetched
 
     def insert_execution_report(self, execution_report):
         """
@@ -864,15 +866,16 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         Returns:
             order_cancel_id (int)
         """
-        last_status = 0 #TODO Husein is this status correct
+        last_status = TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED
         executed_time = FIXDateTimeUTC.create_for_current_time()
         sql_command = ("INSERT INTO OrderCancel(Order_ClientOrderID, OrderCancelID, Order_Account_CompanyID, " \
                       "Order_ReceivedDate, LastStatus, ReceivedTime, MsgSeqNum, CancelQuantity, ExecutionTime) " \
                       "VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%s')"%(requested_order_cancel.client_order_id,
-            requested_order_cancel.order_cancel_id,requested_order_cancel.account_company_id,
+            requested_order_cancel.client_order_cancel_id,requested_order_cancel.account_company_id,
             requested_order_cancel.order_received_date, last_status, requested_order_cancel.received_time.date_time,
             requested_order_cancel.msg_seq_num,requested_order_cancel.cancel_quantity, executed_time.date_time))
-        self.execute_nonresponsive_sql_command(sql_command) #TODO Husein use execute_responsive_insert_sql_command
+        order_cancel_id = self.execute_responsive_insert_sql_command(sql_command)
+        return order_cancel_id
 
     def update_order_status(self, order, order_status):
         """Update TradingClass.Order status into database
@@ -886,7 +889,8 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         sql_command = ("UPDATE `Order` SET LastStatus ='%s' where ClientOrderID='%s' AND Account_CompanyID='%s' "
                        "AND ReceivedDate ='%s'"
                        % (order_status, order.client_order_id, order.account_company_id, order.received_date))
-        self.execute_nonresponsive_sql_command(sql_command)
+        update_id = self.execute_responsive_sql_command(sql_command)
+        return update_id
 
     def fetch_pending_order_with_cumulative_quantity_by_stock_ticker(self, symbol):
         """Fetches all orders from the database with status pending and returns them in a list of orders

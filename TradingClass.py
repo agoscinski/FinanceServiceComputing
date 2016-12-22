@@ -430,7 +430,6 @@ class FIXHandlerUtils:
         else:
             return None
 
-
 class DatabaseHandler(object):
     def __init__(self, database_host="localhost", user_name="root", user_password="root", database_name="Database",
                  database_port=3306,
@@ -1486,12 +1485,12 @@ class OrderCancel(object):
         execution_time (FixDateTimeUTC): execution time of cancelling the order
     """
 
-    def __init__(self, client_order_id, order_cancel_id, account_company_id, order_received_date, stock_ticker,
+    def __init__(self, client_order_id, client_order_cancel_id, account_company_id, order_received_date, stock_ticker,
                  side,
                  order_quantity, last_status, received_time, msg_seq_num=None, cancel_quantity=None,
                  execution_time=None, on_behalf_of_company_id=None, sender_sub_id=None):
         self.client_order_id = client_order_id
-        self.order_cancel_id = order_cancel_id
+        self.client_order_cancel_id = client_order_cancel_id
         self.account_company_id = account_company_id
         self.order_received_date = order_received_date
         self.stock_ticker = stock_ticker
@@ -1515,7 +1514,7 @@ class OrderCancel(object):
         """
 
         client_order_id = order_cancel_request.orig_cl_ord_id
-        order_cancel_id = order_cancel_request.cl_ord_id
+        client_order_cancel_id = order_cancel_request.cl_ord_id
         account_company_id = order_cancel_request.sender_comp_id
         order_received_date = None
         received_time = FIXDateTimeUTC.create_for_current_time()
@@ -1523,29 +1522,58 @@ class OrderCancel(object):
         side = order_cancel_request.side
         order_quantity = order_cancel_request.order_qty
         last_status = DatabaseHandlerUtils.LastStatus.PENDING
-        message_sequence_number = None
+        message_sequence_number = 0
         on_behalf_of_company_id = None
         sender_sub_id = None
         cancel_quantity = None
         execution_time = None
-        order_cancel = cls(client_order_id, order_cancel_id, account_company_id, order_received_date, stock_ticker,
+        order_cancel = cls(client_order_id, client_order_cancel_id, account_company_id, order_received_date, stock_ticker,
                            side, order_quantity, last_status, received_time, message_sequence_number, cancel_quantity,
                            execution_time, on_behalf_of_company_id, sender_sub_id)
         return order_cancel
 
     @classmethod
-    def create_dummy_order_cancel(cls, client_order_id='0', order_cancel_id='1', account_company_id='MS',
-                                  order_received_date=FIXDate.from_year_month_day(2016, 11, 8), stock_ticker="TSLA",
-                                  side=2, order_quantity=100, last_status=DatabaseHandlerUtils.LastStatus.CANCELED,
-                                  received_time=FIXDateTimeUTC.create_for_current_time(), msg_seq_num=1,
-                                  cancel_quantity=10,
-                                  execution_time=FIXDateTimeUTC.create_for_current_time()):
+    def create_dummy_order_cancel(cls, client_order_id = '0', client_order_cancel_id = '1', account_company_id = 'MS',
+        order_received_date = FIXDate.from_year_month_day(2016,11,8), stock_ticker = "TSLA",
+        side = 2, order_quantity = 100, last_status = DatabaseHandlerUtils.LastStatus.CANCELED,
+        received_time = FIXDateTimeUTC.from_date_fix_time_stamp_string("20161201-11:11:11"), msg_seq_num = 1,
+        cancel_quantity=10, execution_time=FIXDateTimeUTC.from_date_fix_time_stamp_string("20161201-12:12:12")):
+
         """For testing"""
-        dummy_order_cancel = cls(client_order_id, order_cancel_id, account_company_id, order_received_date,
+        dummy_order_cancel = cls(client_order_id, client_order_cancel_id, account_company_id, order_received_date,
                                  stock_ticker, side, order_quantity, last_status, received_time, msg_seq_num,
                                  cancel_quantity, execution_time)
         return dummy_order_cancel
 
+    @property
+    def order_cancel_id(self):
+        """
+        Returns:
+             order_cancel_id (string):
+        """
+        return Order.create_order_id(self.client_order_cancel_id, self.account_company_id)
+
+    @staticmethod
+    def create_order_cancel_id(client_order_cancel_id, account_company_id):
+        """Creates an order cancel id from the components. Use this method if you want
+         to create an order cancel id
+
+        Args:
+            client_order_cancel_id (string)
+            account_company_id (string)
+        Returns:
+             order_cancel_id (string):
+        """
+        return client_order_cancel_id + "_" + account_company_id
+
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(self, other)
 
 class ClientOrder:
     """This class is designed after the Order table of the client database"""

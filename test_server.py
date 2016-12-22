@@ -44,18 +44,6 @@ class TestServerLogic:
         # TODO Emely
         pass
 
-    def test_fetch_latest_order_by_client_information(self):
-        #TODO Husein
-        pass
-
-    def test_update_order_status(self):
-        #TODO Husein
-        pass
-
-    def test_fetch_order_cancel(self):
-        #TODO Husein
-        pass
-
     """
     def test_process_valid_order_cancel_request(self):
         # TODO Husein
@@ -208,6 +196,20 @@ class TestServerDatabaseHandler:
         order_execution = TradingClass.OrderExecution.create_dummy_order_execution(execution_id=None)
         assert fsc_server_database_handler.insert_order_execution(order_execution) == 3
 
+    def test_fetch_latest_order_by_client_information(self):
+        db_order = fsc_server_database_handler.fetch_latest_order_by_client_information('0','MS')
+        test_order = TradingClass.Order(client_order_id='0', account_company_id='MS',
+                                                 received_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-09'), handling_instruction=1,
+                                                 maturity_date=TradingClass.FIXDate.from_mysql_date_stamp_string(
+                                                     '2016-11-20'), stock_ticker='TSLA',
+                                                 side=TradingClass.DatabaseHandlerUtils.Side.SELL,
+                                                 order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT,
+                                                 order_quantity=2000., price=1010.,
+                                                 last_status=TradingClass.DatabaseHandlerUtils.LastStatus.PENDING)
+        assert db_order == test_order
+        pass
+
     def test_update_order_status(self):
         test_order=TradingClass.Order.create_dummy_order()
         test_order_status=TradingClass.DatabaseHandlerUtils.LastStatus.DONE
@@ -216,3 +218,16 @@ class TestServerDatabaseHandler:
     def test_insert_order_cancel(self):
         test_requested_order_cancel=TradingClass.OrderCancel.create_dummy_order_cancel()
         assert fsc_server_database_handler.insert_order_cancel(test_requested_order_cancel) == None
+
+    def test_fetch_order_cancel(self):
+        test_order_cancel=TradingClass.OrderCancel.create_dummy_order_cancel()
+        db_order_cancel = fsc_server_database_handler.fetch_order_cancel(test_order_cancel.client_order_cancel_id)
+        assert db_order_cancel == test_order_cancel
+
+        #Notes: side in database not retrieved, stock_ticker & order_quantity not in database not retrieved
+        db_order_cancel.side = 2
+        db_order_cancel.stock_ticker = "TSLA"
+        db_order_cancel.order_quantity = 10
+        assert db_order_cancel == test_order_cancel
+        pass
+
