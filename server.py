@@ -458,8 +458,8 @@ class ServerLogic(object):
         cl_ord_id = requested_order_cancel.client_order_cancel_id
         orig_cl_ord_id = requested_order_cancel.client_order_id
         receiver_comp_id = requested_order_cancel.account_company_id
-        ord_status = '8'
-        cxl_rej_response_to = '1'
+        ord_status =  TradingClass.FIXHandlerUtils.OrderStatus.REJECTED
+        cxl_rej_response_to = '1' #TODO Husein please use enums in FIXHandlerUtils, und if there is no, just add them
         cxl_rej_reason = None
         order_cancel_reject = OrderCancelReject(orig_cl_ord_id, cl_ord_id, order_id, ord_status, cxl_rej_response_to,
                                                 receiver_comp_id, cxl_rej_reason)
