@@ -949,6 +949,20 @@ class OrderCancelRequest(object):
         return dummy_new_order_cancel_request
 
 
+    @classmethod
+    def from_client_order(self, client_order, new_order_id):
+        """
+        Args:
+            client_order (ClientOrder)
+            new_order_id (string): some new order to make it identifiable
+        Return:
+            OrderCancelRequest
+        """
+        transaction_time = FIXDateTimeUTC.create_for_current_time()
+        OrderCancelRequest(client_order.order_id, new_order_id, client_order.stock_ticker, client_order.side,
+                           transaction_time, client_order.order_quantity)
+
+
 class OrderCancelReject(object):
     """Constructor of class OrderCancelReject represents a quickfix order cancel reject (message type 9):
     Args:
@@ -1542,7 +1556,7 @@ class OrderCancel(object):
         """For testing"""
         dummy_order_cancel = cls(client_order_id, client_order_cancel_id, account_company_id, order_received_date,
                                  stock_ticker, side, order_quantity, last_status, received_time, msg_seq_num,
-                                 cancel_quantity, execution_time)
+                                    cancel_quantity, execution_time)
         return dummy_order_cancel
 
     @property
