@@ -16,7 +16,8 @@ class GUISignal(htmlPy.Object):
     # GUI callable functions have to be inside a class.
     # The class should be inherited from htmlPy.Object.
 
-    #TODO add some function in GUI to cancel an order
+    #TODO add the function somehow in the GUI to cancel an order. The function should forward the order_id
+
     #TODO Yelinsheng add to GUI that Client orders are shown in GUI use database_name for this
     def __init__(self, gui_hadler):
         super(GUISignal, self).__init__()
@@ -365,7 +366,7 @@ class ClientFIXHandler:
         price = self.get_field_value(fix.Price(), message)
 
         order_execution = TradingClass.ExecutionReport(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type,
-                                                       ord_status, symbol, side, leaves_qty, cum_qty, avg_px, price)
+                                                       ord_status, symbol, side, leaves_qty, cum_qty, avg_px, price, orig_cl_ord_id)
         self.client_logic.process_order_execution_respond(order_execution)
 
         return
@@ -588,8 +589,13 @@ class ClientLogic():
     def process_order_cancel_request(self, order_id):
         # Construct Fix Order Object to be sent to the fix handler
         orig_cl_ord_id = order_id
-        cl_ord_id = '1'  # self.client_fix_handler.fix_application.gen_order_id()
-        # should be retrieved from database
+        cl_ord_id = self.client_database_handler.generate_new_cancel_order_id()
+        #TODO Husein use this instead, when you finished testing this {
+        #client_order = self.client_database_handler.fetch_order(order_id)
+        #order_cancel_request = TradingClass.OrderCancelReject.from_client_order(client_order, cl_ord_id)
+        #self.client_fix_handler.send_order_cancel_request(order_cancel_request)
+        #TODO } and delete the rest
+        #  should be retrieved from database
         symbol = 'TSLA'
         side = TradingClass.FIXHandlerUtils.Side.BUY
         order_qty = 100
@@ -599,8 +605,13 @@ class ClientLogic():
         return
 
     def process_order_cancel_reject(self, order_cancel_reject):
-        # TODO Database Query Update Order Cancel Rejected
-        print "reject the order cancellation"
+        """
+        Args
+            order_cancel_request (TradingClass.OrderCancelReject)
+        Return:
+             None
+        """
+        self.client_database_handler.update_order(order_cancel_reject.orig_cl_ord_id, order_status=TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED)
 
     def request_trading_transactions(self, user_name):
         # DELETE
@@ -624,7 +635,6 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
     Attributes:
         application_id (string): the id used from the client, used to create an order id
     """
-    last_order_id = 0
     last_market_data_request_id = 0
 
     def __init__(self, database_host, user_name, user_password, database_name,
@@ -636,6 +646,9 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
     def generate_new_client_order_id(self):
         current_time = TradingClass.FIXDateTimeUTC.create_for_current_time()
         return self.application_id + "_" + str(current_time)
+
+    def generate_new_cancel_order_id(self):
+        return '1'
 
     def insert_order(self, order):
         """Inserts an order into client database
@@ -924,4 +937,12 @@ class GUIHandler:
                                                            order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
                                                            price=float(1000),
                                                            quantity=float(1000))
-    #TODO Valentin scenario 4 order is canceled
+    #TODO Valentin
+    def scenario_4(self):
+        #TODO use process_order_cancel_request
+        pass
+
+    def scenario_5(self):
+        client_order = TradingClass.ClientOrder.create_dummy_client_order(order_id="wrong_id")
+        order_cancel_request = TradingClass.OrderCancelReject.from_client_order(client_order, "new_id")
+        self.client_fix_handler.send_order_cancel_request(order_cancel_request)
