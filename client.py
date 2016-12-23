@@ -16,6 +16,7 @@ class GUISignal(htmlPy.Object):
     # GUI callable functions have to be inside a class.
     # The class should be inherited from htmlPy.Object.
 
+    #TODO Yelinsheng add to GUI that Client orders are shown in GUI use database_name for this
     def __init__(self, gui_hadler):
         super(GUISignal, self).__init__()
         self.gui_handler = gui_hadler
@@ -663,8 +664,6 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         Return:
             None
         """
-        # TODO Yelinsheng and write test in test_client.py
-        # TODO if the value is None, the value is not updated
         sql_command = "UPDATE `Order` SET"
         set_part = []
 
@@ -692,7 +691,6 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         Return:
             order (TradingClass.ClientOrder)
         """
-        # TODO Yelinsheng and write test in test_client.py
         sql_command = ("select TransactionTime, Side, OrderType, OrderQuantity, OrderPrice,"
                        "LastStatus, MaturityDate, QuantityFilled, AveragePrice from "
                        "`Order` where OrderID='%s'") % (order_id)
@@ -826,7 +824,7 @@ class GUIHandler:
         print "fresh chart"
 
         '''
-        # TODO yenlinsheng finish these functions
+        # OPTIONALTODO finish these functions
         quantity_chart_json = self.extract_quantity_chart_json(market_data)
         stock_course_chart_json = self.extract_course_chart_json(market_data)
         stock_information_json = self.extract_stock_information_json(market_data)
@@ -921,7 +919,6 @@ class GUIHandler:
         pass
 
     def scenario_3(self):
-        # TODO Yelinsheng
         self.client_logic.process_new_single_order_request(stock_ticker="MS",
                                                            side=TradingClass.FIXHandlerUtils.Side.SELL,
                                                            order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
