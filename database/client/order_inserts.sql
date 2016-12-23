@@ -1,0 +1,1 @@
+INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice, OrderQuantity, LastStatus, MaturityDate, StockTicker) VALUES('client_2016-11-09-10:40:00','2016-11-09 10:40:01','1','2','1000','500', '1', '2016-11-10','GC=F');
