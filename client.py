@@ -16,6 +16,7 @@ class GUISignal(htmlPy.Object):
     # GUI callable functions have to be inside a class.
     # The class should be inherited from htmlPy.Object.
 
+    #TODO add some function in GUI to cancel an order
     #TODO Yelinsheng add to GUI that Client orders are shown in GUI use database_name for this
     def __init__(self, gui_hadler):
         super(GUISignal, self).__init__()
