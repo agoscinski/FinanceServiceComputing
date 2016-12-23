@@ -461,16 +461,16 @@ class ClientLogic():
 
         offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, \
         closing_price, day_high, day_low = self.extract_market_data_information(market_data)
-        # TODO tobefixed not working comment it out to avoid error
+        # OPTIONALTODO tobefixed not working comment it out to avoid error
         """
         five_smallest_offers_price, five_smallest_offers_quantity = self.extract_five_smallest_offers(offers_price,
                                                                                                       offers_quantity)
         five_biggest_bids_price, five_biggest_bids_quantity = self.extract_five_biggest_bids(bids_price, bid_quantity)
         """
         print offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, closing_price, day_high, day_low
-        # TODO here should be some database interaction
+        # OPTIONALTODO here should be some database interaction
 
-        # TODO tobefixed not working comment it out to avoid error
+        # OPTIONALTODO tobefixed not working comment it out to avoid error
         """
         order_book_buy = TradingClass.OrderBookBuy(five_biggest_bids_price, five_biggest_bids_quantity)
         order_book_sell = TradingClass.OrderBookBuy(five_smallest_offers_price, five_smallest_offers_quantity)
@@ -479,7 +479,7 @@ class ClientLogic():
         order_book_sell = TradingClass.OrderBookBuy([100, 90, 80, 70, 60], [10, 11, 12, 13, 15, 16])
         stock_information = TradingClass.StockInformation(current_price, day_high, day_low)
 
-        # TODO how todo date
+        # OPTIONALTODO how todo date
         current_date = datetime.date.today()
         stock_history = TradingClass.StockHistory(current_date, current_price, current_quantity)
         gui_market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
@@ -599,7 +599,6 @@ class ClientLogic():
         return
 
     def process_order_cancel_reject(self, order_cancel_reject):
-        # TODO what is the purpose of this function?
         # TODO Database Query Update Order Cancel Rejected
         print "reject the order cancellation"
 
@@ -925,3 +924,4 @@ class GUIHandler:
                                                            order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
                                                            price=float(1000),
                                                            quantity=float(1000))
+    #TODO Valentin scenario 4 order is canceled
