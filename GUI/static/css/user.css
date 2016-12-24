@@ -8,9 +8,19 @@
   border: 1px solid #e3e3e3;
 
 }
-.fsc-width-4{
+.fsc-width-3-5{
   display: inline-block;
-  width:40%;
+  width:35%;
+  height: 600px;
+  float: left;
+  margin-top: 55px;
+  background: rgb(238, 238, 238);
+  border: 1px solid #e3e3e3;
+}
+
+.fsc-width-4-5{
+  display: inline-block;
+  width:45%;
   height: 600px;
   float: left;
   margin-top: 55px;
@@ -141,7 +151,7 @@
 }
 
 .fsc-history table{
-  width: 70%;
+  width: 99%;
   margin-left: auto;
   margin-right: auto;
   background: rgb(238, 238, 238);
@@ -192,4 +202,19 @@
   width:100%;
   margin-top: 10px;
   margin-bottom:10px;
+}
+.fsc-btn-cancel{
+  display: inline-block;
+  vertical-align: middle;
+  padding: 0px 2px;
+  line-height: 0.9;
+  height: 18px;
+}
+
+#tradingTransaction{
+  font-size: 12px;
+}
+
+#tradingTransaction tr{
+  height:25px;
 }

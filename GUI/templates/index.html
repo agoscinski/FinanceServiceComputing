@@ -110,17 +110,19 @@
         </div>
       </div>
 
+
     </div>
-    <div class="fsc-width-4">
+    <div class="fsc-width-3-5">
       <div class="fsc-chart-container">
         <div id="main" class="fsc-chart"></div>
       </div>
     </div>
-    <div class="fsc-width-4">
+    <div class="fsc-width-4-5">
       <div class="fsc-transaction text-center">
         <h4>Order Book</h4>
         <table class="table table-striped">
           <tbody id="orderBook">
+
 
           </tbody>
         </table>
@@ -130,10 +132,15 @@
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>time</th>
-              <th>price</th>
-              <th>quantity</th>
-              <th>side</th>
+              <th>Time</th>
+              <th>Symbol</th>
+              <th>Price /$</th>
+              <th>Volumn</th>
+              <th>Side</th>
+              <th>Status</th>
+              <th>Filled</th>
+              <th>Avg Price</th>
+              <th>Cancel</th>
             </tr>
           </thead>
           <tbody id="tradingTransaction">
@@ -208,15 +215,35 @@
       var transactionData=JSON.parse(transactionJson);
       var tmp='';
       for(var i=0;i<transactionData.content.length;i++){
+        if(transactionData.content[i].average_price == null){
+          transactionData.content[i].average_price='None';
+        }
         tmp=tmp+'\
-          <tr>\
-            <td>'+transactionData.content[i].time+'</td>\
-            <td>'+transactionData.content[i].price+'$</td>\
-            <td>'+transactionData.content[i].quantity+'</td>\
+          <tr>';
+
+        tmp=tmp+'\
+            <td>'+transactionData.content[i].transaction_time+'</td>\
+            <td>'+transactionData.content[i].stock_ticker+'</td>\
+            <td>'+transactionData.content[i].order_price+'</td>\
+            <td>'+transactionData.content[i].order_quantity+'</td>\
             <td>'+transactionData.content[i].side+'</td>\
-          </tr>';
+            <td>'+transactionData.content[i].last_status+'</td>\
+            <td>'+transactionData.content[i].quantity_filled+'</td>\
+            <td>'+transactionData.content[i].average_price+'</td>';
+          if(transactionData.content[i].last_status == 'PENDING'){
+            tmp=tmp+'<td><a class="btn fsc-btn-cancel btn-xs btn-danger" data-bind="true" href="orderCancel(\''+transactionData.content[i].order_id+'\')">cancel</a></td>';
+          }
+          else{
+            tmp=tmp+'<td>—</td>';
+          }
+          tmp=tmp+'</tr>';
+
       }
       $('#tradingTransaction').html(tmp);
+    }
+
+    function orderCancel(orderID){
+      GUISignal.orderCancel(orderID);
     }
 
 

@@ -16,9 +16,6 @@ class GUISignal(htmlPy.Object):
     # GUI callable functions have to be inside a class.
     # The class should be inherited from htmlPy.Object.
 
-    #TODO add the function somehow in the GUI to cancel an order. The function should forward the order_id
-
-    #TODO Yelinsheng add to GUI that Client orders are shown in GUI use database_name for this
     def __init__(self, gui_hadler):
         super(GUISignal, self).__init__()
         self.gui_handler = gui_hadler
@@ -37,14 +34,26 @@ class GUISignal(htmlPy.Object):
     @htmlPy.Slot()
     def logOut(self):
         self.gui_handler.client_logic.logout()
+        transactionJson='{"content":[]}'
+        self.refreshTransaction(transactionJson)
 
     @htmlPy.Slot(str)
     def searchStock(self, stockCode):
         self.gui_handler.search_for_stock_actuated(stockCode)
 
+    # TODO yelinsheng: add the function somehow in the GUI to cancel an order. The function should forward the order_id
+    @htmlPy.Slot(str)
+    def orderCancel(self, OrderID):
+        print OrderID
+
+    # TODO Yelinsheng add to GUI that Client orders are shown in GUI use database_name for this
     @htmlPy.Slot(str)
     def refreshTransaction(self,transactionJson):
-        print transactionJson
+        """This function is called to refresh transaction area in GUI
+        Args:
+            client transaction json can be fetched as follow:
+            transactionJson = self.gui_handler.request_trading_transactions()
+        """
         htmlPy_app.evaluate_javascript('refreshTransaction(\'' + transactionJson + '\')')
 
     @htmlPy.Slot(str)
@@ -623,17 +632,35 @@ class ClientLogic():
     def request_trading_transactions(self):
         client_orders = self.client_database_handler.fetch_all_order()
 
-        time=[]
-        price=[]
-        quantity=[]
-        side=[]
+        order_id = []
+        transaction_time = []
+        side = []
+        order_type = []
+        order_price = []
+        order_quantity = []
+        last_status = []
+        maturity_day = []
+        quantity_filled = []
+        average_price = []
+        stock_ticker = []
         for order in client_orders:
-            time.append(str(order.transaction_time))
-            price.append(order.order_price)
-            quantity.append(order.order_quantity)
+            order_id.append(order.order_id)
+            transaction_time.append(str(order.transaction_time))
             side.append(order.side)
+            order_type.append(order.order_type)
+            order_price.append(order.order_price)
+            order_quantity.append(order.order_quantity)
+            last_status.append(order.last_status)
+            maturity_day.append(str(order.maturity_day))
+            quantity_filled.append(order.quantity_filled)
+            average_price.append(order.average_price)
+            stock_ticker.append(order.stock_ticker)
 
-        trading_transaction = TradingClass.TradingTransaction(time,price,quantity,side)
+
+        trading_transaction = TradingClass.TradingTransaction(order_id, transaction_time, side, order_type,
+                                                              order_price, order_quantity,last_status,
+                                                              maturity_day, quantity_filled, average_price,
+                                                              stock_ticker)
         return trading_transaction
 
     def get_tomorrows_maturity_date(self):
@@ -945,13 +972,38 @@ class GUIHandler:
 
     def extract_trading_transaction_json(self, trading_transaction):
         data = {"content": []}
-        for i in range(len(trading_transaction.time)):
+        for i in range(len(trading_transaction.order_id)):
             tmp = {}
-            tmp["time"] = trading_transaction.time[i]
-            tmp["price"] = trading_transaction.price[i]
-            tmp["quantity"] = trading_transaction.quantity[i]
-            tmp["side"] = ("buy" if trading_transaction.side[i] else "sell")
+            tmp["order_id"] = trading_transaction.order_id[i]
+            tmp["transaction_time"] = trading_transaction.transaction_time[i]
+            tmp["side"] = ("buy" if trading_transaction.side[i] == TradingClass.DatabaseHandlerUtils.Side.BUY else "sell")
+
+            tmp["order_type"] =( "Market" if trading_transaction.order_type[i] ==
+                                          TradingClass.DatabaseHandlerUtils.OrderType.MARKET else "Limit")
+
+            tmp["order_price"] = trading_transaction.order_price[i]
+            tmp["order_quantity"] = trading_transaction.order_quantity[i]
+
+            if trading_transaction.last_status[i] == TradingClass.DatabaseHandlerUtils.LastStatus.DONE:
+                tmp["last_status"] = "DONE"
+            elif trading_transaction.last_status[i] == TradingClass.DatabaseHandlerUtils.LastStatus.PENDING:
+                tmp["last_status"] = "PENDING"
+            elif trading_transaction.last_status[i] == TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED:
+                tmp["last_status"] = "CANCELED"
+            elif trading_transaction.last_status[i] == TradingClass.DatabaseHandlerUtils.LastStatus.EXPIRED:
+                tmp["last_status"] = "EXPIRED"
+            elif trading_transaction.last_status[i] == TradingClass.DatabaseHandlerUtils.LastStatus.NOT_YET_ACKNOWLEDGED:
+                tmp["last_status"] = "NOT_YET_ACKNOWLEDGED"
+            elif trading_transaction.last_status[i] == TradingClass.DatabaseHandlerUtils.LastStatus.REJECTED:
+                tmp["last_status"] = "REJECTED"
+
+            tmp["maturity_day"] = trading_transaction.maturity_day[i]
+            tmp["quantity_filled"] = trading_transaction.quantity_filled[i]
+            tmp["average_price"] = trading_transaction.average_price[i]
+            tmp["stock_ticker"] = trading_transaction.stock_ticker[i]
+
             data["content"].append(tmp)
+
         return demjson.encode(data)
 
     def scenario_1(self):

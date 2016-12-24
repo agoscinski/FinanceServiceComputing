@@ -1712,9 +1712,18 @@ class MarketData():
 
 
 class TradingTransaction():
-    def __init__(self, p_time, p_price, p_quantity, p_side):
+    def __init__(self, order_id, transaction_time, side, order_type, order_price, order_quantity,
+                 last_status, maturity_day, quantity_filled, average_price, stock_ticker):
         # side: True means buy, False means sell
-        self.time = p_time
-        self.price = p_price
-        self.quantity = p_quantity
-        self.side = p_side
+
+        self.order_id = order_id
+        self.transaction_time = transaction_time
+        self.side = side
+        self.order_type = order_type
+        self.order_price = order_price
+        self.order_quantity = order_quantity
+        self.last_status = last_status
+        self.maturity_day = maturity_day
+        self.quantity_filled = quantity_filled
+        self.average_price = average_price
+        self.stock_ticker = stock_ticker
