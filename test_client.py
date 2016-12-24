@@ -70,3 +70,4 @@ class TestClientDatabaseHandler:
         assert str(fetch_order.quantity_filled) == str(dummy_order.quantity_filled)
         assert str(fetch_order.side) == str(dummy_order.side)
         assert str(fetch_order.transaction_time) == str(dummy_order.transaction_time)
+        assert fetch_order.stock_ticker == dummy_order.stock_ticker

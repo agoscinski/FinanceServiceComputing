@@ -1618,6 +1618,7 @@ class ClientOrder:
         self.maturity_day = maturity_day
         self.quantity_filled = quantity_filled
         self.average_price = average_price
+        self.stock_ticker=stock_ticker
 
     @classmethod
     def create_dummy_client_order(cls, order_id="0", transaction_time=FIXDate.from_fix_date_stamp_string("20161109"),

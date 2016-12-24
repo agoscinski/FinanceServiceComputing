@@ -21,13 +21,15 @@
         <a class="brand" href="#">Stock Trading</a>
         <div class="nav-collapse collapse">
           <p class="navbar-text pull-right">
-            <a href="showLoginModal()" class="navbar-link" id="logInA" data-bind="true">Log in</a>
+            <a href="logIn()" class="navbar-link" id="logInA" data-bind="true">Log in</a>
             <a href="#" class="navbar-link hide" id="Name">name</a>
             <span>|</span>
             <a href="logOut()" class="navbar-link" data-bind="true">Log out</a>
           </p>
           <ul class="nav">
+            <!--
             <li><a href="#">some function</a></li>
+            !-->
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -140,6 +142,7 @@
         </table>
       </div>
     </div>
+    <!--
     <div id="logInModal" class="modal hide fade in" style="display: none; ">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -160,7 +163,7 @@
         </div>
       </div>
     </div>
-
+    !-->
   </div>
   <script type="text/javascript">
     //js must be edited here
@@ -168,32 +171,54 @@
     var stockCode="";
 
 
-
+    /*
     function showLoginModal(){
       $('#logInModal').modal('show');
     }
+    */
 
     function logIn(){
-      var userName=$('#userName').val();
-      var password=$('#password').val();
-      var msg=GUISignal.logIn(userName,password);
-      msg=JSON.parse(msg);
-      if(msg.success){
-        $('#logInA').hide();
-        $('#Name').show();
-        $('#Name').text(msg.userName);
-        $('#logInModal').modal('hide');
-      }
-      else{
-        alert(msg.msg);
-      }
+      //var userName=$('#userName').val();
+      //var password=$('#password').val();
+      //var msg=GUISignal.logIn(userName,password);
+      //msg=JSON.parse(msg);
+      //if(msg.success){
+        //$('#logInA').hide();
+        //$('#Name').show();
+        //$('#Name').text(msg.userName);
+        //$('#logInModal').modal('hide');
+      //}
+      //else{
+        //alert(msg.msg);
+      //}
+      GUISignal.logIn();
+      $('#logInA').hide();
+      $('#Name').show();
+      $('#Name').text("Client");
     }
+
 
     function logOut(){
       GUISignal.logOut();
       $('#Name').hide();
       $('#logInA').show();
     }
+
+    function refreshTransaction(transactionJson){
+      var transactionData=JSON.parse(transactionJson);
+      var tmp='';
+      for(var i=0;i<transactionData.content.length;i++){
+        tmp=tmp+'\
+          <tr>\
+            <td>'+transactionData.content[i].time+'</td>\
+            <td>'+transactionData.content[i].price+'$</td>\
+            <td>'+transactionData.content[i].quantity+'</td>\
+            <td>'+transactionData.content[i].side+'</td>\
+          </tr>';
+      }
+      $('#tradingTransaction').html(tmp);
+    }
+
 
     function splitData(price,quantity) {
       var categoryData = [];
@@ -279,18 +304,6 @@
             <td>'+jsonData.orderBook.buy[0].price+'$</td>\
             <td>'+jsonData.orderBook.buy[0].quantity+'</td>\
           </tr>');
-
-        ///var tmp='';
-        //for(var i=0;i<jsonData.tradingTransaction.content.length;i++){
-          //tmp=tmp+'\
-        //    <tr>\
-      //        <td>'+jsonData.tradingTransaction.content[i].time+'</td>\
-        //      <td>'+jsonData.tradingTransaction.content[i].price+'$</td>\
-        //      <td>'+jsonData.tradingTransaction.content[i].quantity+'</td>\
-        //      <td>'+jsonData.tradingTransaction.content[i].side+'</td>\
-        //    </tr>';
-        //}
-        //$('#tradingTransaction').html(tmp);
 
         var chartData = splitData(jsonData.price.content,jsonData.quantity.content);
 

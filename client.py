@@ -26,11 +26,13 @@ class GUISignal(htmlPy.Object):
         # Initialize the class here, if required.
         return
 
-    @htmlPy.Slot(str, str, result=str)
-    def logIn(self, usr, psw):
+    @htmlPy.Slot()
+    def logIn(self):
         # TODO Yelinsheng remove usr and password field. The login button does not need any information. the information
         # TODO is grabbed from somewhere else now
         self.gui_handler.client_logic.logon()
+        transactionJson = self.gui_handler.request_trading_transactions()
+        self.refreshTransaction(transactionJson)
 
     @htmlPy.Slot()
     def logOut(self):
@@ -39,6 +41,11 @@ class GUISignal(htmlPy.Object):
     @htmlPy.Slot(str)
     def searchStock(self, stockCode):
         self.gui_handler.search_for_stock_actuated(stockCode)
+
+    @htmlPy.Slot(str)
+    def refreshTransaction(self,transactionJson):
+        print transactionJson
+        htmlPy_app.evaluate_javascript('refreshTransaction(\'' + transactionJson + '\')')
 
     @htmlPy.Slot(str)
     def refreshChart(self, market_data):
@@ -613,9 +620,20 @@ class ClientLogic():
         """
         self.client_database_handler.update_order(order_cancel_reject.orig_cl_ord_id, order_status=TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED)
 
-    def request_trading_transactions(self, user_name):
-        # DELETE
-        trading_transaction = None
+    def request_trading_transactions(self):
+        client_orders = self.client_database_handler.fetch_all_order()
+
+        time=[]
+        price=[]
+        quantity=[]
+        side=[]
+        for order in client_orders:
+            time.append(str(order.transaction_time))
+            price.append(order.order_price)
+            quantity.append(order.order_quantity)
+            side.append(order.side)
+
+        trading_transaction = TradingClass.TradingTransaction(time,price,quantity,side)
         return trading_transaction
 
     def get_tomorrows_maturity_date(self):
@@ -659,11 +677,11 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         """
         command = (
             "INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderQuantity, OrderPrice, LastStatus, "
-            "MaturityDate, QuantityFilled, AveragePrice) VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')"
+            "MaturityDate, QuantityFilled, AveragePrice, StockTicker) VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')"
             % (order.order_id, order.transaction_time.mysql_date_stamp_string, str(order.side), str(order.order_type),
                str(order.order_quantity), str(order.order_price), str(order.last_status),
                order.maturity_day.mysql_date_stamp_string,
-               str(order.quantity_filled), str(order.average_price)))
+               str(order.quantity_filled), str(order.average_price), order.stock_ticker))
         self.execute_nonresponsive_sql_command(command)
         return
 
@@ -695,7 +713,43 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
 
         sql_command += (" where OrderID='%s'" % (order_id))
         self.execute_nonresponsive_sql_command(sql_command)
-        pass
+
+    def fetch_all_order(self):
+        """Fetches all client order in client database
+        Return:
+            order[] (TradingClass.ClientOrder)
+        """
+        sql_command = ("select OrderID, TransactionTime, Side, OrderType, OrderQuantity, OrderPrice,"
+                       "LastStatus, MaturityDate, QuantityFilled, AveragePrice, StockTicker from "
+                       "`Order`")
+        order_rows = self.execute_select_sql_command(sql_command)
+        all_client_order=[]
+        for order_row_list in order_rows:
+            order_row_list = list(order_row_list)
+
+            order_id = order_row_list[0]
+            transaction_time = TradingClass.FIXDate(order_row_list[1])
+            side = int(order_row_list[2])
+            order_type = int(order_row_list[3])
+            order_quantity = float(order_row_list[4])
+            order_price = float(order_row_list[5])
+            last_status = int(order_row_list[6])
+            maturity_day = TradingClass.FIXDate(order_row_list[7])
+            if order_row_list[8] == None:
+                order_row_list[8] = 0
+            quantity_filled = float(order_row_list[8])
+            if order_row_list[9] == None:
+                average_price=None
+            else:
+                average_price = float(order_row_list[9])
+            stock_ticker = order_row_list[10]
+
+            client_order = TradingClass.ClientOrder(order_id, transaction_time, side, order_type,
+                                                    order_price, order_quantity, last_status, maturity_day,
+                                                    quantity_filled, average_price, stock_ticker)
+            all_client_order.append(client_order)
+        return all_client_order
+
 
     def fetch_order(self, order_id):
         """Fetches an client order for a specific order id
@@ -705,7 +759,7 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
             order (TradingClass.ClientOrder)
         """
         sql_command = ("select TransactionTime, Side, OrderType, OrderQuantity, OrderPrice,"
-                       "LastStatus, MaturityDate, QuantityFilled, AveragePrice from "
+                       "LastStatus, MaturityDate, QuantityFilled, AveragePrice, StockTicker from "
                        "`Order` where OrderID='%s'") % (order_id)
 
         order_rows = self.execute_select_sql_command(sql_command)
@@ -718,12 +772,15 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         order_price = float(order_row_list[4])
         last_status = int(order_row_list[5])
         maturity_day = TradingClass.FIXDate(order_row_list[6])
+        if order_row_list[7]==None:
+            order_row_list[7]=0
         quantity_filled = float(order_row_list[7])
         average_price = float(order_row_list[8])
+        stock_ticker = order_row_list[9]
 
         client_order = TradingClass.ClientOrder(order_id, transaction_time, side, order_type,
                                                 order_price, order_quantity, last_status, maturity_day,
-                                                quantity_filled, average_price)
+                                                quantity_filled, average_price, stock_ticker)
         return client_order
 
     def generate_market_data_request_id(self):
@@ -786,19 +843,15 @@ class GUIHandler:
         """This function is activated when the login button is pushed"""
         return self.client_logic.logon()
 
-    def request_trading_transactions(self, user_name):
+    def request_trading_transactions(self):
         """Request trading transactions
-
-        Args:
-            user_name (string): .
-
         Returns:
         trading_transactions (string): json string of trading transaction
         """
-        trading_transactions = self.client_logic.request_trading_transactions(user_name)
-        # function not finished but also not needed anymore
-        trading_transactions_json = self.extract_trading_transactions_json(trading_transactions)
-        pass
+        trading_transactions = self.client_logic.request_trading_transactions()
+        # This function is needed, don't delete
+        trading_transactions_json = self.extract_trading_transaction_json(trading_transactions)
+        return trading_transactions_json
 
     def send_market_data_request_option(self, symbol):
         self.client_logic.process_market_data_request(symbol)
@@ -847,9 +900,9 @@ class GUIHandler:
         self.client_logic.gui_signal.refreshChart(market_data)
 
     def refresh_trading_transaction_list(self, trading_transaction):
-        # not finished but also not needed anymore
-        trading_transaction_json = self.extract_trading_transaction_json(trading_transaction)
-        return trading_transaction_json
+        # This function is needed when fresh transaction list, don't delete it.
+        trading_transactions_json=self.request_trading_transactions()
+        self.client_logic.gui_signal.refreshTransaction(trading_transactions_json)
 
     def extract_quantity_chart_json(self, market_data):
         data = {"content": []}
@@ -910,7 +963,7 @@ class GUIHandler:
                                                            order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT,
                                                            price=float(606),
                                                            quantity=float(10))
-        """ 
+        """
         A client wants to send an order (more than) 10% less expensive than the last price
         """
         self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
