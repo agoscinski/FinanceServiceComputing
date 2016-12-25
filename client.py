@@ -604,20 +604,10 @@ class ClientLogic():
 
     def process_order_cancel_request(self, order_id):
         # Construct Fix Order Object to be sent to the fix handler
-        orig_cl_ord_id = order_id
         cl_ord_id = self.client_database_handler.generate_new_cancel_order_id()
-        #TODO Husein use this instead, when you finished testing this {
-        #client_order = self.client_database_handler.fetch_order(order_id)
-        #order_cancel_request = TradingClass.OrderCancelReject.from_client_order(client_order, cl_ord_id)
-        #self.client_fix_handler.send_order_cancel_request(order_cancel_request)
-        #TODO } and delete the rest
-        #  should be retrieved from database
-        symbol = 'TSLA'
-        side = TradingClass.FIXHandlerUtils.Side.BUY
-        order_qty = 100
-        transact_time = TradingClass.FIXDateTimeUTC.create_for_current_time()
-        ocr = TradingClass.OrderCancelRequest(orig_cl_ord_id, cl_ord_id, symbol, side, transact_time, order_qty)
-        self.client_fix_handler.send_order_cancel_request(ocr)
+        client_order = self.client_database_handler.fetch_order(order_id)
+        order_cancel_request = TradingClass.OrderCancelRequest.from_client_order(client_order, cl_ord_id)
+        self.client_fix_handler.send_order_cancel_request(order_cancel_request)
         return
 
     def process_order_cancel_reject(self, order_cancel_reject):
@@ -801,6 +791,8 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         maturity_day = TradingClass.FIXDate(order_row_list[6])
         if order_row_list[7]==None:
             order_row_list[7]=0
+        if order_row_list[8] == None:
+            order_row_list[8] = 0
         quantity_filled = float(order_row_list[7])
         average_price = float(order_row_list[8])
         stock_ticker = order_row_list[9]
@@ -842,7 +834,7 @@ class GUIHandler:
     def wait_for_input(self):
         while True:
             print ("input 1 to logon\ninput 2 to logout\ninput 3 to send market request\ninput 4 to order\ninput 5"
-             " scenario 1\ninput 6 scenario 2\ninput 7 scenario 3\ninput 6 to quit")
+             " scenario 1\ninput 6 scenario 2\ninput 7 scenario 3\ninput 8 scenario 4\ninput 9 to quit")
             input = raw_input()
             if input == '1':
                 self.client_logic.logon()
@@ -859,7 +851,7 @@ class GUIHandler:
             elif input == '7':
                 self.scenario_3()
             elif input == '8':
-                # TODO send cancel
+                self.scenario_4()
                 pass
             elif input == '9':
                 break
@@ -1042,9 +1034,10 @@ class GUIHandler:
                                                            order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
                                                            price=float(1000),
                                                            quantity=float(1000))
-    #TODO Valentin
+    #TODO Valentin -> Added by Husein to check fixing order cancel request
     def scenario_4(self):
         #TODO use process_order_cancel_request
+        self.client_logic.process_order_cancel_request("client_2016-11-09-10:40:00")
         pass
 
     def scenario_5(self):

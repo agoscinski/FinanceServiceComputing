@@ -959,8 +959,9 @@ class OrderCancelRequest(object):
             OrderCancelRequest
         """
         transaction_time = FIXDateTimeUTC.create_for_current_time()
-        OrderCancelRequest(client_order.order_id, new_order_id, client_order.stock_ticker, client_order.side,
+        return OrderCancelRequest(client_order.order_id, new_order_id, client_order.stock_ticker, client_order.side,
                            transaction_time, client_order.order_quantity)
+
 
 
 class OrderCancelReject(object):
