@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS `TestClientDatabase`.`Order` (
   `MaturityDate` DATE NULL,
   `QuantityFilled` FLOAT NULL,
   `AveragePrice` FLOAT NULL,
+  `StockTicker` VARCHAR(45) NULL,
   PRIMARY KEY (`OrderID`))
 ENGINE = InnoDB;
 
