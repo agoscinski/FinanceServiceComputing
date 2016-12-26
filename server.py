@@ -124,11 +124,9 @@ class ServerFIXHandler:
         return
 
     def send_logon_reject(self):
-        #OPTIONAL TODO
+        #OPTIONALTODO
         pass
 
-    def handle_uncovered_message_type_message(self, message):
-        pass
     def handle_market_data_request(self, message):
         """Process market data request
 
@@ -193,20 +191,25 @@ class ServerFIXHandler:
         return
 
     def handle_order_request(self, fix_message):
-        """Process order request from a client
+        """Handles order request from a client (message type D)
 
-            Args:
-                fix_message (quickfix.Message): order fix message received from client
+        Args:
+            fix_message (quickfix.Message): order fix message received from client
 
-            Returns:
-                None
+        Returns:
+            None
         """
         fix_order = NewSingleOrder.from_fix_message(fix_message)
         self.server_logic.process_new_single_order_request(fix_order)
         return
 
     def handle_order_cancel_request(self, message):
-        #TODO documentation
+        """Handles and order cancel request from a client(message type F)
+        Args:
+            fix_message (quickfix.Message): order cancel request fix message received from client
+        Returns:
+            None
+        """
         order_cancel_request = OrderCancelRequest.from_fix_message(message)
         self.server_logic.process_order_cancel_request(order_cancel_request)
 
