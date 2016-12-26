@@ -289,9 +289,7 @@ class ServerFIXHandler:
         message.setField(fix.OrigClOrdID(order_cancel_reject.orig_cl_ord_id))
         message.setField(fix.OrdStatus(order_cancel_reject.ord_status))
         message.setField(fix.CxlRejResponseTo(order_cancel_reject.cxl_rej_response_to))
-        print(order_cancel_reject.cxl_rej_reason)
-        if order_cancel_reject.cxl_rej_reason is not None:
-            message.setField(fix.CxlRejReason(order_cancel_reject.cxl_rej_reason)) #TODO Husein here is a bug because the object is None or type is not correct
+        message.setField(fix.CxlRejReason(order_cancel_reject.cxl_rej_reason))
 
         fix.Session.sendToTarget(message, self.fix_application.sessionID)
         return
@@ -465,7 +463,7 @@ class ServerLogic(object):
         is_valid = (0.1 >= price_difference >= -0.1 and 0.2 >= traded_value_difference >= -0.2)
         return is_valid
 
-    def process_invalid_order_cancel_request(self, requested_order_cancel):
+    def process_invalid_order_cancel_request(self, requested_order_cancel, reason_invalid):
         """Process an invalid order cancel request and create OrderCancelReject Fix object to be sent through FixHandler
 
         Args:
@@ -479,10 +477,10 @@ class ServerLogic(object):
         orig_cl_ord_id = requested_order_cancel.client_order_id
         receiver_comp_id = requested_order_cancel.account_company_id
         ord_status =  TradingClass.FIXHandlerUtils.OrderStatus.REJECTED
-        cxl_rej_response_to = '1' #TODO Husein please use enums in FIXHandlerUtils, und if there is no, just add them
-        cxl_rej_reason = None #TODO Husein dont use None, a bug occurs with None, look at TradingClass TODOs first and use enum here
-        order_cancel_reject = OrderCancelReject(orig_cl_ord_id, cl_ord_id, order_id, ord_status, cxl_rej_response_to,
-                                                receiver_comp_id, cxl_rej_reason)
+        cxl_rej_response_to = TradingClass.FIXHandlerUtils.CancelRejectReponseTo.ORDER_CANCEL_REQUEST
+        cxl_rej_reason = reason_invalid
+        order_cancel_reject = OrderCancelReject(orig_cl_ord_id, cl_ord_id, order_id, ord_status, receiver_comp_id,
+                                                cxl_rej_reason, cxl_rej_response_to)
         self.server_fix_handler.send_order_cancel_reject_respond(order_cancel_reject)
 
     def process_order_cancel_request(self, order_cancel_request):
@@ -497,12 +495,12 @@ class ServerLogic(object):
         requested_order_cancel = TradingClass.OrderCancel.from_order_cancel_request(order_cancel_request)
         order = self.server_database_handler.fetch_latest_order_by_client_information(
             requested_order_cancel.client_order_id, requested_order_cancel.account_company_id)
-        order_cancel_is_valid = self.check_if_order_cancel_is_valid(order)
+        order_cancel_is_valid, reason_invalid = self.check_if_order_cancel_is_valid(order)
         if order_cancel_is_valid:
             requested_order_cancel.order_received_date = order.received_date
             self.process_valid_order_cancel_request(requested_order_cancel, order)
         else:
-            self.process_invalid_order_cancel_request(requested_order_cancel)
+            self.process_invalid_order_cancel_request(requested_order_cancel, reason_invalid)
 
     def check_if_order_cancel_is_valid(self, order):
         """Check whether an order cancel request is valid or not valid based on status of Order Object
@@ -511,16 +509,19 @@ class ServerLogic(object):
             order (Order): Order object created based on OrderCancel object
 
         Returns:
-            True or False
+            Boolean (True/False), reason_invalid(int) reason of invalid order cancel for false scenario
         """
+        reason_invalid = None
         if order is None:
-            return False
+            reason_invalid = TradingClass.FIXHandlerUtils.CancelRejectReason.UNKNOWN_ORDER
+            return False, reason_invalid
         elif (order.last_status == TradingClass.DatabaseHandlerUtils.LastStatus.DONE or
                       order.last_status == TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED
             or order.last_status == TradingClass.DatabaseHandlerUtils.LastStatus.EXPIRED):
-            return False
+            reason_invalid = TradingClass.FIXHandlerUtils.CancelRejectReason.TOO_LATE_CANCEL
+            return False, reason_invalid
         else:
-            return True
+            return True, reason_invalid
 
     def process_valid_order_cancel_request(self, requested_order_cancel, order):
         """Process a valid order cancel request and create ExecutionReport Fix object to be sent through FixHandler
@@ -538,7 +539,7 @@ class ServerLogic(object):
         requested_order_cancel.cancel_quantity = order.price-cumulative_quantity
         requested_order_cancel.last_status = TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED
 
-        order_cancel_id = self.server_database_handler.insert_order_cancel(requested_order_cancel)
+        order_cancel_id = str(self.server_database_handler.insert_order_cancel(requested_order_cancel))
         # self.server_database_handler.update_order_cancel_success(requested_order_cancel.client_order_id,
         #        requested_order_cancel.account_company_id, OrderCancelStatus.CANCELED, cumulative_quantity, executed_time)
 
@@ -552,6 +553,7 @@ class ServerLogic(object):
         leaves_qty = 0  # could also be filled order quantity-cum_quantity
 
         order_cancel_execution = ExecutionReport.from_order(order, order_cancel_id, exec_trans_type, exec_type, ord_status, leaves_qty, cumulative_quantity, average_price, receiver_comp_id, orig_cl_ord_id)
+
         self.server_fix_handler.send_order_cancel_execution_respond(order_cancel_execution)
 
     def create_execution_report_for_new_order(self, new_order):
