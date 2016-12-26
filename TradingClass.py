@@ -347,6 +347,7 @@ class DummyServerFIXHandler(ServerFIXHandlerScheme):
 
 
 class FIXHandlerUtils:
+
     class MarketDataEntryType:
         OFFER = 0
         BID = 1
@@ -397,6 +398,14 @@ class FIXHandlerUtils:
 
     class HandlingInstruction:
         AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION = fix.HandlInst_AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION
+
+    class CancelRejectReason:
+        #TODO Husein write the enums
+        pass
+
+    class CancelRejectReponseTo:
+        #TODO Husein write the enums
+        pass
 
     @staticmethod
     def get_field_value(fix_object, message):
@@ -965,15 +974,18 @@ class OrderCancelRequest(object):
 
 
 class OrderCancelReject(object):
+    #TODO Husein change documentation type like the others
+    #TODO Husein use for cxl_rej_reason FIXHandlerUtils.CancelRejectReason
+    #TODO Husein cxl_rej_reason what type?
     """Constructor of class OrderCancelReject represents a quickfix order cancel reject (message type 9):
     Args:
         orig_cl_ord_id=original client order id to be cancelled (String)
         cl_ord_id= cancellation client order id (String)
         order_id= Execution Order Cancel ID  (String)
         ord_status= status of rejected order cancel =8 (Char)
-        cxl_rej_response_to= type of transaction requested=> OrderCancelRequest =1 (Char)
+        cxl_rej_response_to= type of transaction requested=> OrderCancelRequest =1 (Char) #TODO
         receiver_comp_id= receiver company ID (String)
-
+        cxl_rej_reason #TODO what type
     """
 
     def __init__(self, orig_cl_ord_id, cl_ord_id, order_id, ord_status, receiver_comp_id, cxl_rej_reason=None,

@@ -289,8 +289,9 @@ class ServerFIXHandler:
         message.setField(fix.OrigClOrdID(order_cancel_reject.orig_cl_ord_id))
         message.setField(fix.OrdStatus(order_cancel_reject.ord_status))
         message.setField(fix.CxlRejResponseTo(order_cancel_reject.cxl_rej_response_to))
+        print(order_cancel_reject.cxl_rej_reason)
         if order_cancel_reject.cxl_rej_reason is not None:
-            message.setField(fix.CxlRejReason(order_cancel_reject.cxl_rej_reason))
+            message.setField(fix.CxlRejReason(order_cancel_reject.cxl_rej_reason)) #TODO Husein here is a bug because the object is None or type is not correct
 
         fix.Session.sendToTarget(message, self.fix_application.sessionID)
         return
@@ -479,7 +480,7 @@ class ServerLogic(object):
         receiver_comp_id = requested_order_cancel.account_company_id
         ord_status =  TradingClass.FIXHandlerUtils.OrderStatus.REJECTED
         cxl_rej_response_to = '1' #TODO Husein please use enums in FIXHandlerUtils, und if there is no, just add them
-        cxl_rej_reason = None
+        cxl_rej_reason = None #TODO Husein dont use None, a bug occurs with None, look at TradingClass TODOs first and use enum here
         order_cancel_reject = OrderCancelReject(orig_cl_ord_id, cl_ord_id, order_id, ord_status, cxl_rej_response_to,
                                                 receiver_comp_id, cxl_rej_reason)
         self.server_fix_handler.send_order_cancel_reject_respond(order_cancel_reject)
@@ -496,9 +497,9 @@ class ServerLogic(object):
         requested_order_cancel = TradingClass.OrderCancel.from_order_cancel_request(order_cancel_request)
         order = self.server_database_handler.fetch_latest_order_by_client_information(
             requested_order_cancel.client_order_id, requested_order_cancel.account_company_id)
-        requested_order_cancel.order_received_date = order.received_date
         order_cancel_is_valid = self.check_if_order_cancel_is_valid(order)
         if order_cancel_is_valid:
+            requested_order_cancel.order_received_date = order.received_date
             self.process_valid_order_cancel_request(requested_order_cancel, order)
         else:
             self.process_invalid_order_cancel_request(requested_order_cancel)

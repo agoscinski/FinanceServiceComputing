@@ -1084,5 +1084,5 @@ class GUIHandler:
 
     def scenario_5(self):
         client_order = TradingClass.ClientOrder.create_dummy_client_order(order_id="wrong_id")
-        order_cancel_request = TradingClass.OrderCancelReject.from_client_order(client_order, "new_id")
-        self.client_fix_handler.send_order_cancel_request(order_cancel_request)
+        order_cancel_request = TradingClass.OrderCancelRequest.from_client_order(client_order, "new_id")
+        self.client_logic.client_fix_handler.send_order_cancel_request(order_cancel_request)
