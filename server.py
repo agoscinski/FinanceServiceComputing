@@ -528,22 +528,16 @@ class ServerLogic(object):
         # self.server_database_handler.update_order_cancel_success(requested_order_cancel.client_order_id,
         #        requested_order_cancel.account_company_id, OrderCancelStatus.CANCELED, cumulative_quantity, executed_time)
 
-        order_id = order_cancel_id
         orig_cl_ord_id = requested_order_cancel.client_order_id
 
-        cl_ord_id = requested_order_cancel.order_cancel_id
         exec_id = str(self.server_database_handler.insert_execution_report(None))
         receiver_comp_id = requested_order_cancel.account_company_id
         exec_trans_type =  TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW
         exec_type = TradingClass.FIXHandlerUtils.ExecutionType.CANCELED
         ord_status = TradingClass.FIXHandlerUtils.OrderStatus.CANCELED
-        symbol = requested_order_cancel.stock_ticker
-        side = requested_order_cancel.side
-        price = None
         leaves_qty = 0  # could also be filled order quantity-cum_quantity
 
-        order_cancel_execution = ExecutionReport(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type,
-                        ord_status, symbol, side, leaves_qty, cumulative_quantity, average_price, price, receiver_comp_id, orig_cl_ord_id)
+        order_cancel_execution = ExecutionReport.from_order(order, exec_id, exec_trans_type, exec_type, ord_status, leaves_qty, cumulative_quantity, average_price, receiver_comp_id, orig_cl_ord_id)
         self.server_fix_handler.send_order_cancel_execution_respond(order_cancel_execution)
 
     def create_execution_report_for_new_order(self, new_order):
