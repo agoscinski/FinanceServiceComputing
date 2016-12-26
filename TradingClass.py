@@ -400,12 +400,14 @@ class FIXHandlerUtils:
         AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION = fix.HandlInst_AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION
 
     class CancelRejectReason:
-        #TODO Husein write the enums
-        pass
+        TOO_LATE_CANCEL = 0
+        UNKNOWN_ORDER = 1
+        BROKER_OPTION = 2
+        ALREADY_PENDING = 3
 
     class CancelRejectReponseTo:
-        #TODO Husein write the enums
-        pass
+        ORDER_CANCEL_REQUEST = '1'
+        ORDER_CANCEL_REPLACE = '2'
 
     @staticmethod
     def get_field_value(fix_object, message):
@@ -975,20 +977,17 @@ class OrderCancelRequest(object):
 
 
 class OrderCancelReject(object):
-    #TODO Husein change documentation type like the others
-    #TODO Husein use for cxl_rej_reason FIXHandlerUtils.CancelRejectReason
-    #TODO Husein cxl_rej_reason what type?
-    """Constructor of class OrderCancelReject represents a quickfix order cancel reject (message type 9):
+    """Constructor of class OrderCancelReject:
     Args:
-        orig_cl_ord_id=original client order id to be cancelled (String)
-        cl_ord_id= cancellation client order id (String)
-        order_id= Execution Order Cancel ID  (String)
-        ord_status= status of rejected order cancel =8 (Char)
-        cxl_rej_response_to= type of transaction requested=> OrderCancelRequest =1 (Char) #TODO
-        receiver_comp_id= receiver company ID (String)
-        cxl_rej_reason #TODO what type
-    """
+        orig_cl_ord_id (string): original client order id to be cancelled
+        cl_ord_id (string):  cancellation client order id
+        order_id (string): execution Order Cancel ID
+        ord_status (char): status of rejected order cancel
+        receiver_comp_id (string): receiver company ID
+        cxl_rej_reason (int): reason of why order cancel is rejected
+        cxl_rej_response_to (char): type of cancelling transaction requested
 
+    """
     def __init__(self, orig_cl_ord_id, cl_ord_id, order_id, ord_status, receiver_comp_id, cxl_rej_reason=None,
                  cxl_rej_response_to=None):
         self.orig_cl_ord_id = orig_cl_ord_id
