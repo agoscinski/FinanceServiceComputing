@@ -170,6 +170,17 @@ class TestClientOrder:
 
     def test_from_new_single_order(self):
         dummy_new_single_order = TradingClass.NewSingleOrder.create_dummy_new_single_order()
-        test_client_order=TradingClass.ClientOrder.from_new_single_order(dummy_new_single_order,2,101.,5)
-        pass
+        client_order=TradingClass.ClientOrder.from_new_single_order(dummy_new_single_order,2,101.,5)
+        assert type(client_order.order_id) is str
+        assert type(client_order.transaction_time) is TradingClass.FIXDate
+        assert type(client_order.side) is int
+        assert type(client_order.order_type) is int
+        assert type(client_order.order_price) is float
+        assert type(client_order.order_quantity) is float
+        assert type(client_order.last_status) is int
+        assert type(client_order.maturity_day) is TradingClass.FIXDate
+        assert type(client_order.quantity_filled) is float
+        assert type(client_order.average_price) is float
+        assert type(client_order.stock_ticker) is str
+
 

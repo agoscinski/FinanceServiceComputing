@@ -5,7 +5,7 @@ import datetime
 import quickfix as fix
 import quickfix42 as fix42
 import abc
-
+import traceback
 
 ##################
 ## Time classes ##
@@ -484,7 +484,9 @@ class DatabaseHandler(object):
             connection.close()
             return
         except MySQLdb.Error, e:
+            traceback.print_exc()
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+            print("SQL command '"+sql_command+"'")
         return
 
     def drop_schema(self):
@@ -520,8 +522,9 @@ class DatabaseHandler(object):
             fetched_database_rows = cursor.fetchall()
             connection.close()
         except MySQLdb.Error, e:
+            traceback.print_exc()
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
-
+            print("SQL command '"+sql_command+"'")
         return fetched_database_rows
 
     def execute_nonresponsive_sql_command(self, sql_command):
@@ -540,8 +543,9 @@ class DatabaseHandler(object):
             connection.close()
             return
         except MySQLdb.Error, e:
+            traceback.print_exc()
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
-            print(sql_command)
+            print("SQL command '"+sql_command+"'")
 
     def execute_responsive_insert_sql_command(self, insert_sql_command):
         """Used to execute commands INSERT which returns the produced ID from database server
@@ -561,6 +565,8 @@ class DatabaseHandler(object):
             return id_of_inserted_row
         except MySQLdb.Error, e:
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+            print(insert_sql_command)
+
 
 
 class DatabaseHandlerUtils:
@@ -1337,7 +1343,7 @@ class Order(object):
         order_quantity = new_single_order.order_quantity
         price = new_single_order.price
         last_status = DatabaseHandlerUtils.LastStatus.PENDING
-        message_sequence_number = 0
+        message_sequence_number = None
         on_behalf_of_company_id = None
         sender_sub_id = None
         cash_order_quantity = None
@@ -1658,17 +1664,16 @@ class ClientOrder:
         """
 
         order_id = new_single_order.client_order_id
-        transaction_time = new_single_order.transaction_time
-        side = new_single_order.side
-        order_type = new_single_order.order_type
-        order_price = new_single_order.price
-        order_quantity = new_single_order.order_quantity
-        last_status = last_status
+        transaction_time = FIXDate(new_single_order.transaction_time.date_time)
+        side = int(new_single_order.side)
+        order_type = int(new_single_order.order_type)
+        order_price = float(new_single_order.price)
+        order_quantity = float(new_single_order.order_quantity)
         maturity_day = FIXDate.from_year_month_day(new_single_order.maturity_month_year.year,
                                                    new_single_order.maturity_month_year.month,
                                                    new_single_order.maturity_day)
-        quantity_filled = quantity_filled
-        average_price = average_price
+        quantity_filled = float(quantity_filled)
+        average_price = float(average_price)
         stock_ticker = new_single_order.symbol
         client_order = cls(order_id, transaction_time, side, order_type, order_price, order_quantity, last_status,
                            maturity_day, quantity_filled, average_price, stock_ticker)
