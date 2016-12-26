@@ -401,8 +401,7 @@ class ServerLogic(object):
         """
 
         requested_order = TradingClass.Order.from_new_single_order(requested_fix_order)
-        order_is_valid = self.check_if_order_is_valid(requested_order)
-        if order_is_valid:
+        if self.order_is_valid(requested_order):
             self.process_valid_order_request(requested_order)
         else:
             self.process_invalid_order_request(requested_order)
@@ -417,6 +416,8 @@ class ServerLogic(object):
         self.server_fix_handler.send_execution_report_respond(acknowledge_execution_report)
         orders = self.server_database_handler.fetch_pending_order_with_cumulative_quantity_by_stock_ticker(requested_order.symbol)
         order_executions = matching_algorithm.match(orders)
+        print("valid order")
+        print(order_executions)
         for order_execution in order_executions:
             order_execution.execution_id = self.server_database_handler.insert_order_execution(order_execution)
             execution_report_of_buy_order, execution_report_of_sell_order = self.create_execution_report_for_order_execution(
@@ -448,20 +449,32 @@ class ServerLogic(object):
                                                               stop_px, receiver_comp_id)
         self.server_fix_handler.send_reject_order_execution_respond(reject_order_execution)
 
-    def check_if_order_is_valid(self, requested_order):
-
-        if(self.current_server_time>=self.end_time or self.current_server_time<=self.start_time):
+    def order_is_valid(self, requested_order):
+        if self.order_received_within_trading_time():
             return False
 
         stock_total_volume = self.server_database_handler.fetch_stock_total_volume(requested_order.stock_ticker)
         stock_information = self.server_database_handler.fetch_stock_information(requested_order.stock_ticker)
         current_price = stock_information.current_price
 
-        price_difference = requested_order.price - current_price
-        traded_value_difference = requested_order.price * requested_order.order_quantity - stock_total_volume * current_price
-
-        is_valid = (0.1 >= price_difference >= -0.1 and 0.2 >= traded_value_difference >= -0.2)
+        is_valid = (self.order_is_in_valid_price_range(requested_order, current_price)
+                    and self.order_is_in_valid_traded_value_range(requested_order, current_price, stock_total_volume))
+        print("is_valid"+str(is_valid))
         return is_valid
+
+    def order_received_within_trading_time(self):
+        return self.current_server_time>=self.end_time or self.current_server_time<=self.start_time
+
+    def order_is_in_valid_price_range(self, requested_order, current_price):
+        price_absolute_difference = abs(requested_order.price - current_price)
+        valid_price_range = 0.1 * current_price
+        return (valid_price_range >= price_absolute_difference)
+
+    def order_is_in_valid_traded_value_range(self, requested_order, current_price, stock_total_volume):
+        traded_value =  requested_order.price * requested_order.order_quantity
+        valid_traded_value_range = 0.2 * stock_total_volume * current_price
+        return (valid_traded_value_range >= traded_value)
+
 
     def process_invalid_order_cancel_request(self, requested_order_cancel, reason_invalid):
         """Process an invalid order cancel request and create OrderCancelReject Fix object to be sent through FixHandler
