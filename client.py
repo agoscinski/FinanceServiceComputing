@@ -510,7 +510,7 @@ class ClientLogic():
         Args:
             stock_ticker (string)
             side (int/FIXHandler.Side)
-            order_type (char/FIXHandler.OrderType)
+            order_type (char/FIXHandlerUtils.OrderType)
             price (float)
             quantity (float)
         """
@@ -853,8 +853,8 @@ class GUIHandler:
 
     def wait_for_input(self):
         while True:
-            print ("input 1 to logon\ninput 2 to logout\ninput 3 to send market request\ninput 4 to order\ninput 5"
-             " scenario 1\ninput 6 scenario 2\ninput 7 scenario 3\ninput 8 scenario 4\ninput 9 scenario 5\ninput 10 to quit")
+            print ("input 1 to logon\ninput 2 to logout\ninput 3 to send market request\ninput 4 client exceeds 10 percent price gap\ninput 5"
+             " client deceeds 10 percent price gap\ninput 6 client exceeds 20 percent of total tradable value\ninput 7 scenario 3\ninput 8 scenario 4\ninput 9 scenario 5\ninput 10 to quit")
             input = raw_input()
             if input == '1':
                 self.client_logic.logon()
@@ -863,11 +863,11 @@ class GUIHandler:
             elif input == '3':
                 self.send_market_data_request_option("TSLA")
             elif input == '4':
-                self.send_dummy_order()
+                self.client_exceeds_10_percent_price_gap()
             elif input == '5':
-                self.scenario_1()
+                self.client_deceeds_10_percent_price_gap()
             elif input == '6':
-                self.scenario_2()
+                self.client_exceeds_20_percent_total_tradable_value()
             elif input == '7':
                 self.scenario_3()
             elif input == '8':
@@ -1035,32 +1035,33 @@ class GUIHandler:
 
         return demjson.encode(data)
 
-    def scenario_1(self):
+    def client_exceeds_10_percent_price_gap(self):
         """
         A client wants to send an order (more than) 10% more expensive than the last price
         """
         self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
                                                            side=TradingClass.FIXHandlerUtils.Side.BUY,
-                                                           order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT,
+                                                           order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
                                                            price=float(606),
                                                            quantity=float(10))
+
+    def client_deceeds_10_percent_price_gap(self):
         """
         A client wants to send an order (more than) 10% less expensive than the last price
         """
         self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
                                                            side=TradingClass.FIXHandlerUtils.Side.BUY,
-                                                           order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT,
+                                                           order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
                                                            price=float(494),
                                                            quantity=float(10))
-        pass
 
-    def scenario_2(self):
+    def client_exceeds_20_percent_total_tradable_value(self):
         """
 		A client wants to send an order that represents more than 20% of the total tradable value
         """
         self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
                                                            side=TradingClass.FIXHandlerUtils.Side.BUY,
-                                                           order_type=TradingClass.DatabaseHandlerUtils.OrderType.LIMIT,
+                                                           order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
                                                            price=float(500),
                                                            quantity=float(34))
         pass
