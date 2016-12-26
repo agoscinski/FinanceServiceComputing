@@ -1,2 +1,2 @@
-INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice, OrderQuantity, LastStatus, MaturityDate, StockTicker) VALUES('client_2016-11-09-10:40:00','2016-11-09 10:40:01','1','2','1000','500', '1', '2016-11-10','GC=F');
-INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice, OrderQuantity, LastStatus, MaturityDate, StockTicker) VALUES('client_2016-11-10-11:40:00','2016-11-09 10:40:01','1','2','1000','500', '0', '2016-11-11','TSLA');
+INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice, OrderQuantity, LastStatus, MaturityDate, StockTicker) VALUES('client_2016-11-09-10:40:00','2016-11-09','1','2','1000','500', '1', '2016-11-10','GC=F');
+INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice, OrderQuantity, LastStatus, MaturityDate, StockTicker) VALUES('client_2016-11-10-11:40:00','2016-11-10','1','2','1000','500', '0', '2016-11-11','TSLA');
