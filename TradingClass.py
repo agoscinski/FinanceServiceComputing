@@ -1181,7 +1181,7 @@ class ExecutionReport(object):
 
     @classmethod
     def from_order(cls, order, execution_id, execution_transaction_type, execution_type, order_status, left_quantity,
-                   cumulative_quantity, average_price):
+                   cumulative_quantity, average_price, receiver_comp_id=None, orig_cl_ord_id=None):
         """
         Args:
             execution_id (string)
@@ -1206,7 +1206,7 @@ class ExecutionReport(object):
         price = float(order.price)
         execution_report = cls(order_id, client_order_id, execution_id, execution_transaction_type, str(execution_type),
                                str(order_status), symbol, side, left_quantity, cumulative_quantity, average_price,
-                               price)
+                               price, receiver_comp_id, orig_cl_ord_id)
         return execution_report
 
     def __eq__(self, other):
