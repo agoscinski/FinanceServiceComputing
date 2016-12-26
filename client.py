@@ -330,6 +330,12 @@ class ClientFIXHandler:
         pass
 
     def send_order_cancel_request(self, order_cancel_request):
+        """
+        Args:
+            order_cancel_request (TradingClass.OrderCancelRequest)
+        Returns:
+            None
+        """
         # Create Fix Message for Order Cancel Request
         message = fix.Message()
         header = message.getHeader()
@@ -602,6 +608,12 @@ class ClientLogic():
         self.client_database_handler.update_order(average_price=execution_report.average_price, quantity_filled=0)
 
     def process_order_cancel_request(self, order_id):
+        """Processes a order cancel request before it is sent to the server
+        Args:
+            order_id (string): the id of the order which is requested to be canceled
+        Returns:
+            None
+        """
         # Construct Fix Order Object to be sent to the fix handler
         cl_ord_id = self.client_database_handler.generate_new_cancel_order_id()
         client_order = self.client_database_handler.fetch_order(order_id)
