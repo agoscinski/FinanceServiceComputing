@@ -86,6 +86,9 @@ class ServerFIXApplication(fix.Application):
             self.server_fix_handler.handle_order_request(message)
         elif msg_Type.getString() == fix.MsgType_OrderCancelRequest:
             self.server_fix_handler.handle_order_cancel_request(message)
+        else:
+            self.server_fix_handler.handle_uncovered_message_type_message(message)
+
 
 class ServerFIXHandler:
     def __init__(self, server_logic):
@@ -126,6 +129,16 @@ class ServerFIXHandler:
     def send_logon_reject(self):
         #OPTIONALTODO
         pass
+
+    def handle_uncovered_message_type_message(self, message):
+        """
+        Args:
+            message (quickfix.message)
+        """
+        #OPTIONALTODO write reject message if the message is not in dictionary of FIX42
+        #otherwise let client know that the message was not understand
+        return
+
 
     def handle_market_data_request(self, message):
         """Process market data request
