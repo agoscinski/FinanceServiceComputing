@@ -27,8 +27,7 @@ class GUISignal(htmlPy.Object):
     def logIn(self):
         # TODO Yelinsheng remove usr and password field. The login button does not need any information. the information
         # TODO is grabbed from somewhere else now
-        self.gui_handler.client_logic.logon()
-        self.gui_handler.refresh_transactions()
+        self.gui_handler.button_login_actuated()
 
     @htmlPy.Slot()
     def logOut(self):
@@ -43,7 +42,7 @@ class GUISignal(htmlPy.Object):
     # TODO yelinsheng: add the function somehow in the GUI to cancel an order. The function should forward the order_id
     @htmlPy.Slot(str)
     def orderCancel(self, OrderID):
-        print OrderID
+        self.gui_handler.button_cancel_actuated(OrderID)
 
     # TODO Yelinsheng add to GUI that Client orders are shown in GUI use database_name for this
     @htmlPy.Slot(str)
@@ -554,6 +553,8 @@ class ClientLogic():
             self.process_order_partial_filled_respond(execution_report)
         elif execution_report.execution_type == TradingClass.FIXHandlerUtils.ExecutionType.FILL:
             self.process_order_filled_respond(execution_report)
+
+        self.gui_handler.refresh_transactions()
         return
 
     def process_order_canceled_respond(self, execution_report):
@@ -888,9 +889,20 @@ class GUIHandler:
         trading_transactions_json = self.request_trading_transactions()
         self.client_logic.gui_signal.refreshTransaction(trading_transactions_json)
 
-    def button_login_actuated(self, user_name, user_password):
+    def button_login_actuated(self):
         """This function is activated when the login button is pushed"""
-        return self.client_logic.logon()
+        self.client_logic.logon()
+        self.refresh_transactions()
+
+
+    def button_cancel_actuated(self, order_id):
+        """
+        Args:
+            order_id (unicode): the oid of the order requested to be canceled
+        Return:
+            None
+        """
+        self.client_logic.process_order_cancel_request(str(order_id))
 
     def request_trading_transactions(self):
         """Request trading transactions
