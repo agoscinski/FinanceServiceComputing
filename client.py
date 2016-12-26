@@ -25,8 +25,6 @@ class GUISignal(htmlPy.Object):
 
     @htmlPy.Slot()
     def logIn(self):
-        # TODO Yelinsheng remove usr and password field. The login button does not need any information. the information
-        # TODO is grabbed from somewhere else now
         self.gui_handler.button_login_actuated()
 
     @htmlPy.Slot()
@@ -39,12 +37,10 @@ class GUISignal(htmlPy.Object):
     def searchStock(self, stockCode):
         self.gui_handler.search_for_stock_actuated(stockCode)
 
-    # TODO yelinsheng: add the function somehow in the GUI to cancel an order. The function should forward the order_id
     @htmlPy.Slot(str)
     def orderCancel(self, OrderID):
         self.gui_handler.button_cancel_actuated(OrderID)
 
-    # TODO Yelinsheng add to GUI that Client orders are shown in GUI use database_name for this
     @htmlPy.Slot(str)
     def refreshTransaction(self,transactionJson):
         """This function is called to refresh transaction area in GUI
@@ -884,7 +880,6 @@ class GUIHandler:
                 continue
 
     def refresh_transactions(self):
-        # TODO Yelinsheng I want to invoke the refreshTransaction from GUI signal but I don't know how to. Maybe you write the code of refreshTransaction here? Dont know best solution.
         """Refreshes the transaction list from the client"""
         trading_transactions_json = self.request_trading_transactions()
         self.client_logic.gui_signal.refreshTransaction(trading_transactions_json)
@@ -1076,9 +1071,7 @@ class GUIHandler:
                                                            order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
                                                            price=float(1000),
                                                            quantity=float(1000))
-    #TODO Valentin -> Added by Husein to check fixing order cancel request
     def scenario_4(self):
-        #TODO use process_order_cancel_request
         self.client_logic.process_order_cancel_request("client_2016-11-09-10:40:00")
         pass
 
