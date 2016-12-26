@@ -868,7 +868,7 @@ class OrderCancelRequest(object):
     """Constructor of class OrderCancelRequest:
     Args:
         orig_cl_ord_id (string): original client order id which is to be cancelled
-        cl_ord_id (gid): client order id
+        cl_ord_id (string): client order id
         symbol (string)
         side (char)
         transact_time (FIXDateTimeUTC)
@@ -950,16 +950,16 @@ class OrderCancelRequest(object):
 
 
     @classmethod
-    def from_client_order(self, client_order, new_order_id):
+    def from_client_order(cls, client_order, new_order_id):
         """
         Args:
             client_order (ClientOrder)
-            new_order_id (string): some new order to make it identifiable
+            new_order_id (string): some new order id to make it identifiable
         Return:
             OrderCancelRequest
         """
         transaction_time = FIXDateTimeUTC.create_for_current_time()
-        return OrderCancelRequest(client_order.order_id, new_order_id, client_order.stock_ticker, client_order.side,
+        return cls(client_order.order_id, new_order_id, client_order.stock_ticker, str(client_order.side),
                            transaction_time, client_order.order_quantity)
 
 
