@@ -1,5 +1,33 @@
---TODO these are the orders in server database, please add theses ones into the client database of MS
-INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, MaturityDate, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES('0','MS','2016-11-08','1','2016-11-20','TSLA','2','1','100','1200','0');
-INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, MaturityDate, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES('1','MS','2016-11-08','1','2016-11-10', 'TSLA', '2','2','100','100', '0');
-INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, MaturityDate, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES('0','MS','2016-11-09','1','2016-11-20','TSLA','2','2','2000','1010', '1');
-INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, MaturityDate, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES('0','MS','2016-11-09','1','2016-11-15','MS','1','2','10000','1000', '1');
+
+INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice, OrderQuantity, LastStatus, MaturityDate, StockTicker) VALUES('MS_2016-11-08-16:32:00','2016-11-08','2','1','1200','100', '0', '2016-11-20','TSLA');
+
+INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice, OrderQuantity, LastStatus, MaturityDate, StockTicker) VALUES('MS_2016-11-08-16:44:00','2016-11-08','2','2','100','100', '0', '2016-11-10','TSLA');
+
+INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice, OrderQuantity, LastStatus, MaturityDate, StockTicker) VALUES('MS_2016-11-09-16:55:00','2016-11-09','2','2','1010','2000', '0', '2016-11-20','TSLA');
+
+INSERT INTO `Order`(OrderID, TransactionTime, Side, OrderType, OrderPrice, OrderQuantity, LastStatus, MaturityDate, StockTicker) VALUES('MS_2016-11-09-17:02:00', '2016-11-09','1','2','1000','10000', '0', '2016-11-15','MS');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
