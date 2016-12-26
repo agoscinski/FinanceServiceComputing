@@ -806,9 +806,21 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         self.last_market_data_request_id = self.last_market_data_request_id + 1
         return self.last_market_data_request_id
 
+    def fetch_all_orders(self):
+        """Returs all orders from the client
+
+        Return:
+             client_orders (list of TradingClass.ClientOrder)
+        """
+        client_orders = [TradingClass.ClientOrder.create_dummy_client_order()]
+        return client_orders
 
 class GUIHandler:
     def __init__(self, client_logic):
+        """
+        Args:
+            client_logic (ClientLogic)
+        """
         self.client_logic = client_logic
         pass
 
@@ -834,7 +846,7 @@ class GUIHandler:
     def wait_for_input(self):
         while True:
             print ("input 1 to logon\ninput 2 to logout\ninput 3 to send market request\ninput 4 to order\ninput 5"
-             " scenario 1\ninput 6 scenario 2\ninput 7 scenario 3\ninput 8 scenario 4\ninput 9 to quit")
+             " scenario 1\ninput 6 scenario 2\ninput 7 scenario 3\ninput 8 scenario 4\ninput 9 scenario 5\ninput 10 to quit")
             input = raw_input()
             if input == '1':
                 self.client_logic.logon()
@@ -852,11 +864,30 @@ class GUIHandler:
                 self.scenario_3()
             elif input == '8':
                 self.scenario_4()
-                pass
             elif input == '9':
+                self.scenario_5()
+            elif input == '10':
                 break
             else:
                 continue
+
+    def refresh_transactions(self):
+        """Refreshes the transaction list from the client"""
+        client_orders = self.client_logic.client_database_handler.fetch_all_orders()
+        transaction_json = self.transform_orders_to_transaction_json(client_orders)
+        #self.gui_signal.refreshTransaction(transaction_json) # TODO Yelinsheng I want to invoke the refreshTransaction from GUI signal but I don't know how to. Maybe you write the code of refreshTransaction here? Dont know best solution.
+
+
+    def transform_orders_to_transaction_json(self,orders):
+        """Transforms a list of orders to a json string for the transaction list in the GUI
+        Args:
+            orders (list of TradingClass.ClientOrder)
+        Return:
+             transaction_json (string)
+        """
+        #TODO yelinsheng
+        transaction_json = ""
+        return transaction_json
 
     def button_login_actuated(self, user_name, user_password):
         """This function is activated when the login button is pushed"""
