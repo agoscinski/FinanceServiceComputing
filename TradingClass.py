@@ -1235,6 +1235,8 @@ class ExecutionReport(object):
         header = message.getHeader()
         header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
         header.setField(fix.SendingTime())
+        if self.receiver_comp_id is not None:
+            message.setField(fix.TargetCompID(self.receiver_comp_id))
 
         message.setField(fix.OrderID(self.order_id))
         message.setField(fix.ClOrdID(self.client_order_id))

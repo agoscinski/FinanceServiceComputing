@@ -538,7 +538,7 @@ class ServerLogic(object):
         requested_order_cancel.cancel_quantity = order.price-cumulative_quantity
         requested_order_cancel.last_status = TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED
 
-        order_cancel_id= self.server_database_handler.insert_order_cancel(requested_order_cancel)
+        order_cancel_id = self.server_database_handler.insert_order_cancel(requested_order_cancel)
         # self.server_database_handler.update_order_cancel_success(requested_order_cancel.client_order_id,
         #        requested_order_cancel.account_company_id, OrderCancelStatus.CANCELED, cumulative_quantity, executed_time)
 
@@ -551,7 +551,7 @@ class ServerLogic(object):
         ord_status = TradingClass.FIXHandlerUtils.OrderStatus.CANCELED
         leaves_qty = 0  # could also be filled order quantity-cum_quantity
 
-        order_cancel_execution = ExecutionReport.from_order(order, exec_id, exec_trans_type, exec_type, ord_status, leaves_qty, cumulative_quantity, average_price, receiver_comp_id, orig_cl_ord_id)
+        order_cancel_execution = ExecutionReport.from_order(order, order_cancel_id, exec_trans_type, exec_type, ord_status, leaves_qty, cumulative_quantity, average_price, receiver_comp_id, orig_cl_ord_id)
         self.server_fix_handler.send_order_cancel_execution_respond(order_cancel_execution)
 
     def create_execution_report_for_new_order(self, new_order):
@@ -634,7 +634,7 @@ class ServerLogic(object):
                                                         symbol=order.symbol,
                                                         side=order.side, price=order.price, left_quantity=left_quantity,
                                                         cumulative_quantity=cumulative_quantity,
-                                                        average_price=average_price)
+                                                        average_price=average_price, receiver_comp_id=account_company_id)
         return execution_report
 
     def pack_into_fix_market_data_response(self, market_data_required_id, market_data_entry_types, symbol,
