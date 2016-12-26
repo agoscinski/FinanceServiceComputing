@@ -9,9 +9,9 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 
 
 -- -----------------------------------------------------
--- Table `MSDatabase`.`StockInformation`
+-- Table `MS_Database`.`StockInformation`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `MSDatabase`.`StockInformation` (
+CREATE TABLE IF NOT EXISTS `MS_Database`.`StockInformation` (
   `Timestamp` DATE NOT NULL,
   `Price` FLOAT NULL,
   `Quantity` FLOAT NULL,
@@ -22,9 +22,9 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `MSDatabase`.`Order`
+-- Table `MS_Database`.`Order`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `MSDatabase`.`Order` (
+CREATE TABLE IF NOT EXISTS `MS_Database`.`Order` (
   `OrderID` VARCHAR(45) NOT NULL,
   `TransactionTime` DATE NULL,
   `Side` INT NULL,
@@ -41,9 +41,9 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `MSDatabase`.`OrderResult`
+-- Table `MS_Database`.`OrderResult`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `MSDatabase`.`OrderResult` (
+CREATE TABLE IF NOT EXISTS `MS_Database`.`OrderResult` (
   `OrderID` VARCHAR(45) NOT NULL,
   `OrderTransactionTime` DATE NULL,
   `ResultTime` DATE NULL,
@@ -52,13 +52,8 @@ CREATE TABLE IF NOT EXISTS `MSDatabase`.`OrderResult` (
   PRIMARY KEY (`OrderID`),
   CONSTRAINT `OrderID`
     FOREIGN KEY (`OrderID`)
-    REFERENCES `MSDatabase`.`Order` (`OrderID`)
+    REFERENCES `MS_Database`.`Order` (`OrderID`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
-
-
-SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 

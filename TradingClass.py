@@ -539,6 +539,7 @@ class DatabaseHandler(object):
             return
         except MySQLdb.Error, e:
             print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+            print(sql_command)
 
     def execute_responsive_insert_sql_command(self, insert_sql_command):
         """Used to execute commands INSERT which returns the produced ID from database server

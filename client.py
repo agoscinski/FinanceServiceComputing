@@ -432,8 +432,8 @@ class ClientLogic():
     def __init__(self, application_id):
         self.client_database_handler = ClientDatabaseHandler(database_host="localhost",
                                                              user_name="root", user_password="root",
-                                                             database_name="ClientDatabase", database_port=3306,
-                                                             init_database_script_path="./database/client/init_client_database.sql",
+                                                             database_name=application_id+"_Database", database_port=3306,
+                                                             init_database_script_path="./database/"+application_id+"/init_client_database.sql",
                                                              application_id=application_id)
         self.application_id = application_id
         self.start_time = datetime.datetime.strptime("00:00:01", "%H:%M:%S").time()

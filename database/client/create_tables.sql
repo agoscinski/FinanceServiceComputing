@@ -9,9 +9,9 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 
 
 -- -----------------------------------------------------
--- Table `ClientDatabase`.`StockInformation`
+-- Table `client_Database`.`StockInformation`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `ClientDatabase`.`StockInformation` (
+CREATE TABLE IF NOT EXISTS `client_Database`.`StockInformation` (
   `Timestamp` DATE NOT NULL,
   `Price` FLOAT NULL,
   `Quantity` FLOAT NULL,
@@ -22,9 +22,9 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `ClientDatabase`.`Order`
+-- Table `client_Database`.`Order`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `ClientDatabase`.`Order` (
+CREATE TABLE IF NOT EXISTS `client_Database`.`Order` (
   `OrderID` VARCHAR(45) NOT NULL,
   `TransactionTime` DATE NULL,
   `Side` INT NULL,
@@ -38,27 +38,4 @@ CREATE TABLE IF NOT EXISTS `ClientDatabase`.`Order` (
   `StockTicker` VARCHAR(45) NULL,
   PRIMARY KEY (`OrderID`))
 ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `ClientDatabase`.`OrderResult`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `ClientDatabase`.`OrderResult` (
-  `OrderID` VARCHAR(45) NOT NULL,
-  `OrderTransactionTime` DATE NULL,
-  `ResultTime` DATE NULL,
-  `Quantity` FLOAT NULL,
-  `Price` FLOAT NULL,
-  PRIMARY KEY (`OrderID`),
-  CONSTRAINT `OrderID`
-    FOREIGN KEY (`OrderID`)
-    REFERENCES `ClientDatabase`.`Order` (`OrderID`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
-
-SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 
