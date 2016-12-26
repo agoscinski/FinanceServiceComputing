@@ -16,9 +16,9 @@ class GUISignal(htmlPy.Object):
     # GUI callable functions have to be inside a class.
     # The class should be inherited from htmlPy.Object.
 
-    def __init__(self, gui_hadler):
+    def __init__(self, gui_handler):
         super(GUISignal, self).__init__()
-        self.gui_handler = gui_hadler
+        self.gui_handler = gui_handler
         self.fresh = 1;
         # Initialize the class here, if required.
         return
@@ -380,6 +380,8 @@ class ClientFIXHandler:
         cum_qty = self.get_field_value(fix.CumQty(), message)
         avg_px = self.get_field_value(fix.AvgPx(), message)
         price = self.get_field_value(fix.Price(), message)
+        print("avg_px, cum_qty")
+        print(avg_px, cum_qty)
 
         order_execution = TradingClass.ExecutionReport(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type,
                                                        ord_status, symbol, side, leaves_qty, cum_qty, avg_px, price, orig_cl_ord_id)
@@ -538,7 +540,6 @@ class ClientLogic():
         Returns:
             None
         """
-
         if execution_report.execution_type == TradingClass.FIXHandlerUtils.ExecutionType.CANCELED:
             self.process_order_canceled_respond(execution_report)
         elif execution_report.execution_type == TradingClass.FIXHandlerUtils.ExecutionType.NEW:
@@ -548,8 +549,7 @@ class ClientLogic():
         elif execution_report.execution_type == TradingClass.FIXHandlerUtils.ExecutionType.PARTIAL_FILL:
             self.process_order_partial_filled_respond(execution_report)
         elif execution_report.execution_type == TradingClass.FIXHandlerUtils.ExecutionType.FILL:
-            self.process_order_filled_respond(execution_report)
-
+            self.process_order_partial_filled_respond(execution_report)
         self.gui_handler.refresh_transactions()
         return
 
@@ -595,15 +595,6 @@ class ClientLogic():
         self.client_database_handler.update_order(average_price=execution_report.average_price,
                                                   quantity_filled=quantity_filled)
 
-    def process_order_filled_respond(self, execution_report):
-        """ Processes an execution report regarding a filled order
-        Args:
-            execution_report (TradingClass.ExecutionReport)
-        Returns:
-            None
-        """
-        self.client_database_handler.update_order(average_price=execution_report.average_price, quantity_filled=0)
-
     def process_order_cancel_request(self, order_id):
         """Processes a order cancel request before it is sent to the server
         Args:
@@ -625,7 +616,7 @@ class ClientLogic():
         Return:
              None
         """
-        self.client_database_handler.update_order(order_cancel_reject.orig_cl_ord_id, order_status=TradingClass.DatabaseHandlerUtils.LastStatus.CANCELED)
+        pass
 
     def request_trading_transactions(self):
         client_orders = self.client_database_handler.fetch_all_order()
@@ -854,7 +845,8 @@ class GUIHandler:
     def wait_for_input(self):
         while True:
             print ("input 1 to logon\ninput 2 to logout\ninput 3 to send market request\ninput 4 client exceeds 10 percent price gap\ninput 5"
-             " client deceeds 10 percent price gap\ninput 6 client exceeds 20 percent of total tradable value\ninput 7 scenario 3\ninput 8 scenario 4\ninput 9 scenario 5\ninput 10 to quit")
+             " client deceeds 10 percent price gap\ninput 6 client exceeds 20 percent of total tradable value\ninput 7 send an order which will"
+            " be matched\ninput 8 client sends valid cancel request\ninput 9 client sends invalid cancel request\ninput 10 to quit")
             input = raw_input()
             if input == '1':
                 self.client_logic.logon()
@@ -869,11 +861,11 @@ class GUIHandler:
             elif input == '6':
                 self.client_exceeds_20_percent_total_tradable_value()
             elif input == '7':
-                self.scenario_3()
+                self.send_will_be_matched_order()
             elif input == '8':
-                self.scenario_4()
+                self.client_sends_valid_cancel_request()
             elif input == '9':
-                self.scenario_5()
+                self.client_sends_invalid_cancel_request()
             elif input == '10':
                 break
             else:
@@ -1058,7 +1050,7 @@ class GUIHandler:
     def client_exceeds_20_percent_total_tradable_value(self):
         """
 		A client wants to send an order that represents more than 20% of the total tradable value
-        """
+        """ 
         self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
                                                            side=TradingClass.FIXHandlerUtils.Side.BUY,
                                                            order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
@@ -1066,17 +1058,17 @@ class GUIHandler:
                                                            quantity=float(34))
         pass
 
-    def scenario_3(self):
+    def send_will_be_matched_order(self):
         self.client_logic.process_new_single_order_request(stock_ticker="MS",
                                                            side=TradingClass.FIXHandlerUtils.Side.SELL,
                                                            order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
-                                                           price=float(1000),
-                                                           quantity=float(1000))
-    def scenario_4(self):
-        self.client_logic.process_order_cancel_request("client_2016-11-09-10:40:00")
+                                                           price=float(560),
+                                                           quantity=float(10))
+    def client_sends_valid_cancel_request(self):
+        self.client_logic.process_order_cancel_request("client_20161109-10:40:00")
         pass
 
-    def scenario_5(self):
+    def client_sends_invalid_cancel_request(self):
         client_order = TradingClass.ClientOrder.create_dummy_client_order(order_id="wrong_id")
         order_cancel_request = TradingClass.OrderCancelRequest.from_client_order(client_order, "new_id")
         self.client_logic.client_fix_handler.send_order_cancel_request(order_cancel_request)
