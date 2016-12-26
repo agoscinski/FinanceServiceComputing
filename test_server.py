@@ -28,7 +28,7 @@ class TestServerLogic:
         fsc_server_logic.create_execution_report_for_new_order(dummy_order)
 
 
-    def test_check_if_order_is_valid(self):
+    def test_order_is_valid(self):
         # TODO Valentin
         pass
 
