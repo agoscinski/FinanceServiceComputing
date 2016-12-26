@@ -240,11 +240,14 @@ class ServerFIXHandler:
         return
 
     def send_order_cancel_execution_respond(self, order_cancel_execution):
+        """ Sends and execution report concerning a cancel execution
+        Args:
+            order_cancel_execution (TradingClass.ExecutionReport
+        """
         message = fix.Message()
         header = message.getHeader()
         header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
         header.setField(fix.SendingTime())
-
         message.setField(fix.OrderID(order_cancel_execution.order_id))
         message.setField(fix.ClOrdID(order_cancel_execution.client_order_id))
         if order_cancel_execution.original_client_order_id is not None:
@@ -551,10 +554,11 @@ class ServerLogic(object):
         Returns:
             execution_report (TradingClass.ExecutionReport)
         """
+        execution_report_id = '0'
         left_quantity = new_order.order_quantity
-        cumulative_quantity = 0
-        average_price = 0
-        execution_report = TradingClass.ExecutionReport.from_order(new_order, TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW,
+        cumulative_quantity = 0.
+        average_price = 0.
+        execution_report = TradingClass.ExecutionReport.from_order(new_order, execution_report_id, TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW,
                                                                    TradingClass.FIXHandlerUtils.ExecutionType.NEW,
                                                                    TradingClass.FIXHandlerUtils.OrderStatus.NEW, left_quantity,
                                                                    cumulative_quantity, average_price)

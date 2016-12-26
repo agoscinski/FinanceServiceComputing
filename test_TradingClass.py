@@ -14,14 +14,25 @@ def teardown_module(module):
 class TestExecutionReport:
 
     def test_from_order(self):
+        execution_report_id = '0'
         dummy_order = TradingClass.Order.create_dummy_order()
         left_quantity = dummy_order.order_quantity
-        cumulative_quantity = 0
-        average_price = 0
-        TradingClass.ExecutionReport.from_order(dummy_order, TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW,
+        cumulative_quantity = 0.
+        average_price = 0.
+        execution_report = TradingClass.ExecutionReport.from_order(dummy_order, execution_report_id, TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW,
                                                 TradingClass.FIXHandlerUtils.ExecutionType.NEW,
                                                 TradingClass.FIXHandlerUtils.OrderStatus.NEW, left_quantity,
                                                 cumulative_quantity, average_price)
+        assert type(execution_report.execution_id) is str
+        assert type(execution_report.execution_transaction_type) is str
+        assert type(execution_report.order_status) is str
+        assert type(execution_report.symbol) is str
+        assert type(execution_report.side) is str
+        assert type(execution_report.left_quantity) is float
+        assert type(execution_report.cumulative_quantity) is float
+        assert type(execution_report.average_price) is float
+        assert type(execution_report.price) is float
+
 class TestNewSingleOrder:
 
     def test_create_dummy_new_single_order(self):

@@ -1030,26 +1030,26 @@ class OrderCancelReject(object):
 
 
 class NewSingleOrder(object):
-    """A New single order is designed after the FIX message of type D "Order - Single" and is used to
-     encapsulate a message into an object
-
-    Args:
-        client_order_id (string)
-        handling_instruction (char/FIXHandlerUtils.HandlingInstruction)
-        symbol (string)
-        side (char/FIXHandlerUtils.Side)
-        maturity_month_year (FIXYearMonth)
-        maturity_day (int): between 1-31
-        transaction_time (FIXDateTimeUTC)
-        order_quantity (float)
-        order_type (char/FIXHandlerUtils.OrderType)
-        price (float)
-
-    """
 
     def __init__(self, client_order_id, handling_instruction, symbol, maturity_month_year,
                  maturity_day, side, transaction_time, order_quantity, order_type, price,
                  sender_company_id=None, sending_time=None, on_behalf_of_comp_id=None, sender_sub_id=None):
+        """A New single order is designed after the FIX message of type D "Order - Single" and is used to
+         encapsulate a message into an object
+
+        Args:
+            client_order_id (string)
+            handling_instruction (char/FIXHandlerUtils.HandlingInstruction)
+            symbol (string)
+            side (char/FIXHandlerUtils.Side)
+            maturity_month_year (FIXYearMonth)
+            maturity_day (int): between 1-31
+            transaction_time (FIXDateTimeUTC)
+            order_quantity (float)
+            order_type (char/FIXHandlerUtils.OrderType)
+            price (float)
+
+        """
         self.client_order_id = client_order_id
         self.handling_instruction = handling_instruction
         self.symbol = symbol
@@ -1140,27 +1140,27 @@ class NewSingleOrder(object):
 
 
 class ExecutionReport(object):
-    """
-    Attributes:
-        order_id (string): order id
-        client_order_id (string): client order id (if it's cancellation response it will be client cancel order id)
-        execution_id (string): execution id
-        execution_transaction_type (char): execution transaction type
-        execution_type (char): execution type
-        order_status (char):
-        symbol (String): ticker symbol of the stock
-        side (char):
-        left_quantity (float): amount of shares open for further execution
-        cumulative_quantity (float): total number of shares filled
-        average_price (float): calculated average price of all fills on this order
-        price (float): price of order if it's an order execution response
-        receiver_comp_id (String): receiver of company id
-        original_client_order_id : client order id in case of cancellation response returned
-    """
 
     def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type,
                  order_status, symbol, side, left_quantity, cumulative_quantity, average_price, price,
                  receiver_comp_id=None, original_client_order_id=None):
+        """
+        Attributes:
+            order_id (string): order id
+            client_order_id (string): client order id (if it's cancellation response it will be client cancel order id)
+            execution_id (string): execution id
+            execution_transaction_type (char): execution transaction type
+            execution_type (char): execution type
+            order_status (char):
+            symbol (String): ticker symbol of the stock
+            side (char):
+            left_quantity (float): amount of shares open for further execution
+            cumulative_quantity (float): total number of shares filled
+            average_price (float): calculated average price of all fills on this order
+            price (float): price of order if it's an order execution response
+            receiver_comp_id (String): receiver of company id
+            original_client_order_id : client order id in case of cancellation response returned
+        """
         self.order_id = order_id
         self.client_order_id = client_order_id
         self.execution_id = execution_id
@@ -1180,10 +1180,11 @@ class ExecutionReport(object):
             self.original_client_order_id = None
 
     @classmethod
-    def from_order(cls, order, execution_transaction_type, execution_type, order_status, left_quantity,
+    def from_order(cls, order, execution_id, execution_transaction_type, execution_type, order_status, left_quantity,
                    cumulative_quantity, average_price):
         """
         Args:
+            execution_id (string)
             order (TradingClass.Order)
             execution_transaction_type (char)
             execution_type (int)
@@ -1192,18 +1193,17 @@ class ExecutionReport(object):
             cumulative_quantity (float): total number of shares filled
             average_price (float): calculated average price of all fills on this order
         """
-        order_id = order.order_id
-        client_order_id = order.client_order_id
-        execution_id = None
+        order_id = str(order.order_id)
+        client_order_id =str(order.client_order_id)
         # execution_transaction_type
         # str(execution_type)
         # str(order_status)
         symbol = order.stock_ticker
-        side = order.side
+        side = str(order.side)
         # left_quantity
         # cumulative_quantity
         # average_price
-        price = order.price
+        price = float(order.price)
         execution_report = cls(order_id, client_order_id, execution_id, execution_transaction_type, str(execution_type),
                                str(order_status), symbol, side, left_quantity, cumulative_quantity, average_price,
                                price)
@@ -1483,27 +1483,28 @@ class OrderExecution:
 
 
 class OrderCancel(object):
-    """Constructor of class OrderCancel, it is designed after the OrderCancel table from the database
-    Args:
-        client_order_id (String): original order ID
-        order_cancel_id (String): cancelled order ID from the client side
-        account_company_id (String): account company id related to the order
-        order_received_date (FixDate): order received date
-        stock_ticker (String): ticker symbol of the stock referring in the order
-        side (int): side
-        order_quantity (int): order quantity
-        last_status (int): last status
-        msg_seq_num (int): message sequence number
-        on_behalf_of_company_id (String): original sender who sends order
-        sender_sub_id (String): sub identifier of sender
-        cancel_quantity (float): otal order quantity cancelled
-        execution_time (FixDateTimeUTC): execution time of cancelling the order
-    """
+
 
     def __init__(self, client_order_id, client_order_cancel_id, account_company_id, order_received_date, stock_ticker,
                  side,
                  order_quantity, last_status, received_time, msg_seq_num=None, cancel_quantity=None,
                  execution_time=None, on_behalf_of_company_id=None, sender_sub_id=None):
+        """Constructor of class OrderCancel, it is designed after the OrderCancel table from the database
+        Args:
+            client_order_id (String): original order ID
+            order_cancel_id (String): cancelled order ID from the client side
+            account_company_id (String): account company id related to the order
+            order_received_date (FixDate): order received date
+            stock_ticker (String): ticker symbol of the stock referring in the order
+            side (int): side
+            order_quantity (int): order quantity
+            last_status (int): last status
+            msg_seq_num (int): message sequence number
+            on_behalf_of_company_id (String): original sender who sends order
+            sender_sub_id (String): sub identifier of sender
+            cancel_quantity (float): otal order quantity cancelled
+            execution_time (FixDateTimeUTC): execution time of cancelling the order
+        """
         self.client_order_id = client_order_id
         self.client_order_cancel_id = client_order_cancel_id
         self.account_company_id = account_company_id
@@ -1518,6 +1519,14 @@ class OrderCancel(object):
         self.execution_time = execution_time
         self.on_behalf_of_company_id = on_behalf_of_company_id
         self.sender_sub_id = sender_sub_id
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(self, other)
 
     @classmethod
     def from_order_cancel_request(cls, order_cancel_request):
@@ -1566,7 +1575,7 @@ class OrderCancel(object):
         Returns:
              order_cancel_id (string):
         """
-        return Order.create_order_id(self.client_order_cancel_id, self.account_company_id)
+        return Order.create_order_id(self.client_order_cancel_id, self.account_company_id, self.order_received_date)
 
     @staticmethod
     def create_order_cancel_id(client_order_cancel_id, account_company_id):
@@ -1581,14 +1590,6 @@ class OrderCancel(object):
         """
         return client_order_cancel_id + "_" + account_company_id
 
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
-        return False
-
-    def __ne__(self, other):
-        return not self.__eq__(self, other)
 
 class ClientOrder:
     """This class is designed after the Order table of the client database"""
