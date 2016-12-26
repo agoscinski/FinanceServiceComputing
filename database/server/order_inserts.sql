@@ -3,3 +3,5 @@ INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInst
 INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, MaturityDate, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES('1','MS','2016-11-08','1','2016-11-10', 'TSLA', '2','2','100','100', '0');
 INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, MaturityDate, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES('0','MS','2016-11-09','1','2016-11-20','TSLA','2','2','2000','1010', '1');
 INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, MaturityDate, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES('0','MS','2016-11-09','1','2016-11-15','MS','1','2','10000','1000', '1');
+INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, MaturityDate, Stock_Ticker, Side, OrderType, OrderQuantity, Price, LastStatus) VALUES
+('client_2016-11-09-10:40:00','client','2016-11-09 10:40:03','1','2016-11-10','GC=F','1','2','500','1000','1')
