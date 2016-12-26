@@ -9,7 +9,7 @@ import json
 import demjson
 
 sys.path.append('GUI')
-from frontEnd import htmlPy_app
+import frontEnd
 
 
 class GUISignal(htmlPy.Object):
@@ -19,7 +19,7 @@ class GUISignal(htmlPy.Object):
     def __init__(self, gui_handler):
         super(GUISignal, self).__init__()
         self.gui_handler = gui_handler
-        self.fresh = 1;
+        self.fresh = 1
         # Initialize the class here, if required.
         return
 
@@ -41,14 +41,17 @@ class GUISignal(htmlPy.Object):
     def orderCancel(self, OrderID):
         self.gui_handler.button_cancel_actuated(OrderID)
 
-    @htmlPy.Slot(str)
+    @htmlPy.Slot()
+    def refreshTransactionRequest(self):
+        self.gui_handler.refresh_transactions()
+
     def refreshTransaction(self,transactionJson):
         """This function is called to refresh transaction area in GUI
         Args:
             client transaction json can be fetched as follow:
             transactionJson = self.gui_handler.request_trading_transactions()
         """
-        htmlPy_app.evaluate_javascript('refreshTransaction(\'' + transactionJson + '\')')
+        self.gui_handler.client_logic.front_end.htmlPy_app.evaluate_javascript('refreshTransaction(\'' + transactionJson + '\')')
 
     @htmlPy.Slot(str)
     def refreshChart(self, market_data):
@@ -73,7 +76,7 @@ class GUISignal(htmlPy.Object):
 
         # trading_transaction_json = self.client_logic.gui_handler.extract_trading_transaction_json(trading_transaction)
         result = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
-        htmlPy_app.evaluate_javascript("freshChart('" + result + "')")
+        self.gui_handler.client_logic.front_end.htmlPy_app.evaluate_javascript("freshChart('" + result + "')")
 
     @htmlPy.Slot(str, str, str, str)
     def orderSell(self, price, quantity, order_type, ticket_code):
@@ -443,6 +446,7 @@ class ClientLogic():
         self.client_fix_handler = ClientFIXHandler(self, self.client_database_handler)
         self.gui_handler = GUIHandler(self)
         self.gui_signal = GUISignal(self.gui_handler)
+        self.front_end = frontEnd.FrontEndHandler()
 
     def start_client(self):
         self.client_database_handler.init_database()
@@ -550,7 +554,6 @@ class ClientLogic():
             self.process_order_partial_filled_respond(execution_report)
         elif execution_report.execution_type == TradingClass.FIXHandlerUtils.ExecutionType.FILL:
             self.process_order_partial_filled_respond(execution_report)
-        self.gui_handler.refresh_transactions()
         return
 
     def process_order_canceled_respond(self, execution_report):
@@ -834,9 +837,9 @@ class GUIHandler:
             elif (input == '2'):
                 json = {
                 }
-                htmlPy_app.template = ("index.html", json)
-                htmlPy_app.bind(self.client_logic.gui_signal)
-                htmlPy_app.start()
+                self.client_logic.front_end.htmlPy_app.template = ("index.html", json)
+                self.client_logic.front_end.htmlPy_app.bind(self.client_logic.gui_signal)
+                self.client_logic.front_end.htmlPy_app.start()
             elif (input == '3'):
                 break
             else:

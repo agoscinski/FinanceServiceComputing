@@ -244,6 +244,8 @@
 
     function orderCancel(orderID){
       GUISignal.orderCancel(orderID);
+      alert("Order cancel request has sent!");
+      GUISignal.refreshTransactionRequest();
     }
 
 
