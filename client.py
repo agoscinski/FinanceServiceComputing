@@ -28,8 +28,7 @@ class GUISignal(htmlPy.Object):
         # TODO Yelinsheng remove usr and password field. The login button does not need any information. the information
         # TODO is grabbed from somewhere else now
         self.gui_handler.client_logic.logon()
-        transactionJson = self.gui_handler.request_trading_transactions()
-        self.refreshTransaction(transactionJson)
+        self.gui_handler.refresh_transactions()
 
     @htmlPy.Slot()
     def logOut(self):
@@ -872,22 +871,10 @@ class GUIHandler:
                 continue
 
     def refresh_transactions(self):
+        # TODO Yelinsheng I want to invoke the refreshTransaction from GUI signal but I don't know how to. Maybe you write the code of refreshTransaction here? Dont know best solution.
         """Refreshes the transaction list from the client"""
-        client_orders = self.client_logic.client_database_handler.fetch_all_orders()
-        transaction_json = self.transform_orders_to_transaction_json(client_orders)
-        #self.gui_signal.refreshTransaction(transaction_json) # TODO Yelinsheng I want to invoke the refreshTransaction from GUI signal but I don't know how to. Maybe you write the code of refreshTransaction here? Dont know best solution.
-
-
-    def transform_orders_to_transaction_json(self,orders):
-        """Transforms a list of orders to a json string for the transaction list in the GUI
-        Args:
-            orders (list of TradingClass.ClientOrder)
-        Return:
-             transaction_json (string)
-        """
-        #TODO yelinsheng
-        transaction_json = ""
-        return transaction_json
+        trading_transactions_json = self.request_trading_transactions()
+        self.client_logic.gui_signal.refreshTransaction(trading_transactions_json)
 
     def button_login_actuated(self, user_name, user_password):
         """This function is activated when the login button is pushed"""
