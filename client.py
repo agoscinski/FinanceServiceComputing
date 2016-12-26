@@ -556,7 +556,7 @@ class ClientLogic():
             self.process_order_filled_respond(execution_report)
         return
 
-    def process_order_cancel_respond(self, execution_report):
+    def process_order_canceled_respond(self, execution_report):
         """ Processes an execution report regarding a canceled an order
         Args:
             execution_report (TradingClass.ExecutionReport)
