@@ -74,6 +74,10 @@ class GUISignal(htmlPy.Object):
         stock_information_json = self.gui_handler.extract_stock_information_json(market_data)
         order_book_json = self.gui_handler.extract_order_book_json(market_data)
 
+        print quantity_chart_json
+        print stock_course_chart_json
+        print stock_information_json
+        print order_book_json
         # trading_transaction_json = self.client_logic.gui_handler.extract_trading_transaction_json(trading_transaction)
         result = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
         self.gui_handler.client_logic.front_end.htmlPy_app.evaluate_javascript("freshChart('" + result + "')")
@@ -227,7 +231,7 @@ class ClientFIXHandler:
         message = fix.Message();
         header = message.getHeader();
         header.setField(fix.MsgType(fix.MsgType_MarketDataRequest))
-        header.setField(fix.MsgSeqNum(self.client_database_handler.generate_new_client_order_id()))
+        #header.setField(fix.MsgSeqNum(self.client_database_handler.generate_new_client_order_id()))
         header.setField(fix.SendingTime())
         message.setField(fix.MDReqID(str(self.client_database_handler.generate_market_data_request_id())))
         message.setField(fix.SubscriptionRequestType(fix.SubscriptionRequestType_SNAPSHOT))
@@ -240,21 +244,14 @@ class ClientFIXHandler:
         message.addGroup(group_md_entry)
         group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_TRADE))
         message.addGroup(group_md_entry)
-        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_INDEX_VALUE))
-        message.addGroup(group_md_entry)
         group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_OPENING_PRICE))
         message.addGroup(group_md_entry)
         group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_CLOSING_PRICE))
-        message.addGroup(group_md_entry)
-        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_SETTLEMENT_PRICE))
         message.addGroup(group_md_entry)
         group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_TRADING_SESSION_HIGH_PRICE))
         message.addGroup(group_md_entry)
         group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_TRADING_SESSION_LOW_PRICE))
         message.addGroup(group_md_entry)
-        group_md_entry.setField(fix.MDEntryType(fix.MDEntryType_TRADING_SESSION_VWAP_PRICE))
-        message.addGroup(group_md_entry)
-
         group_symbol = fix42.MarketDataRequest().NoRelatedSym()
         group_symbol.setField(fix.Symbol(symbol))
         message.addGroup(group_symbol)
@@ -297,8 +294,6 @@ class ClientFIXHandler:
         message.getField(symbol_fix)
         message.getField(total_volume_traded_fix)
 
-        a_date = TradingClass.FIXDate.from_year_month_day(2000, 1, 1)
-        a_time = TradingClass.FIXTime(0, 0, 0)
         groupMD = fix42.MarketDataSnapshotFullRefresh.NoMDEntries()
         for MDIndex in range(no_md_entries_fix.getValue()):
             message.getGroup(MDIndex + 1, groupMD)
@@ -307,13 +302,11 @@ class ClientFIXHandler:
             groupMD.getField(md_entry_size_fix)
             groupMD.getField(md_entry_date_fix)
             groupMD.getField(md_entry_time_fix)
-            a_date.set_date_from_date_stamp_string(md_entry_date_fix.getString())
-            a_time.set_time_string(md_entry_time_fix.getString())
             md_entry_type_list.append(md_entry_type_fix.getValue())
             md_entry_px_list.append(md_entry_px_fix.getValue())
             md_entry_size_list.append(md_entry_size_fix.getValue())
-            md_entry_date_list.append(a_date)
-            md_entry_time_list.append(a_time)
+            md_entry_date_list.append(TradingClass.FIXDate.from_fix_date_stamp_string(md_entry_date_fix.getString()))
+            md_entry_time_list.append(TradingClass.FIXTime.from_fix_time_stamp_string(md_entry_time_fix.getString()))
 
         # Encapsulate data into market data response object
         market_data = TradingClass.MarketDataResponse(md_req_id_fix.getValue(), no_md_entries_fix.getValue(),
@@ -450,28 +443,61 @@ class ClientLogic():
             print(market_data.md_entry_date_list[j])
             print(market_data.md_entry_time_list[j])
 
+        offers_price = []
+        offers_quantity = []
+        bids_price = []
+        bids_quantity = []
+        #current_price = 0
+        #current_quantity = 0
+        current_price = []
+        current_quantity = []
+        current_date = []
+        opening_price = 0
+        closing_price = 0
+        day_high = 0
+        day_low = 0
+
+        for j in range(market_data.no_md_entry_types):
+            if str(TradingClass.FIXHandlerUtils.MarketDataEntryType.OFFER) in market_data.md_entry_type_list[j]:
+                offers_price.append(market_data.md_entry_px_list[j])
+                offers_quantity.append(market_data.md_entry_size_list[j])
+            if str(TradingClass.FIXHandlerUtils.MarketDataEntryType.BID) in market_data.md_entry_type_list[j]:
+                bids_price.append(market_data.md_entry_px_list[j])
+                bids_quantity.append(market_data.md_entry_size_list[j])
+            if str(TradingClass.FIXHandlerUtils.MarketDataEntryType.CURRENT_PRICE) in market_data.md_entry_type_list[j]:
+                #current_price = market_data.md_entry_px_list[j]
+                #current_quantity = market_data.md_entry_size_list[j]
+                current_price.append(market_data.md_entry_px_list[j])
+                current_quantity.append(market_data.md_entry_size_list[j])
+                current_date.append(market_data.md_entry_date_list[j].mysql_date_stamp_string)
+            if str(TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING_PRICE) in market_data.md_entry_type_list[j]:
+                opening_price = market_data.md_entry_px_list[j]
+            if str(TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING_PRICE) in market_data.md_entry_type_list[j]:
+                closing_price = market_data.md_entry_px_list[j]
+            if str(TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_HIGH) in market_data.md_entry_type_list[j]:
+                day_high = market_data.md_entry_px_list[j]
+            if str(TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_LOW) in market_data.md_entry_type_list[j]:
+                day_low=market_data.md_entry_px_list[j]
+
+        """
         offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, \
         closing_price, day_high, day_low = self.extract_market_data_information(market_data)
         # OPTIONALTODO tobefixed not working comment it out to avoid error
-        """
         five_smallest_offers_price, five_smallest_offers_quantity = self.extract_five_smallest_offers(offers_price,
-                                                                                                      offers_quantity)
         five_biggest_bids_price, five_biggest_bids_quantity = self.extract_five_biggest_bids(bids_price, bid_quantity)
-        """
         print offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, closing_price, day_high, day_low
         # OPTIONALTODO here should be some database interaction
 
         # OPTIONALTODO tobefixed not working comment it out to avoid error
-        """
         order_book_buy = TradingClass.OrderBookBuy(five_biggest_bids_price, five_biggest_bids_quantity)
         order_book_sell = TradingClass.OrderBookBuy(five_smallest_offers_price, five_smallest_offers_quantity)
         """
+        print offers_price, offers_quantity, bids_price, current_date, current_price, opening_price, closing_price, day_high, day_low
+
         order_book_buy = TradingClass.OrderBookBuy([100, 200, 300, 400, 500], [10, 20, 30, 40, 50])
         order_book_sell = TradingClass.OrderBookBuy([100, 90, 80, 70, 60], [10, 11, 12, 13, 15, 16])
         stock_information = TradingClass.StockInformation(current_price, day_high, day_low)
 
-        # OPTIONALTODO how todo date
-        current_date = datetime.date.today()
         stock_history = TradingClass.StockHistory(current_date, current_price, current_quantity)
         gui_market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
 

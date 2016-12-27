@@ -182,7 +182,7 @@ class FIXTime(object):
         Returns:
             (FIXTime object)
         """
-        time_object = datetime.datetime.strptime(time_stamp_string, "%H%M%S").time()
+        time_object = datetime.datetime.strptime(time_stamp_string, "%H:%M:%S").time()
         return cls(time_object)
 
     @classmethod
@@ -208,6 +208,11 @@ class FIXTime(object):
         """
         time_object = datetime.time(hour, minute, second)
         return cls(time_object)
+
+    @classmethod
+    def create_for_current_time(cls):
+        current_time_datetime_object = datetime.datetime.utcnow()
+        return cls(current_time_datetime_object)
 
     @property
     def mysql_time_stamp_string(self):
@@ -830,7 +835,10 @@ def get_values_from_fix_message_fields(fix_message, message_field_types):
     for i in range(len(message_field_types)):
         fix_field = message_field_types[i]
         fix_message.getField(fix_field)
-        values[i] = fix_field.getValue()
+        print i
+        print fix_field
+        print fix_field.getValue()
+        values.append(fix_field.getValue())
     return values
 
 

@@ -707,12 +707,10 @@ class ServerLogic(object):
                 # market_date_entry_time_list.append(pending_order_fix_time)
 
         current_date_time = datetime.datetime.now()
-        current_fix_date = TradingClass.FIXDate.from_year_month_day(current_date_time.year, current_date_time.month,
-                                                                    current_date_time.day)
-        current_fix_time = TradingClass.FIXTime(current_date_time.hour, current_date_time.minute,
-                                                current_date_time.second)
-        if TradingClass.FIXHandlerUtils.MarketDataEntryType.TRADE in market_data_entry_types:
-            market_data_entry_type_list.append(TradingClass.FIXHandlerUtils.MarketDataEntryType.TRADE)
+        current_fix_date = TradingClass.FIXDate.create_for_current_date()
+        current_fix_time = TradingClass.FIXTime.create_for_current_time()
+        if TradingClass.FIXHandlerUtils.MarketDataEntryType.CURRENT_PRICE in market_data_entry_types:
+            market_data_entry_type_list.append(str(TradingClass.FIXHandlerUtils.MarketDataEntryType.CURRENT_PRICE))
             market_data_entry_price_list.append(stock_information.current_price)
             market_data_entry_size_list.append(0)
             market_data_entry_date_list.append(current_fix_date)
@@ -724,29 +722,29 @@ class ServerLogic(object):
         # if 7 in market_data_entry_types_integer:
         # if 8 in market_data_entry_types_integer:
 
-        if TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING in market_data_entry_types:
-            market_data_entry_type_list.append(TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING)
+        if TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING_PRICE in market_data_entry_types:
+            market_data_entry_type_list.append(str(TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING_PRICE))
             market_data_entry_price_list.append(20)
             market_data_entry_size_list.append(0)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
-        if TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING in market_data_entry_types:
-            market_data_entry_type_list.append(TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING)
+        if TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING_PRICE in market_data_entry_types:
+            market_data_entry_type_list.append(str(TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING_PRICE))
             market_data_entry_price_list.append(20)
             market_data_entry_size_list.append(0)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
-        if TradingClass.FIXHandlerUtils.MarketDataEntryType.SESSION_HIGH in market_data_entry_types:
-            market_data_entry_type_list.append(TradingClass.FIXHandlerUtils.MarketDataEntryType.SESSION_HIGH)
+        if TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_HIGH in market_data_entry_types:
+            market_data_entry_type_list.append(str(TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_HIGH))
             market_data_entry_price_list.append(20)
             market_data_entry_size_list.append(0)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
-        if TradingClass.FIXHandlerUtils.MarketDataEntryType.SESSION_LOW in market_data_entry_types:
-            market_data_entry_type_list.append(TradingClass.FIXHandlerUtils.MarketDataEntryType.SESSION_LOW)
+        if TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_LOW in market_data_entry_types:
+            market_data_entry_type_list.append(str(TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_LOW))
             market_data_entry_price_list.append(stock_information.current_price)
             market_data_entry_size_list.append(20)
             market_data_entry_date_list.append(current_fix_date)
