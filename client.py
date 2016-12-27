@@ -765,6 +765,39 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
             all_client_order.append(client_order)
         return all_client_order
 
+    def fetch_order_book_from_server(self, stock_ticker):
+        """Fetches an client order for a specific order id
+                Args:
+                    stock_ticker (string)
+                Return:
+                    list of price (float) and list of quantity (float)
+        """
+        sql_command = ("select Side, Price, (OrderQuantity-CumulativeQuantity) AS LeftQuantity, Stock_Ticker, "
+                       "OrderQuantity  from `OrderWithCumulativeQuantityAndAveragePrice` where LastStatus='1' "
+                       "and Stock_Ticker='TSLA' and CumulativeQuantity < OrderQuantity ORDER BY "
+                       "ReceivedDate DESC LIMIT 10")% (stock_ticker)
+        order_rows = self.execute_select_sql_command(sql_command)
+
+        buy_price_list = []
+        buy_left_quantity_list=[]
+        sell_price_list = []
+        sell_left_quantity_list = []
+
+        if len(order_rows) < 1:
+            return None
+        else:
+            for order_row in order_rows:
+                if(order_row[1]== TradingClass.FIXHandlerUtils.Side.BUY):
+                    buy_price_list.append(order_row[1])
+                    buy_left_quantity_list.append(order_row[2])
+                elif (order_row[1] == TradingClass.FIXHandlerUtils.Side.SELL):
+                    sell_price_list.append(order_row[1])
+                    sell_left_quantity_list.append(order_row[2])
+
+        order_book_buy=TradingClass.OrderBookBuy(buy_price_list,buy_left_quantity_list)
+        order_book_sell=TradingClass.OrderBookSell(sell_price_list,sell_left_quantity_list)
+
+        return order_book_buy,order_book_sell
 
     def fetch_order(self, order_id):
         """Fetches an client order for a specific order id
