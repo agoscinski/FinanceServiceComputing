@@ -5,6 +5,7 @@
 \usepackage{comment} % enables the use of multi-line comments (\ifx \fi)
 \usepackage{lipsum} %This package just generates Lorem Ipsum filler text.
 \usepackage{fullpage} % changes the margin
+\usepackage{hyperref}
 
 \begin{document}
 %Header-Make sure you update this information!!!!
@@ -18,8 +19,8 @@
 TA: Nengjun Zhu  \hfill Due Date: 2016/12/30 \\
 
 Teammates:
-
-Alexander Goscinsky
+%TODO all write your student number, check your name
+Alexander Goscinski 116030990050
 
 Ruth-Emely Pierau
 
@@ -32,12 +33,14 @@ Husein Sulianto
 
 
 \section*{Problem Statement}
-Put your Problem statement here! Example of a Citation\cite[p.219]{Robotics}. Here's Another Citation\cite{Flueck}
+%Put your Problem statement here! Example of a Citation\cite[p.219]{Robotics}. Here's Another Citation\cite{Flueck}
+%TODO Husein write requirements for the project
 
 \section*{System Architecture}
 \lipsum[2]
 
 \section*{Key Techniques}
+
 \subsection*{Order Matching}
 
 \subsection*{Server}
@@ -52,9 +55,18 @@ Put your Problem statement here! Example of a Citation\cite[p.219]{Robotics}. He
   \item Use JS library Jquery to add logic.
 \end{itemize}
 
+=======
+The project is mainly written in python. We used python 2.7. For some features like the matching algorithm the numpy library \cite{numpy} was used.
+For the FIX communication we used the quickfix library. For the database we use MySQL and use the library MySQLdb as interface between python and MySQL.
+
+
 
 \section*{Task Allocation Among Members}
-
+Alexander Goscinski:
+\begin{itemize}
+  \item Implementation and maintenance of system architecture
+  \item Manage tasks
+\end{itemize}
 Yelinsheng(查汗巴依尔·叶林生):
 
 \begin{itemize}
@@ -74,12 +86,13 @@ Yelinsheng(查汗巴依尔·叶林生):
 
 \section*{Workload Allocations}
 Total 100\% \\
-I did this
 
 \section*{Other}
 \lipsum[7]
 
 \section*{Conclusion}
+The usage of the quickfix library with pythos is recommended because the port is not fitted to python code. It is mostly Java code with python grabbers.
+
 \lipsum[6]
 
 
@@ -89,6 +102,7 @@ Lab Notes, HelloWorld.ic, FooBar.ic
 %\fi %comment me out
 
 \begin{thebibliography}{9}
+\bibitem{numpy} Developers, NumPy. "NumPy." NumPy Numpy. Scipy Developers (2013) \url{https://docs.scipy.org/doc/numpy-dev/numpy-ref.pdf}.
 \bibitem{Robotics} Fred G. Martin \emph{Robotics Explorations: A Hands-On Introduction to Engineering}. New Jersey: Prentice Hall.
 \bibitem{Flueck}  Flueck, Alexander J. 2005. \emph{ECE 100}[online]. Chicago: Illinois Institute of Technology, Electrical and Computer Engineering Department, 2005 [cited 30 August 2005]. Available from World Wide Web: (http://www.ece.iit.edu/~flueck/ece100).
 \end{thebibliography}
