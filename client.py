@@ -51,7 +51,6 @@ class GUISignal(htmlPy.Object):
             client transaction json can be fetched as follow:
             transactionJson = self.gui_handler.request_trading_transactions()
         """
-        print transactionJson
         self.gui_handler.client_logic.front_end.htmlPy_app.evaluate_javascript('refreshTransaction(\'' + transactionJson + '\')')
 
     @htmlPy.Slot(str)
@@ -562,7 +561,6 @@ class ClientLogic():
         Returns:
             None
         """
-        print execution_report.client_order_id
         order = self.client_database_handler.fetch_order(execution_report.client_order_id)
         quantity_filled = order.order_quantity - execution_report.left_quantity
         order_is_filled = execution_report.left_quantity == 0
