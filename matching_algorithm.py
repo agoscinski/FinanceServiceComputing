@@ -87,17 +87,9 @@ def match(orders):
         order_executions (list of TradingClass.ExecutionReport)
     """
     buy_orders, sell_orders = extract_buy_and_sell_orders(orders)
-    print("buy")
-    print_orders(buy_orders)
-    print"sell"
-    print_orders(sell_orders)
     trading_matrix = pro_rata(buy_orders, sell_orders)
     order_executions = extract_order_executions_out_of_trading_matrix(trading_matrix, buy_orders, sell_orders)
     return order_executions
-
-def print_orders(orders):
-    for order in orders:
-        print(order.left_quantity)
 
 # TODO sorting to latest is order is oldest order
 # TODO change MARKET_ORDERS to 1 for sell and float max for buy

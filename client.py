@@ -147,12 +147,13 @@ class ClientFIXApplication(fix.Application):
         print "IN", message
         msg_Type = message.getHeader().getField(fix.MsgType())
         if (msg_Type.getString() == fix.MsgType_MarketDataSnapshotFullRefresh):
-            print "MarketDataSnapshotFullRefresh"
+            print "Received MarketDataSnapshotFullRefresh"
             self.client_fix_handler.handle_market_data_respond(message)
         elif (msg_Type.getString() == fix.MsgType_ExecutionReport):
+            print "Received ExecutionReport"
             self.client_fix_handler.handle_execution_report(message)
         elif (msg_Type.getString() == fix.MsgType_OrderCancelReject):
-            print "OrderCancelReject"
+            print "Received OrderCancelReject"
             self.client_fix_handler.handle_order_cancel_reject(message)
 
     def toApp(self, message, session_id):
@@ -754,7 +755,6 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         sql_command = ("select TransactionTime, Side, OrderType, OrderQuantity, OrderPrice,"
                        "LastStatus, MaturityDate, QuantityFilled, AveragePrice, StockTicker from "
                        "`Order` where OrderID='%s'") % (order_id)
-        print("order_id"+   order_id+"\n")
         order_rows = self.execute_select_sql_command(sql_command)
         order_row_list = list(order_rows[0])
 
@@ -1027,12 +1027,15 @@ class GUIHandler:
     def client_exceeds_20_percent_total_tradable_value(self):
         """
 		A client wants to send an order that represents more than 20% of the total tradable value
-        """ 
+        """
+        TSLA_total_tradable_value = 550*12000000
+        price = ((TSLA_total_tradable_value * 0.2) + 500)/2.
+        quantity = ((TSLA_total_tradable_value * 0.2) + 500)/2.
         self.client_logic.process_new_single_order_request(stock_ticker="TSLA",
                                                            side=TradingClass.FIXHandlerUtils.Side.BUY,
                                                            order_type=TradingClass.FIXHandlerUtils.OrderType.LIMIT,
-                                                           price=float(500),
-                                                           quantity=float(34))
+                                                           price=price,
+                                                           quantity=quantity)
         pass
 
     def send_will_be_matched_order(self):
