@@ -203,6 +203,7 @@
       $('#Name').show();
       $('#Name').text(clientName);
       setInterval("GUISignal.refreshTransactionRequest()",5000);
+      setInterval("GUISignal.refreshChart()",5000);
     }
 
 
@@ -268,11 +269,14 @@
 
     function freshChart(jsonData){
 
-      if(pStockCode.length==0){
-        return
-      }
+      //if(pStockCode.length==0){
+        //return
+      //}
 
       //var jsonData=GUISignal.freshChart(pStockCode);
+      if(jsonData.length==0){
+        return;
+      }
 
       jsonData=JSON.parse(jsonData);
       if(jsonData.success){

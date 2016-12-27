@@ -20,6 +20,7 @@ class GUISignal(htmlPy.Object):
         super(GUISignal, self).__init__()
         self.gui_handler = gui_handler
         self.fresh = 1
+        self.market_data_json=""
         # Initialize the class here, if required.
         return
 
@@ -53,34 +54,21 @@ class GUISignal(htmlPy.Object):
         """
         self.gui_handler.client_logic.front_end.htmlPy_app.evaluate_javascript('refreshTransaction(\'' + transactionJson + '\')')
 
-    @htmlPy.Slot(str)
-    def refreshChart(self, market_data):
-        # trading_transaction = TradingClass.TradingTransaction(["2016-10-01", "2016-10-02", "2016-10-03"], [12, 23, 12],
-        #                                                       [22, 22, 22], [True, False, True])
-        # stock_information = TradingClass.StockInformation(self.fresh, self.fresh + 2, self.fresh - 2)
-        # stock_history = TradingClass.StockHistory(
-        #     ["2016-10-1", "2016-10-2", "2016-10-3", "2016-10-4", "2016-10-5", "2016-10-6", "2016-10-7", "2016-10-8",
-        #      "2016-10-9", "2016-10-10"],
-        #     [self.fresh + 10, self.fresh + 12.5, 12.5, 12.5, self.fresh + 15.5, 12.5, 12.5, 12.5, 12.5, 12.5],
-        #     [self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh, self.fresh,
-        #      self.fresh])
-        # order_book_buy = TradingClass.OrderBookBuy([11.5, 11.6, 11.7, 11.8, 11.9], [1, 2, 3, 4, 5])
-        # order_book_sell = TradingClass.OrderBookSell([11.5, 11.6, 11.7, 11.8, 11.9], [1, 2, 3, 4, 5])
-        # market_data = TradingClass.MarketData(stock_information, stock_history, order_book_buy, order_book_sell)
-
+    def updataMarketDataJson(self, market_data):
 
         quantity_chart_json = self.gui_handler.extract_quantity_chart_json(market_data)
         stock_course_chart_json = self.gui_handler.extract_course_chart_json(market_data)
         stock_information_json = self.gui_handler.extract_stock_information_json(market_data)
         order_book_json = self.gui_handler.extract_order_book_json(market_data)
 
-        print quantity_chart_json
-        print stock_course_chart_json
-        print stock_information_json
-        print order_book_json
-        # trading_transaction_json = self.client_logic.gui_handler.extract_trading_transaction_json(trading_transaction)
-        result = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
-        self.gui_handler.client_logic.front_end.htmlPy_app.evaluate_javascript("freshChart('" + result + "')")
+        self.market_data_json = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
+
+
+
+    @htmlPy.Slot()
+    def refreshChart(self):
+
+        self.gui_handler.client_logic.front_end.htmlPy_app.evaluate_javascript('freshChart(\'' + self.market_data_json + '\')')
 
     @htmlPy.Slot(str, str, str, str)
     def orderSell(self, price, quantity, order_type, ticket_code):
@@ -934,7 +922,6 @@ class GUIHandler:
             market_data TradingClass.MarketData
         :return:
         """
-        print "fresh chart"
 
         '''
         # OPTIONALTODO finish these functions
@@ -944,7 +931,7 @@ class GUIHandler:
         order_book_json = self.extract_order_book_json(market_data)
         return quantity_chart_json, stock_course_chart_json, stock_information_json, order_book_json
         '''
-        self.client_logic.gui_signal.refreshChart(market_data)
+        self.client_logic.gui_signal.updataMarketDataJson(market_data)
 
     def refresh_trading_transaction_list(self, trading_transaction):
         # This function is needed when fresh transaction list, don't delete it.
