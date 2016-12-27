@@ -1,23 +1,33 @@
+% !Mode:: "TeX:UTF-8"
 \documentclass[a4paper, 11pt]{article}
-\usepackage{comment} % enables the use of multi-line comments (\ifx \fi) 
-\usepackage{lipsum} %This package just generates Lorem Ipsum filler text. 
+\usepackage[no-math]{xeCJK}
+\setCJKmainfont[BoldFont=SimHei, ItalicFont=KaiTi]{SimSun}
+\setCJKmonofont{KaiTi}
+\usepackage{comment} % enables the use of multi-line comments (\ifx \fi)
+\usepackage{lipsum} %This package just generates Lorem Ipsum filler text.
 \usepackage{fullpage} % changes the margin
 
 \begin{document}
 %Header-Make sure you update this information!!!!
 \noindent
 
-\large\textbf{Conclusion Report} 
+\large\textbf{Conclusion Report}
 \hfill \textbf{Exchange Simulator Project / Team B} \\
 
-\normalsize Course code: CS28011 \hfill Prof. Jian Cao \& Dr. James L. Mei\\ 
+\normalsize Course code: CS28011 \hfill Prof. Jian Cao \& Dr. James L. Mei\\
 
 TA: Nengjun Zhu  \hfill Due Date: 2016/12/30 \\
 
-Teammates: Alexander Goscinsky,
-Ruth-Emely Pierau,
-Valentin Rothoft,
-Yelin Sheng,
+Teammates:
+
+Alexander Goscinsky
+
+Ruth-Emely Pierau
+
+Valentin Rothoft
+
+Yelinsheng(查汗巴依尔·叶林生) 116033910057
+
 Husein Sulianto
 
 
@@ -32,13 +42,22 @@ Put your Problem statement here! Example of a Citation\cite[p.219]{Robotics}. He
 \lipsum[3]
 
 \section*{Task Allocation Among Members}
-\lipsum[4]
+
+Yelinsheng(查汗巴依尔·叶林生):
+
+\begin{itemize}
+  \item GUI implementation
+  \item Some functions of client logic
+  \item Some functions of server logic
+  \item Implementation of some basic data classes
+  \item Code testing
+\end{itemize}
 % to comment sections out, use the command \ifx and \fi. Use this technique when writing your pre lab. For example, to comment something out I would do:
 %  \ifx
 %   \begin{itemize}
 %       \item item1
 %       \item item2
-%   \end{itemize}   
+%   \end{itemize}
 %  \fi
 
 \section*{Workload Allocations}
@@ -63,4 +82,3 @@ Lab Notes, HelloWorld.ic, FooBar.ic
 \end{thebibliography}
 
 \end{document}
-
