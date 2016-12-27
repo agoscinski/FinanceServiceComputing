@@ -81,6 +81,7 @@ class ServerFIXApplication(fix.Application):
             None
         """
         # beginString = message.getHeader().getField(fix.BeginString())
+        print "IN"
         msg_Type = message.getHeader().getField(fix.MsgType())
         if msg_Type.getString() == fix.MsgType_MarketDataRequest:
             self.server_fix_handler.handle_market_data_request(message)
@@ -422,6 +423,10 @@ class ServerLogic(object):
         acknowledge_execution_report = self.create_execution_report_for_new_order(requested_order)
         self.server_fix_handler.send_execution_report_respond(acknowledge_execution_report)
         orders = self.server_database_handler.fetch_pending_order_with_left_quantity_by_stock_ticker(requested_order.stock_ticker)
+        print "orders:\n"
+        for order in orders:
+            print order.client_order_id
+            print order.left_quantity
         order_executions = matching_algorithm.match(orders)
         for order_execution in order_executions:
             order_execution.execution_id = self.server_database_handler.insert_order_execution(order_execution)
@@ -946,13 +951,14 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         sql_command = ("select ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
                        "Side, MaturityDate, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID,"
                        " SenderSubID, CashOrderQuantity, (OrderQuantity-CumulativeQuantity) AS LeftQuantity from "
-                       "`OrderWithCumulativeQuantityAndAveragePrice` where LastStatus=1 and Stock_Ticker='%s'") % (
+                       "`OrderWithCumulativeQuantityAndAveragePrice` where LastStatus=1 and Stock_Ticker='%s and LeftQuantity > 0'") % (
                           symbol)
-
         pending_orders_arguments_as_list = self.execute_select_sql_command(sql_command)  # list of tuples
         pending_orders = []
         for pending_order_arguments in pending_orders_arguments_as_list:
-            pending_order_arguments_as_list = list(pending_order_arguments)  # ClientOrderID
+            pending_order_arguments_as_list = list(pending_order_arguments)
+            print("ClientOrderID "+pending_order_arguments_as_list[0])
+            print("LeftQuantity "+str(pending_order_arguments_as_list[15]))
             #pending_order_arguments_as_list[0] = pending_order_arguments_as_list[0]  # ClientOrderID
             #pending_order_arguments_as_list[1] = pending_order_arguments_as_list[1]  # Account_CompanyID
             pending_order_arguments_as_list[2] = TradingClass.FIXDate(pending_order_arguments_as_list[2])  # ReceivedDate

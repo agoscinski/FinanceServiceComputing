@@ -24,8 +24,7 @@ def pro_rata(buy_orders, sell_orders):
         
     """trade_matrix (numpy.array): matrix for traded shares set buy and sell shares to new amount"""
 
-    if len(buy_orders) == 0 or len(sell_orders) == 0: return None
-
+    if len(buy_orders) == 0 or len(sell_orders) == 0: return np.array([])
     current_buy_orders_length = len(buy_orders)
     current_sell_orders_length = len(sell_orders)
 
@@ -88,12 +87,17 @@ def match(orders):
         order_executions (list of TradingClass.ExecutionReport)
     """
     buy_orders, sell_orders = extract_buy_and_sell_orders(orders)
+    print("buy")
+    print_orders(buy_orders)
+    print"sell"
+    print_orders(sell_orders)
     trading_matrix = pro_rata(buy_orders, sell_orders)
-
-    print(trading_matrix)
     order_executions = extract_order_executions_out_of_trading_matrix(trading_matrix, buy_orders, sell_orders)
     return order_executions
 
+def print_orders(orders):
+    for order in orders:
+        print(order.left_quantity)
 
 # TODO sorting to latest is order is oldest order
 # TODO change MARKET_ORDERS to 1 for sell and float max for buy
