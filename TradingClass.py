@@ -108,6 +108,11 @@ class FIXDate(object):
         date_object = datetime.date(year, month, day)
         return cls(date_object)
 
+    @classmethod
+    def create_for_current_date(cls):
+        current_time_datetime_object = datetime.datetime.utcnow()
+        return cls(current_time_datetime_object)
+
     def __eq__(self, other):
         return self.date.year == other.date.year and self.date.month == other.date.month and self.date.day == other.date.day
 
@@ -1326,7 +1331,7 @@ class Order(object):
 
         client_order_id = new_single_order.client_order_id
         account_company_id = new_single_order.sender_company_id
-        received_time = FIXDateTimeUTC.create_for_current_time()
+        received_date = FIXDate.create_for_current_date()
         handling_instruction = new_single_order.handling_instruction
         stock_ticker = new_single_order.symbol
         side = new_single_order.side
@@ -1342,7 +1347,7 @@ class Order(object):
         sender_sub_id = None
         cash_order_quantity = None
 
-        order = cls(client_order_id, account_company_id, received_time, handling_instruction, stock_ticker,
+        order = cls(client_order_id, account_company_id, received_date, handling_instruction, stock_ticker,
                     side, maturity_date, order_type, order_quantity, price, last_status, message_sequence_number,
                     on_behalf_of_company_id, sender_sub_id, cash_order_quantity)
         return order

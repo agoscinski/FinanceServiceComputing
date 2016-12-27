@@ -144,31 +144,28 @@ class ClientFIXApplication(fix.Application):
         pass
 
     def fromApp(self, message, session_id):
-        print "IN", message
+        print("IN", message.toString())
         msg_Type = message.getHeader().getField(fix.MsgType())
         if (msg_Type.getString() == fix.MsgType_MarketDataSnapshotFullRefresh):
-            print "Received MarketDataSnapshotFullRefresh"
+            print("Received MarketDataSnapshotFullRefresh")
             self.client_fix_handler.handle_market_data_respond(message)
         elif (msg_Type.getString() == fix.MsgType_ExecutionReport):
-            print "Received ExecutionReport"
+            print("Received ExecutionReport")
             self.client_fix_handler.handle_execution_report(message)
         elif (msg_Type.getString() == fix.MsgType_OrderCancelReject):
-            print "Received OrderCancelReject"
+            print("Received OrderCancelReject")
             self.client_fix_handler.handle_order_cancel_reject(message)
 
     def toApp(self, message, session_id):
-        print "OUT", message
+        print("OUT", message.toString())
+        msg_Type = message.getHeader().getField(fix.MsgType())
+        if msg_Type.getString() == fix.MsgType_OrderCancelRequest:
+            print("Sending OrderCancelRequest")
+        elif msg_Type.getString() == fix.MsgType_ExecutionReport:
+            print("Sending ExecutionReport")
+        elif msg_Type.getString() == fix.MsgType_NewOrderSingle:
+            print("Sending NewSingleOrder")
 
-    def _calculate_checksum(self):
-        pass
-
-    def gen_order_id(self):
-        self.order_id = self.order_id + 1
-        return self.order_id
-
-    def gen_market_data_request_id(self):
-        self.market_data_request_id = self.market_data_request_id + 1
-        return self.market_data_request_id
 
 
 class ClientFIXHandler:
@@ -382,8 +379,6 @@ class ClientFIXHandler:
         side = TradingClass.FIXHandlerUtils.get_field_value(fix.Side(), message)
         leaves_qty = TradingClass.FIXHandlerUtils.get_field_value(fix.LeavesQty(), message)
         price = TradingClass.FIXHandlerUtils.get_field_value(fix.Price(), message)
-        #TODO avg price and cum_qty always return 0 here
-        ord_qty = TradingClass.FIXHandlerUtils.get_field_value(fix.OrderQty(), message)
         cum_qty = TradingClass.FIXHandlerUtils.get_field_value(fix.CumQty(), message)
         avg_px = TradingClass.FIXHandlerUtils.get_field_value(fix.AvgPx(), message)
 

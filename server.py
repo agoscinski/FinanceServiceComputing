@@ -64,8 +64,14 @@ class ServerFIXApplication(fix.Application):
         return
 
     def toApp(self, message, session_id):
-        return
-
+        print("OUT", message.toString())
+        msg_Type = message.getHeader().getField(fix.MsgType())
+        if msg_Type.getString() == fix.MsgType_OrderCancelReject:
+            print("Sending OrderCancelReject")
+        elif msg_Type.getString() == fix.MsgType_ExecutionReport:
+            print("Sending ExecutionReport")
+        elif msg_Type.getString() == fix.MsgType_NewOrderSingle:
+            print("Sending NewSingleOrder")
 
     def fromApp(self, message, session_id):
         """React to application level messages
@@ -81,13 +87,16 @@ class ServerFIXApplication(fix.Application):
             None
         """
         # beginString = message.getHeader().getField(fix.BeginString())
-        print "IN"
+        print("IN", message.toString())
         msg_Type = message.getHeader().getField(fix.MsgType())
         if msg_Type.getString() == fix.MsgType_MarketDataRequest:
+            print("Received MarketDataRequest")
             self.server_fix_handler.handle_market_data_request(message)
         elif msg_Type.getString() == fix.MsgType_NewOrderSingle:
+            print("Received NewOrderSingle")
             self.server_fix_handler.handle_order_request(message)
         elif msg_Type.getString() == fix.MsgType_OrderCancelRequest:
+            print("Received OrderCancelRequest")
             self.server_fix_handler.handle_order_cancel_request(message)
         else:
             self.server_fix_handler.handle_uncovered_message_type_message(message)
@@ -949,13 +958,10 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
                        " SenderSubID, CashOrderQuantity, (OrderQuantity-CumulativeQuantity) AS LeftQuantity from "
                        "`OrderWithCumulativeQuantityAndAveragePrice` where LastStatus=1 and Stock_Ticker='%s' and CumulativeQuantity < OrderQuantity") % (
                           symbol)
-        print(sql_command)
         pending_orders_arguments_as_list = self.execute_select_sql_command(sql_command)  # list of tuples
         pending_orders = []
         for pending_order_arguments in pending_orders_arguments_as_list:
             pending_order_arguments_as_list = list(pending_order_arguments)
-            print("ClientOrderID "+pending_order_arguments_as_list[0])
-            print("LeftQuantity "+str(pending_order_arguments_as_list[15]))
             #pending_order_arguments_as_list[0] = pending_order_arguments_as_list[0]  # ClientOrderID
             #pending_order_arguments_as_list[1] = pending_order_arguments_as_list[1]  # Account_CompanyID
             pending_order_arguments_as_list[2] = TradingClass.FIXDate(pending_order_arguments_as_list[2])  # ReceivedDate
