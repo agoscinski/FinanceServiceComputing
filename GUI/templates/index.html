@@ -484,6 +484,8 @@
       var p=$("#sellP").val();
       var c=$("#stockCode").val();
       GUISignal.orderSell(p,q,type,c);
+      alert("Order for sell request has sent!")
+      GUISignal.refreshTransactionRequest();
     }
     function orderBuy(){
       var type=$("#buyT").val();
@@ -491,6 +493,8 @@
       var p=$("#buyP").val();
       var c=$("#stockCode").val();
       GUISignal.orderBuy(p,q,type,c);
+      alert("Order for sell request has sent!")
+      GUISignal.refreshTransactionRequest();
     }
 
 
