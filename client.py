@@ -23,9 +23,9 @@ class GUISignal(htmlPy.Object):
         # Initialize the class here, if required.
         return
 
-    @htmlPy.Slot()
+    @htmlPy.Slot(result=str)
     def logIn(self):
-        self.gui_handler.button_login_actuated()
+        return self.gui_handler.button_login_actuated()
 
     @htmlPy.Slot()
     def logOut(self):
@@ -857,6 +857,7 @@ class GUIHandler:
         """This function is activated when the login button is pushed"""
         self.client_logic.logon()
         self.refresh_transactions()
+        return self.client_logic.application_id
 
 
     def button_cancel_actuated(self, order_id):

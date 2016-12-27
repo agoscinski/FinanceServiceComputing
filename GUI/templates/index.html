@@ -198,10 +198,10 @@
       //else{
         //alert(msg.msg);
       //}
-      GUISignal.logIn();
+      var clientName = GUISignal.logIn();
       $('#logInA').hide();
       $('#Name').show();
-      $('#Name').text("Client");
+      $('#Name').text(clientName);
     }
 
 
