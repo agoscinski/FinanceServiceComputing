@@ -399,13 +399,28 @@ class ServerLogic(object):
         md_entry_type_list = md_request.md_entry_type_list
 
         pending_stock_orders = self.server_database_handler.fetch_pending_order_with_left_quantity_by_stock_ticker(symbol)
-        stock_information = self.server_database_handler.fetch_stock_information(symbol)
-        market_data_response = self.pack_into_fix_market_data_response(md_req_id, md_entry_type_list, symbol,
+        stock_information = self.server_database_handler.fetch_stock_information_correct(symbol)
+        if self.market_data_request_is_valid(md_request):
+            market_data_response = self.pack_into_fix_market_data_response(md_req_id, md_entry_type_list, symbol,
                                                                        pending_stock_orders, stock_information)
-
-        self.server_fix_handler.send_market_data_respond(market_data_response)
+            self.server_fix_handler.send_market_data_respond(market_data_response)
+        else:
+            print("Invalid MarketDataRequest")
 
         pass
+
+    def market_data_request_is_valid(self, md_request):
+        """Check whether market data request is valid i.e. is stock is available in database
+
+        Args:
+            md_request (MarketDataRequest): MarketDataRequest Object from fix handler
+
+        Returns:
+            Boolean (True/False)
+        """
+        total_volume=self.server_database_handler.fetch_stock_total_volume(md_request.symbol_list[0])
+        if(total_volume is None): return False
+        else: return True
 
     def process_new_single_order_request(self, requested_fix_order):
         """Process an order request from the FIX Handler
@@ -722,31 +737,34 @@ class ServerLogic(object):
         # if 7 in market_data_entry_types_integer:
         # if 8 in market_data_entry_types_integer:
 
+
         if TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING_PRICE in market_data_entry_types:
             market_data_entry_type_list.append(str(TradingClass.FIXHandlerUtils.MarketDataEntryType.OPENING_PRICE))
-            market_data_entry_price_list.append(20)
+            market_data_entry_price_list.append(500)
             market_data_entry_size_list.append(0)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
         if TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING_PRICE in market_data_entry_types:
             market_data_entry_type_list.append(str(TradingClass.FIXHandlerUtils.MarketDataEntryType.CLOSING_PRICE))
-            market_data_entry_price_list.append(20)
+            market_data_entry_price_list.append(600)
             market_data_entry_size_list.append(0)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
         if TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_HIGH in market_data_entry_types:
+            highest_price, h_quantity= self.server_database_handler.fetch_max_or_min_price_stock("MAX",symbol)
             market_data_entry_type_list.append(str(TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_HIGH))
-            market_data_entry_price_list.append(20)
-            market_data_entry_size_list.append(0)
+            market_data_entry_price_list.append(highest_price)
+            market_data_entry_size_list.append(h_quantity)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
         if TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_LOW in market_data_entry_types:
+            lowest_price, l_quantity= self.server_database_handler.fetch_max_or_min_price_stock("MIN",symbol)
             market_data_entry_type_list.append(str(TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_LOW))
-            market_data_entry_price_list.append(stock_information.current_price)
-            market_data_entry_size_list.append(20)
+            market_data_entry_price_list.append(lowest_price)
+            market_data_entry_size_list.append(l_quantity)
             market_data_entry_date_list.append(current_fix_date)
             market_date_entry_time_list.append(current_fix_time)
 
@@ -837,6 +855,24 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         if len(sql_command_result) < 1: return None
         cumulative_quantity, average_price = float(sql_command_result[0][0]), float(sql_command_result[0][1])
         return cumulative_quantity, average_price
+
+    def fetch_max_or_min_price_stock(self, type, stock_ticker):
+        """Fetches maximum or minimum price of stock already executed
+        Args:
+            type(string): Max or Min determine maximum or minimum value is searched
+            stock_ticker(string) : stock symbol
+        Returns:
+            stock max/min price(float) and quantity(float)
+        """
+        sql_command = ("SELECT OrderExecutionPrice, OrderExecutionQuantity, Stock_Ticker FROM `Order` , "
+                       "OrderExecution WHERE Order_BuyClientOrderID=ClientOrderID and Order_BuyCompanyID = "
+                       "Account_CompanyID and Order_BuyReceivedDate=ReceivedDate AND Stock_Ticker='%s' AND "
+                       "OrderExecutionPrice = (SELECT %s(OrderExecutionPrice) FROM OrderExecution)") % (stock_ticker, type)
+
+        sql_command_result = self.execute_select_sql_command(sql_command)
+        if len(sql_command_result) < 1: return 0,0
+        max_or_min_price, quantity = float(sql_command_result[0][0]), float(sql_command_result[0][1])
+        return max_or_min_price, quantity
 
     def fetch_order_by_order_id(self, client_order_id, account_company_id, received_date):
         """Fetches the order data of the order with the order id (client_order_id, account_company_id, received_date)
@@ -1013,6 +1049,29 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         database_stock_information = TradingClass.DatabaseStockInformation(*order_arguments_row_list)
         return database_stock_information
 
+    def fetch_stock_information_correct(self, stock_ticker_symbol):
+        """Retrieves stock information from database
+
+        Args:
+            stock_ticker_symbol (string): The stock's ticker symbol
+
+        Returns:
+             TradingClass.DatabaseStockInformation object"""
+        sql_command = (
+            "SELECT CurrentPrice.CurrentPrice, PendingOrderCurrentQuantity.CurrentQuantity "
+            "FROM PendingOrderCurrentQuantity INNER JOIN CurrentPrice "
+            "ON PendingOrderCurrentQuantity.Ticker = CurrentPrice.Stock_Ticker "
+            "AND CurrentPrice.Stock_Ticker= '%s'")% stock_ticker_symbol
+        order_arguments_rows = self.execute_select_sql_command(sql_command)
+        if (len(order_arguments_rows)>=1):
+            order_arguments_row_list = list(order_arguments_rows[0])
+            order_arguments_row_list[0] = int(order_arguments_row_list[0])
+            order_arguments_row_list[1] = int(order_arguments_row_list[1])
+            database_stock_information = TradingClass.DatabaseStockInformation(*order_arguments_row_list)
+        else :
+            database_stock_information=TradingClass.DatabaseStockInformation(0,0)
+        return database_stock_information
+
     def fetch_stock_total_volume(self, stock_ticker_symbol):
         """Retrieves stock total volume from database
 
@@ -1023,8 +1082,7 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
              Stock Total Volume (float)"""
         sql_command = ("SELECT TotalVolume FROM Stock where Ticker='%s'" % stock_ticker_symbol)
         stock_arguments_rows = self.execute_select_sql_command(sql_command)
-        stock_total_volume = stock_arguments_rows[0][0]
-
+        stock_total_volume = stock_arguments_rows[0][0] if len(stock_arguments_rows)>=1 else None
         return stock_total_volume
 
     def fetch_orders_of_type(self, order):

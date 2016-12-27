@@ -207,8 +207,6 @@ class ClientFIXHandler:
     def send_market_data_request(self, symbol):
         """Sends a market data request to server
 
-        TODO @husein description if needed
-
         Args:
             symbol (string): the ticker symbol of a stock
 
@@ -219,7 +217,6 @@ class ClientFIXHandler:
         message = fix.Message();
         header = message.getHeader();
         header.setField(fix.MsgType(fix.MsgType_MarketDataRequest))
-        #header.setField(fix.MsgSeqNum(self.client_database_handler.generate_new_client_order_id()))
         header.setField(fix.SendingTime())
         message.setField(fix.MDReqID(str(self.client_database_handler.generate_market_data_request_id())))
         message.setField(fix.SubscriptionRequestType(fix.SubscriptionRequestType_SNAPSHOT))
@@ -251,8 +248,6 @@ class ClientFIXHandler:
 
     def handle_market_data_respond(self, message):
         """Handles market data respond
-
-        TODO @husein description if needed
 
         Args:
             message (FIX::Message): Market data message to be handled.
@@ -420,23 +415,10 @@ class ClientLogic():
         Returns:
             None
         """
-        # Example of printing market_data response object
-        print "fresh chart"
-        print market_data.no_md_entry_types
-        print market_data.symbol
-        for j in range(market_data.no_md_entry_types):
-            print(market_data.md_entry_type_list[j])
-            print(market_data.md_entry_px_list[j])
-            print(market_data.md_entry_size_list[j])
-            print(market_data.md_entry_date_list[j])
-            print(market_data.md_entry_time_list[j])
-
         offers_price = []
         offers_quantity = []
         bids_price = []
         bids_quantity = []
-        #current_price = 0
-        #current_quantity = 0
         current_price = []
         current_quantity = []
         current_date = []
@@ -453,8 +435,6 @@ class ClientLogic():
                 bids_price.append(market_data.md_entry_px_list[j])
                 bids_quantity.append(market_data.md_entry_size_list[j])
             if str(TradingClass.FIXHandlerUtils.MarketDataEntryType.CURRENT_PRICE) in market_data.md_entry_type_list[j]:
-                #current_price = market_data.md_entry_px_list[j]
-                #current_quantity = market_data.md_entry_size_list[j]
                 current_price.append(market_data.md_entry_px_list[j])
                 current_quantity.append(market_data.md_entry_size_list[j])
                 current_date.append(market_data.md_entry_date_list[j].mysql_date_stamp_string)
@@ -467,23 +447,14 @@ class ClientLogic():
             if str(TradingClass.FIXHandlerUtils.MarketDataEntryType.DAY_LOW) in market_data.md_entry_type_list[j]:
                 day_low=market_data.md_entry_px_list[j]
 
-        """
-        offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, \
-        closing_price, day_high, day_low = self.extract_market_data_information(market_data)
-        # OPTIONALTODO tobefixed not working comment it out to avoid error
-        five_smallest_offers_price, five_smallest_offers_quantity = self.extract_five_smallest_offers(offers_price,
-        five_biggest_bids_price, five_biggest_bids_quantity = self.extract_five_biggest_bids(bids_price, bid_quantity)
-        print offers_price, offers_quantity, bids_price, bid_quantity, current_price, current_quantity, opening_price, closing_price, day_high, day_low
-        # OPTIONALTODO here should be some database interaction
 
-        # OPTIONALTODO tobefixed not working comment it out to avoid error
-        order_book_buy = TradingClass.OrderBookBuy(five_biggest_bids_price, five_biggest_bids_quantity)
-        order_book_sell = TradingClass.OrderBookBuy(five_smallest_offers_price, five_smallest_offers_quantity)
-        """
-        print offers_price, offers_quantity, bids_price, current_date, current_price, opening_price, closing_price, day_high, day_low
+        order_book_buy = self.client_database_handler.fetch_order_book_from_server("BUY",market_data.symbol)
+        order_book_sell = self.client_database_handler.fetch_order_book_from_server("SELL",market_data.symbol)
+        #order_book_buy = TradingClass.OrderBookBuy([100, 200, 300, 400, 500], [10, 20, 30, 40, 50])
+        #order_book_sell = TradingClass.OrderBookBuy([100, 90, 80, 70, 60], [10, 11, 12, 13, 15, 16])
+        print offers_price, offers_quantity, bids_price, bids_quantity, current_date, current_price, opening_price, closing_price, day_high, day_low
+        print order_book_buy.price, order_book_buy.quantity, order_book_sell.price, order_book_sell.quantity
 
-        order_book_buy = TradingClass.OrderBookBuy([100, 200, 300, 400, 500], [10, 20, 30, 40, 50])
-        order_book_sell = TradingClass.OrderBookBuy([100, 90, 80, 70, 60], [10, 11, 12, 13, 15, 16])
         stock_information = TradingClass.StockInformation(current_price, day_high, day_low)
 
         stock_history = TradingClass.StockHistory(current_date, current_price, current_quantity)
@@ -754,6 +725,7 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         return all_client_order
 
 
+
     def fetch_order(self, order_id):
         """Fetches an client order for a specific order id
         Args:
@@ -786,6 +758,37 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
                                                 order_price, order_quantity, last_status, maturity_day,
                                                 quantity_filled, average_price, stock_ticker)
         return client_order
+
+    def fetch_order_book_from_server(self, type, stock_ticker):
+        """Fetches order book (unfilled yet order) with parameter stock ticker
+                Args:
+                    type (string), "BUY" or "SELL"
+                    stock_ticker (string)
+                Return:
+                    list of price (float) and list of quantity (float)
+        """
+        connect_server = TradingClass.DatabaseHandler()
+        connect_server.database_name="ServerDatabase"
+        side=TradingClass.FIXHandlerUtils.Side.BUY if type=="BUY" else TradingClass.FIXHandlerUtils.Side.SELL
+        sql_command = ("select Side, Price, (OrderQuantity-CumulativeQuantity) AS LeftQuantity, Stock_Ticker, "
+                       "OrderQuantity  from `OrderWithCumulativeQuantityAndAveragePrice` where LastStatus='1' "
+                       "and Stock_Ticker='%s' and CumulativeQuantity < OrderQuantity and Side='%s' ORDER BY "
+                       "ReceivedDate DESC LIMIT 5") % (stock_ticker,side)
+        order_rows = connect_server.execute_select_sql_command(sql_command)
+        buy_or_sell_price_list = []
+        buy_or_sell_left_quantity_list = []
+
+        if len(order_rows) >= 1:
+            for order_row in order_rows:
+                buy_or_sell_price_list.append(order_row[1])
+                buy_or_sell_left_quantity_list.append(order_row[2])
+
+        if type == "BUY":
+            order_book = TradingClass.OrderBookBuy(buy_or_sell_price_list, buy_or_sell_left_quantity_list)
+        else:
+            order_book = TradingClass.OrderBookSell(buy_or_sell_price_list, buy_or_sell_left_quantity_list)
+
+        return order_book
 
     def generate_market_data_request_id(self):
         self.last_market_data_request_id = self.last_market_data_request_id + 1

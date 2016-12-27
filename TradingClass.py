@@ -835,9 +835,6 @@ def get_values_from_fix_message_fields(fix_message, message_field_types):
     for i in range(len(message_field_types)):
         fix_field = message_field_types[i]
         fix_message.getField(fix_field)
-        print i
-        print fix_field
-        print fix_field.getValue()
         values.append(fix_field.getValue())
     return values
 
