@@ -5,8 +5,8 @@ import copy
 class TestMatchingAlgorithm:
 
     def test_pro_rata(self):
-        buy_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=120, price=200)
-        sell_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=120, price=200)
+        buy_order = TradingClass.Order.create_dummy_order(left_quantity=120, price=200)
+        sell_order = TradingClass.Order.create_dummy_order(left_quantity=120, price=200)
 
         buy_orders = [copy.copy(buy_order), copy.copy(buy_order), copy.copy(buy_order), copy.copy(buy_order), copy.copy(buy_order)]
         sell_orders = [copy.copy(sell_order), copy.copy(sell_order), copy.copy(sell_order), copy.copy(sell_order), copy.copy(sell_order)]

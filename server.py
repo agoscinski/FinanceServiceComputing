@@ -30,6 +30,7 @@ class ServerFIXApplication(fix.Application):
 
     def onCreate(self, session_id):
         self.sessionID = session_id
+        self.server_fix_handler.session_ids[session_id.getTargetCompID().getString()] = session_id
         return
 
     def onLogon(self, session_id):
@@ -64,6 +65,7 @@ class ServerFIXApplication(fix.Application):
 
     def toApp(self, message, session_id):
         return
+
 
     def fromApp(self, message, session_id):
         """React to application level messages
@@ -103,6 +105,7 @@ class ServerFIXHandler:
         self.server_config_file_name = server_configuration_handler.create_config_file(self.server_logic.server_database_handler)
         self.fix_application = None
         self.socket_acceptor = None
+        self.session_ids = {}
 
     def start(self):
         self.init_fix_settings()
@@ -236,7 +239,11 @@ class ServerFIXHandler:
                 None
             """
         fix_message = execution_report.create_fix_message()
-        fix.Session.sendToTarget(fix_message, self.fix_application.sessionID)
+        if execution_report.receiver_comp_id is None:
+            fix.Session.sendToTarget(fix_message, self.fix_application.sessionID)
+        else:
+            fix.Session.sendToTarget(fix_message, self.session_ids[execution_report.receiver_comp_id])
+
         return
 
     def send_reject_order_execution_respond(self, execution_report):
@@ -381,7 +388,7 @@ class ServerLogic(object):
         symbol = md_request.symbol_list[0]
         md_entry_type_list = md_request.md_entry_type_list
 
-        pending_stock_orders = self.server_database_handler.fetch_pending_order_with_cumulative_quantity_by_stock_ticker(symbol)
+        pending_stock_orders = self.server_database_handler.fetch_pending_order_with_left_quantity_by_stock_ticker(symbol)
         stock_information = self.server_database_handler.fetch_stock_information(symbol)
         market_data_response = self.pack_into_fix_market_data_response(md_req_id, md_entry_type_list, symbol,
                                                                        pending_stock_orders, stock_information)
@@ -414,10 +421,8 @@ class ServerLogic(object):
         self.server_database_handler.insert_order(requested_order)
         acknowledge_execution_report = self.create_execution_report_for_new_order(requested_order)
         self.server_fix_handler.send_execution_report_respond(acknowledge_execution_report)
-        orders = self.server_database_handler.fetch_pending_order_with_cumulative_quantity_by_stock_ticker(requested_order.symbol)
+        orders = self.server_database_handler.fetch_pending_order_with_left_quantity_by_stock_ticker(requested_order.stock_ticker)
         order_executions = matching_algorithm.match(orders)
-        print("valid order")
-        print(order_executions)
         for order_execution in order_executions:
             order_execution.execution_id = self.server_database_handler.insert_order_execution(order_execution)
             execution_report_of_buy_order, execution_report_of_sell_order = self.create_execution_report_for_order_execution(
@@ -428,7 +433,7 @@ class ServerLogic(object):
 
     def process_invalid_order_request(self, requested_order):
         order_id = "0"
-        exec_id = str(self.server_database_handler.insert_execution_report(None))
+        exec_id = None
         cl_ord_id = requested_order.client_order_id
         receiver_comp_id = requested_order.account_company_id
         exec_trans_type = TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW
@@ -447,6 +452,7 @@ class ServerLogic(object):
                                                               ord_status
                                                               , symbol, side, leaves_qty, cum_qty, avg_px, price,
                                                               stop_px, receiver_comp_id)
+        reject_order_execution.execution_id = str(self.server_database_handler.insert_execution_report(reject_order_execution))
         self.server_fix_handler.send_reject_order_execution_respond(reject_order_execution)
 
     def order_is_valid(self, requested_order):
@@ -454,12 +460,12 @@ class ServerLogic(object):
             return False
 
         stock_total_volume = self.server_database_handler.fetch_stock_total_volume(requested_order.stock_ticker)
+
         stock_information = self.server_database_handler.fetch_stock_information(requested_order.stock_ticker)
         current_price = stock_information.current_price
 
         is_valid = (self.order_is_in_valid_price_range(requested_order, current_price)
                     and self.order_is_in_valid_traded_value_range(requested_order, current_price, stock_total_volume))
-        print("is_valid"+str(is_valid))
         return is_valid
 
     def order_received_within_trading_time(self):
@@ -558,7 +564,6 @@ class ServerLogic(object):
 
         orig_cl_ord_id = requested_order_cancel.client_order_id
 
-        exec_id = str(self.server_database_handler.insert_execution_report(None))
         receiver_comp_id = requested_order_cancel.account_company_id
         exec_trans_type =  TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW
         exec_type = TradingClass.FIXHandlerUtils.ExecutionType.CANCELED
@@ -566,7 +571,6 @@ class ServerLogic(object):
         leaves_qty = 0  # could also be filled order quantity-cum_quantity
 
         order_cancel_execution = ExecutionReport.from_order(order, order_cancel_id, exec_trans_type, exec_type, ord_status, leaves_qty, cumulative_quantity, average_price, receiver_comp_id, orig_cl_ord_id)
-
         self.server_fix_handler.send_order_cancel_execution_respond(order_cancel_execution)
 
     def create_execution_report_for_new_order(self, new_order):
@@ -577,15 +581,15 @@ class ServerLogic(object):
         Returns:
             execution_report (TradingClass.ExecutionReport)
         """
-        execution_report_id = '0'
+        execution_id = None
         left_quantity = new_order.order_quantity
         cumulative_quantity = 0.
         average_price = 0.
-        execution_report = TradingClass.ExecutionReport.from_order(new_order, execution_report_id, TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW,
+        execution_report = TradingClass.ExecutionReport.from_order(new_order, execution_id, TradingClass.FIXHandlerUtils.ExecutionTransactionType.NEW,
                                                                    TradingClass.FIXHandlerUtils.ExecutionType.NEW,
                                                                    TradingClass.FIXHandlerUtils.OrderStatus.NEW, left_quantity,
                                                                    cumulative_quantity, average_price)
-        execution_report.execution_id = self.server_database_handler.insert_execution_report(execution_report)
+        execution_report.execution_id = str(self.server_database_handler.insert_execution_report(execution_report))
         return execution_report
 
     def create_execution_report_for_order_execution(self, order_execution):
@@ -616,7 +620,7 @@ class ServerLogic(object):
 
         Args:
             client_order_id (string): first part of order id
-            account_company_id (string: second part of order id
+            account_company_id (string): second part of order id
             received_date (TradingClass.FIXDate): third part of order id
             order_execution (TradingClass.OrderExecution): The order execution to be inserted
 
@@ -632,7 +636,7 @@ class ServerLogic(object):
         is_order_filled = left_quantity == 0.
 
         if is_order_filled:
-            execution_transaction_type = TradingClass.ExecutionTransactionType.FILL
+            execution_transaction_type = TradingClass.FIXHandlerUtils.ExecutionTransactionType.FILL
             execution_type = TradingClass.FIXHandlerUtils.ExecutionType.FILL
             order_status = TradingClass.FIXHandlerUtils.OrderStatus.FILLED
         else:
@@ -643,11 +647,11 @@ class ServerLogic(object):
         order_id = TradingClass.Order.create_order_id(client_order_id, account_company_id, received_date)
 
         execution_report = TradingClass.ExecutionReport(order_id=order_id, client_order_id=client_order_id,
-                                                        execution_id=order_execution.execution_id,
+                                                        execution_id=str(order_execution.execution_id),
                                                         execution_transaction_type=execution_transaction_type,
                                                         execution_type=execution_type, order_status=order_status,
-                                                        symbol=order.symbol,
-                                                        side=order.side, price=order.price, left_quantity=left_quantity,
+                                                        symbol=order.stock_ticker,
+                                                        side=str(order.side), price=order.price, left_quantity=left_quantity,
                                                         cumulative_quantity=cumulative_quantity,
                                                         average_price=average_price, receiver_comp_id=account_company_id)
         return execution_report
@@ -882,14 +886,15 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         Returns:
             None
         """
+        msg_seq_num = "NULL" if order.msg_seq_num is None else "'"+str(order.msg_seq_num)+"'"
         command = (
             "INSERT INTO `Order`(ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
             "Side, MaturityDate, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum) VALUES('%s','%s','%s','%s','%s','%s',"
-            "'%s','%s','%s','%s','%s', '%s')"
+            "'%s','%s','%s','%s','%s', %s)"
             % (order.client_order_id, order.account_company_id, order.received_date.mysql_date_stamp_string,
                order.handling_instruction, order.stock_ticker, str(order.side),
                str(order.maturity_date), order.order_type, str(order.order_quantity),
-               str(order.price), str(order.last_status), str(order.msg_seq_num)))
+               str(order.price), str(order.last_status), msg_seq_num))
         self.execute_nonresponsive_sql_command(command)
         return
 
@@ -929,7 +934,7 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         update_id = self.execute_responsive_insert_sql_command(sql_command)
         return update_id
 
-    def fetch_pending_order_with_cumulative_quantity_by_stock_ticker(self, symbol):
+    def fetch_pending_order_with_left_quantity_by_stock_ticker(self, symbol):
         """Fetches all orders from the database with status pending and returns them in a list of orders
 
         Args:
@@ -940,7 +945,7 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
         """
         sql_command = ("select ClientOrderID, Account_CompanyID, ReceivedDate, HandlingInstruction, Stock_Ticker,"
                        "Side, MaturityDate, OrderType, OrderQuantity, Price, LastStatus, MsgSeqNum, OnBehalfOfCompanyID,"
-                       " SenderSubID, CashOrderQuantity, CumulativeQuantity from "
+                       " SenderSubID, CashOrderQuantity, (OrderQuantity-CumulativeQuantity) AS LeftQuantity from "
                        "`OrderWithCumulativeQuantityAndAveragePrice` where LastStatus=1 and Stock_Ticker='%s'") % (
                           symbol)
 
@@ -963,7 +968,7 @@ class ServerDatabaseHandler(TradingClass.DatabaseHandler):
             #pending_order_arguments_as_list[12] = pending_order_arguments_as_list[12]  # OnBehalfOfCompanyID
             #pending_order_arguments_as_list[13] = pending_order_arguments_as_list[13]  # SenderSubID
             #pending_order_arguments_as_list[14] = pending_order_arguments_as_list[14]  # CashOrderQuantity
-            pending_order_arguments_as_list[15] = float(pending_order_arguments_as_list[15])  # OrderWithCumulativeQuantityAndAveragePrice
+            pending_order_arguments_as_list[15] = float(pending_order_arguments_as_list[15])  # LeftQuantity
             order = Order(*pending_order_arguments_as_list)
             pending_orders.append(order)
         return pending_orders

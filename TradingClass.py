@@ -385,16 +385,12 @@ class FIXHandlerUtils:
 
     class ExecutionTransactionType:
         NEW = '0'
-        CANCEL = '1'
-        CORRECT = '2'
-        STATUS = '3'
-        #NEW = '0'
-        #PARTIAL_FILL = '1'
-        #FILL = '2'
-        #CANCELED = '4'
-        #REPLACE = '5'
-        #REJECTED = '8'
-        #EXPIRED = 'C'
+        PARTIAL_FILL = '1'
+        FILL = '2'
+        CANCELED = '4'
+        REPLACE = '5'
+        REJECTED = '8'
+        EXPIRED = 'C'
 
     class HandlingInstruction:
         AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION = fix.HandlInst_AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION
@@ -510,7 +506,7 @@ class DatabaseHandler(object):
         Args:
             sql_command (string): the sql command to be executed
         Returns:
-            fetched_database_rows (list of tuples): the each entry is a row of the select statement #TODO do not know if this is correct
+            fetched_database_rows (list of tuples): the each entry is a row of the select statement
         """
         fetched_database_rows = []
         try:
@@ -1161,7 +1157,7 @@ class ExecutionReport(object):
 
     def __init__(self, order_id, client_order_id, execution_id, execution_transaction_type, execution_type,
                  order_status, symbol, side, left_quantity, cumulative_quantity, average_price, price,
-                 receiver_comp_id=None, original_client_order_id=None):
+                 receiver_comp_id=None, original_client_order_id=None, order_quantity=None):
         """
         Attributes:
             order_id (string): order id
@@ -1178,6 +1174,7 @@ class ExecutionReport(object):
             price (float): price of order if it's an order execution response
             receiver_comp_id (String): receiver of company id
             original_client_order_id : client order id in case of cancellation response returned
+            order_quantity (float): the quantity of the order
         """
         self.order_id = order_id
         self.client_order_id = client_order_id
@@ -1241,9 +1238,6 @@ class ExecutionReport(object):
         header = message.getHeader()
         header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
         header.setField(fix.SendingTime())
-        if self.receiver_comp_id is not None:
-            message.setField(fix.TargetCompID(self.receiver_comp_id))
-
         message.setField(fix.OrderID(self.order_id))
         message.setField(fix.ClOrdID(self.client_order_id))
         message.setField(fix.ExecID(self.execution_id))
@@ -1252,10 +1246,10 @@ class ExecutionReport(object):
         message.setField(fix.OrdStatus(self.order_status))
         message.setField(fix.Symbol(self.symbol))
         message.setField(fix.Side(self.side))
-        message.setField(fix.LeavesQty(self.left_quantity))
-        message.setField(fix.CumQty(self.cumulative_quantity))
         message.setField(fix.AvgPx(self.average_price))
+        message.setField(fix.CumQty(self.cumulative_quantity))
         message.setField(fix.Price(self.price))
+        message.setField(fix.LeavesQty(self.left_quantity))
         return message
 
 
@@ -1278,7 +1272,7 @@ class Order(object):
         sender_sub_id (string): sub identifier of sender
         cash_order_quantity (float): amount of order requested
         msg_seq_num (int)
-        cumulative_order_quantity (float): the remaining amount of shares of the order able to be sold/bought
+        left_quantity (float): the remaining amount of shares of the order able to be sold/bought
         average_price (float): the average price of the sold, bought shares
 
     """
@@ -1286,7 +1280,7 @@ class Order(object):
     def __init__(self, client_order_id, account_company_id, received_date, handling_instruction, stock_ticker, side,
                  maturity_date,
                  order_type, order_quantity, price, last_status, msg_seq_num=None, on_behalf_of_company_id=None,
-                 sender_sub_id=None, cash_order_quantity=None, cumulative_order_quantity=None, average_price=None):
+                 sender_sub_id=None, cash_order_quantity=None, left_quantity=None, average_price=None):
         self.client_order_id = client_order_id
         self.account_company_id = account_company_id
         self.received_date = received_date
@@ -1302,7 +1296,7 @@ class Order(object):
         self.on_behalf_of_company_id = on_behalf_of_company_id
         self.sender_sub_id = sender_sub_id
         self.cash_order_quantity = cash_order_quantity
-        self.cumulative_order_quantity = cumulative_order_quantity
+        self.left_quantity = left_quantity
         self.average_price = average_price
 
     @classmethod
@@ -1312,13 +1306,13 @@ class Order(object):
                            maturity_date=FIXDate.from_fix_date_stamp_string("20161105"),
                            order_type=DatabaseHandlerUtils.OrderType.LIMIT, order_quantity=10000.00, price=1000.00,
                            last_status=DatabaseHandlerUtils.LastStatus.PENDING, msg_seq_num=None,
-                           cumulative_order_quantity=None, average_price=None):
+                           left_quantity=None, average_price=None):
         """For testing"""
         dummy_order = cls(client_order_id=client_order_id, account_company_id=account_company_id,
                           received_date=received_date, handling_instruction=handling_instruction,
                           stock_ticker=stock_ticker, side=side, maturity_date=maturity_date, order_type=order_type,
                           order_quantity=order_quantity, price=price, last_status=last_status, msg_seq_num=msg_seq_num,
-                          cumulative_order_quantity=cumulative_order_quantity, average_price=average_price)
+                          left_quantity=left_quantity, average_price=average_price)
         return dummy_order
 
     @classmethod

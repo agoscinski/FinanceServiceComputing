@@ -370,21 +370,21 @@ class ClientFIXHandler:
         return
 
     def handle_execution_report(self, message):
-        order_id = self.get_field_value(fix.OrderID(), message)
-        cl_ord_id = self.get_field_value(fix.ClOrdID(), message)
-        orig_cl_ord_id = self.get_field_value(fix.OrigClOrdID(), message)
-        exec_id = self.get_field_value(fix.ExecID(), message)
-        exec_trans_type = self.get_field_value(fix.ExecTransType(), message)
-        exec_type = self.get_field_value(fix.ExecType(), message)
-        ord_status = self.get_field_value(fix.OrdStatus(), message)
-        symbol = self.get_field_value(fix.Symbol(), message)
-        side = self.get_field_value(fix.Side(), message)
-        leaves_qty = self.get_field_value(fix.LeavesQty(), message)
-        cum_qty = self.get_field_value(fix.CumQty(), message)
-        avg_px = self.get_field_value(fix.AvgPx(), message)
-        price = self.get_field_value(fix.Price(), message)
-        print("avg_px, cum_qty")
-        print(avg_px, cum_qty)
+        order_id = TradingClass.FIXHandlerUtils.get_field_value(fix.OrderID(), message)
+        cl_ord_id = TradingClass.FIXHandlerUtils.get_field_value(fix.ClOrdID(), message)
+        orig_cl_ord_id = TradingClass.FIXHandlerUtils.get_field_value(fix.OrigClOrdID(), message)
+        exec_id = TradingClass.FIXHandlerUtils.get_field_value(fix.ExecID(), message)
+        exec_trans_type = TradingClass.FIXHandlerUtils.get_field_value(fix.ExecTransType(), message)
+        exec_type = TradingClass.FIXHandlerUtils.get_field_value(fix.ExecType(), message)
+        ord_status = TradingClass.FIXHandlerUtils.get_field_value(fix.OrdStatus(), message)
+        symbol = TradingClass.FIXHandlerUtils.get_field_value(fix.Symbol(), message)
+        side = TradingClass.FIXHandlerUtils.get_field_value(fix.Side(), message)
+        leaves_qty = TradingClass.FIXHandlerUtils.get_field_value(fix.LeavesQty(), message)
+        price = TradingClass.FIXHandlerUtils.get_field_value(fix.Price(), message)
+        #TODO avg price and cum_qty always return 0 here
+        ord_qty = TradingClass.FIXHandlerUtils.get_field_value(fix.OrderQty(), message)
+        cum_qty = TradingClass.FIXHandlerUtils.get_field_value(fix.CumQty(), message)
+        avg_px = TradingClass.FIXHandlerUtils.get_field_value(fix.AvgPx(), message)
 
         order_execution = TradingClass.ExecutionReport(order_id, cl_ord_id, exec_id, exec_trans_type, exec_type,
                                                        ord_status, symbol, side, leaves_qty, cum_qty, avg_px, price, orig_cl_ord_id)
@@ -394,34 +394,6 @@ class ClientFIXHandler:
 
     def send_logout_request(self):
         self.socket_initiator.stop()
-
-    def get_field_value(self, fix_object, message):
-        if message.isSetField(fix_object.getField()):
-            message.getField(fix_object)
-            return fix_object.getValue()
-        else:
-            return None
-
-    def get_field_string(self, fix_object, message):
-        if message.isSetField(fix_object.getField()):
-            message.getField(fix_object)
-            return fix_object.getString()
-        else:
-            return None
-
-    def get_header_field_value(self, fix_object, message):
-        if message.getHeader().isSetField(fix_object.getField()):
-            message.getHeader().getField(fix_object)
-            return fix_object.getValue()
-        else:
-            return None
-
-    def get_header_field_string(self, fix_object, message):
-        if message.getHeader().isSetField(fix_object.getField()):
-            message.getHeader().getField(fix_object)
-            return fix_object.getString()
-        else:
-            return None
 
 
 class ClientLogic():
@@ -595,8 +567,10 @@ class ClientLogic():
         """
         order = self.client_database_handler.fetch_order(execution_report.client_order_id)
         quantity_filled = order.order_quantity - execution_report.left_quantity
-        self.client_database_handler.update_order(average_price=execution_report.average_price,
-                                                  quantity_filled=quantity_filled)
+        order_is_filled = execution_report.left_quantity == 0
+        order_status = TradingClass.DatabaseHandlerUtils.LastStatus.DONE if order_is_filled else None
+        self.client_database_handler.update_order(execution_report.client_order_id, average_price=execution_report.average_price,
+                                                  quantity_filled=quantity_filled, order_status=order_status)
 
     def process_order_cancel_request(self, order_id):
         """Processes a order cancel request before it is sent to the server
@@ -716,7 +690,7 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         """
         sql_command = "UPDATE `Order` SET"
         set_part = []
-
+        #OPTIONALTODO update average price
         if order_status is not None: set_part.append(" LastStatus ='" + str(order_status) + "'")
         if average_price is not None: set_part.append(" AveragePrice ='" + str(average_price) + "'")
         if quantity_filled is not None: set_part.append(" QuantityFilled ='" + str(quantity_filled) + "'")
@@ -780,7 +754,7 @@ class ClientDatabaseHandler(TradingClass.DatabaseHandler):
         sql_command = ("select TransactionTime, Side, OrderType, OrderQuantity, OrderPrice,"
                        "LastStatus, MaturityDate, QuantityFilled, AveragePrice, StockTicker from "
                        "`Order` where OrderID='%s'") % (order_id)
-
+        print("order_id"+   order_id+"\n")
         order_rows = self.execute_select_sql_command(sql_command)
         order_row_list = list(order_rows[0])
 

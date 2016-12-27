@@ -3,8 +3,8 @@ import TradingClass
 import timeit
 
 def run_pro_rata(number_of_orders):
-    buy_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=12000., price=200.)
-    sell_order = TradingClass.Order.create_dummy_order(cumulative_order_quantity=12000., price=200.)
+    buy_order = TradingClass.Order.create_dummy_order(left_quantity=12000., price=200.)
+    sell_order = TradingClass.Order.create_dummy_order(left_quantity=12000., price=200.)
     buy_orders = [buy_order for _ in range(number_of_orders)]
     sell_orders = [sell_order for _ in range(number_of_orders)]
     matching_algorithm.pro_rata(buy_orders, sell_orders)
