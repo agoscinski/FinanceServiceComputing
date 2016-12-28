@@ -42,7 +42,7 @@ Husein Sulianto %TODO Husein
 \section*{Key Techniques}
 
 The project is mainly written in python. We used python 2.7. For some features like the matching algorithm the numpy library \cite{numpy} was used.
-For the FIX communication we used the quickfix library. For the database we use MySQL and use the library MySQLdb as interface between python and MySQL.
+For the FIX communication we used the quickfix library. For the database we use MySQL and use the library MySQL-python as interface between python and MySQL.
 \subsection*{Order Matching}
 
 %TODO Valentin
@@ -51,6 +51,17 @@ For the FIX communication we used the quickfix library. For the database we use 
 Talk about quickfix library
 \subsection*{Database}
 
+For the database MySQL 5.7.15 was used. We created the diagrams and sql scripts creating the structure of the database with MySQL Workbench.
+As interface between python any MySQL we used MySQL-python version 1.2.5.
+\subsubsection*{Server}
+\includegraphics{../diagrams/server_database.pdf}
+\paragraph*{Account}
+A user account is used my clients to connect to the server
+
+\textbf{CompanyID:} the ID of the company when the company registered
+...
+\subsubsection*{Client}
+\includegraphics{../diagrams/client_database.pdf}
 %TODO Husein
 \subsection*{GUI}
 
@@ -116,8 +127,9 @@ The usage of the quickfix library with pythos is recommended because the port is
 
 
 \section*{Attachments}
-Demo video (password: sjtu1896)
-https://owncloud.tu-berlin.de/index.php/s/ihEUWxj8FvIAZhI
+Project homepage with installation instructions: \url{https://github.com/agoscinski/fsc}
+
+Demo video (password: sjtu1896): \url{https://owncloud.tu-berlin.de/index.php/s/ihEUWxj8FvIAZhI}
 
 \begin{thebibliography}{9}
 \bibitem{numpy} Developers, NumPy. "NumPy." NumPy Numpy. Scipy Developers (2013) \url{https://docs.scipy.org/doc/numpy-dev/numpy-ref.pdf}.
