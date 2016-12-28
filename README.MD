@@ -1,5 +1,6 @@
 # Documentation guidelines
 Python coding guidelines: https://www.python.org/dev/peps/pep-0008/
+
 Python documentation style demo: http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
 #Installation
 ##Requirements
