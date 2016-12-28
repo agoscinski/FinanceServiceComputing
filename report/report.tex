@@ -81,7 +81,7 @@ executed. Additionally, there exist a mysql\_init\_server\_database.sql which ca
 needing to start the python files.
 
 \subsubsection*{GUI folder}
-%TODO yelinsheng
+This folder contains the files which are used for GUI. In folder static, there are some static files like css files, js files and some front end libraries. Folder templates contains the html files. At last, the file frontEnd.py is the init script of GUI which can be import to start a GUI. 
 
 \section*{Key Techniques}
 
@@ -165,11 +165,16 @@ Table to store executed/matched order including buying side and selling side
 \includegraphics{../diagrams/client_database.pdf}
 \paragraph*{StockInformation}
 Table to store stock price and quantity at given time
-\textbf{Timestamp:}The date stock information is published\\
-\textbf{Price:}The price of the stock at given timestamp \\
-\textbf{Quantity:}The quantity of stock at given timestamp \\
-\textbf{High:}The highest price value of stock at given timestamp\\
-\textbf{Low:}The lowest price value of stock at given timestamp\\
+\textbf{Timestamp:}The date stock information is published
+\\
+\textbf{Price:}The price of the stock at given timestamp 
+\\
+\textbf{Quantity:}The quantity of stock at given timestamp 
+\\
+\textbf{High:}The highest price value of stock at given timestamp
+\\
+\textbf{Low:}The lowest price value of stock at given timestamp
+\\
 
 \paragraph*{Order}
 Table to store order created by client ,it record the progress and status of order
