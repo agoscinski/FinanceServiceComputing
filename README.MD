@@ -1,7 +1,11 @@
-#
+# Documentation guidelines
 Python coding guidelines: https://www.python.org/dev/peps/pep-0008/
-Documentation style demo: http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
+Python documentation style demo: http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
 #Installation
+##Requirements
+
+A linux OS, preferable Ubuntu
+
 ##Database
 
 ###mysql version: 5.7.15
@@ -14,9 +18,12 @@ Install Mysql on ubuntu:
 Install library: 
    1) sudo apt-get install libmysqlclient-dev
    2) sudo pip install MySQL-python  (you need to make sure that pip is installed)
+###Setting database up
+Set username and password to root, otherwise change default variables in ClientLogic.__init__ of ClientDatabaseHandler in client.py and in ServerLogic.__init__ of ServerDatabaseHandler in server.py
 
+##GUI
 
-##htmlPy
+###htmlPy
 
 1) Installing python package manager: pip
 ```
@@ -41,73 +48,21 @@ sudo pip install jinja2
 ```
 sudo apt-get install python-qt4
 ```
+## Testing
 
-## Pytest
+### Pytest
 ```
 pip install -U pytest
 ```
 
 #Demo
-##Database
-###Prepare:
-Create database "FSC":
-  1) use "mysql -u root -p" command to open mysql client in Terminal
-  2) use "create datebase FSC" command in mysql client
-  
-###Create table in FSC:
-```python
-# -*- coding: utf-8 -*-
-import MySQLdb
 
-try:
-    conn=MySQLdb.connect(host='localhost',user='root',passwd='123456',db='FSC',port=3306)
-    cur=conn.cursor()
-    cur.execute("DROP TABLE IF EXISTS User")
-    cur.execute('create table User(phone char(20),name char(50),password char(50),PRIMARY KEY(phone)) CHARACTER SET = utf8')
-    conn.close()
-
-
-except MySQLdb.Error,e:
-    print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+run server with
 ```
-
-###Insert
-```python
-# -*- coding: utf-8 -*-
-import MySQLdb
-
-try:
-    conn=MySQLdb.connect(host='localhost',user='root',passwd='123456',db='FSC',port=3306)
-    cur=conn.cursor()
-    cur.execute("insert into User(phone,name,password) values('18800000000','test','test')")
-    conn.commit()
-    conn.close()
-
-
-except MySQLdb.Error,e:
-    print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+python main_server.py
 ```
-
-###Query
-```python
-# -*- coding: utf-8 -*-
-import MySQLdb
-
-try:
-    conn=MySQLdb.connect(host='localhost',user='root',passwd='123456',db='FSC',port=3306)
-    cur=conn.cursor()
-    cur.execute("select * from User")
-    results=cur.fetchall()
-    for row in results:
-        print "phone=%s,name=%s,password=%s" %(row[0],row[1],row[2])
-    conn.close()
-
-
-except MySQLdb.Error,e:
-    print "Mysql Error %d: %s" % (e.args[0], e.args[1])
+run a client with
 ```
-##Pytest
-After you created the database
+python main_client.py CLIENT_NAME
 ```
-py.test test_server.py
-```
+where possible client names are: "client" and "MS"
