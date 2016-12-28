@@ -66,3 +66,6 @@ run a client with
 python main_client.py CLIENT_NAME
 ```
 where possible client names are: "client" and "MS"
+
+## FIX communication configuration
+Quickfix uses .cfg configuration files to configure the communication details. We build a ServerConfigFileHandler in utils.py to create and handle these files. To change the default configuration for server side look for creation of the server_configuration_handler object in the ServerFIXHandler and for client side look for creation of the client_configuration_handler object in the ClientFIXHandler
