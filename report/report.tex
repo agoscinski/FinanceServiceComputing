@@ -41,22 +41,22 @@ In this section we will talk the structure of our system including its architect
 \subsection*{System Architecture}
 The system architecture can be seen below.
 
-\includegraphics[scale=0.4]{../diagrams/Component_Diagram_final.pdf}
+\begin{center}\includegraphics[scale=0.4]{../diagrams/Component_Diagram_final.pdf}\end{center}
 
 We have a very similar structure on server and client side, because on both sides certain classes are responsible for the same job,
 we will explain the general concept of the classes. For example instead of explaining the use of the ServerFIXHandler and the ClientFIXHandler
-we will generally discuss the concept of the FIXHandler, since it handles on both sides the same thing.
-\paragraph*{FIXHandler:} The FIXHandler is responsible for receiving quickfix messages and packcking them into TradingClass objects 
+we will generally discuss the concept of the FIXHandler, since it handles on both sides the same thing.\\
+\textbf{FIXHandler:} The FIXHandler is responsible for receiving quickfix messages and packcking them into TradingClass objects 
 we then can use in the ServerLogic for processing. Furthermore it also does the reverse job and transforms TradingClass objects into
-and quickfix messages which then can be send. It also managas the tags of the quickfix configuration file.
-\paragraph*{FIXApplication:} The FIXApplication is invoked when a quickfix message is send or received.
-\paragraph*{Logic:} The Logic works as a bridge between all elements. It processes messages translated from the FIXHandler, checks the 
-requirements for messages and invokes the to necessary database requests. It is the first object which is startad and it starts every other object.
-\paragraph*{DatabaseHandler:} The DatabaseHandler works as an interface from python to MySQL database, so MySQL commands can be executeded through
-the Logic. It offers functions for the Logic to create the database, and insert, update or select data from the database.
-\paragraph*{GUIHandler:} The GUIHandler offers functions to control the GUI elements, it is mainly used for console input handling and to swap more
-logical GUI handling from the GUISignal to the GUIHandler.
-\paragraph*{GUISignal:} The GUISignal is invoked when a user interaction with a GUI happens. For example if a button or a key is pushed.
+and quickfix messages which then can be send. It also managas the tags of the quickfix configuration file. \\
+\textbf{FIXApplication:} The FIXApplication is invoked when a quickfix message is send or received. \\
+\textbf{Logic:} The Logic works as a bridge between all elements. It processes messages translated from the FIXHandler, checks the 
+requirements for messages and invokes the to necessary database requests. It is the first object which is startad and it starts every other object. \\
+\textbf{DatabaseHandler:} The DatabaseHandler works as an interface from python to MySQL database, so MySQL commands can be executeded through
+the Logic. It offers functions for the Logic to create the database, and insert, update or select data from the database. \\
+\textbf{GUIHandler:} The GUIHandler offers functions to control the GUI elements, it is mainly used for console input handling and to swap more
+logical GUI handling from the GUISignal to the GUIHandler. \\
+\textbf{GUISignal:} The GUISignal is invoked when a user interaction with a GUI happens. For example if a button or a key is pushed. \\
 
 Here an example how our server file is structured. You can see a automatic generated UML diagram with pyreverse. Sadly
 the types are mostly not recognized, even though we documented almost everything
@@ -66,13 +66,13 @@ the types are mostly not recognized, even though we documented almost everything
 
 \subsection*{File Structure}
 Here we will explain how we structured our file system.
-\paragraph*{TradingClass.py} This files contains all logical objects for the Logic and the DatabaseHandler as well as enums for database and fix
-related tasks. It also contains the DatabaseHandler parent class including functions parsing sql files.
-\paragraph*{server.py} This files contains all server related classes
-\paragraph*{client.py} This files contains all client related class
-\paragraph*{matching\_algorithm.py} This files contains functions related to the matching algorithm
-\paragraph*{utils.py} This files contains config file class which creates and handles quickfix config file 
-\paragraph*{test\_FILENAME} A testing file for the file with the name FILENAME.
+\textbf{TradingClass.py} This files contains all logical objects for the Logic and the DatabaseHandler as well as enums for database and fix
+related tasks. It also contains the DatabaseHandler parent class including functions parsing sql files. \\
+\textbf{server.py} This files contains all server related classes \\
+\textbf{client.py} This files contains all client related class \\
+\textbf{matching\_algorithm.py} This files contains functions related to the matching algorithm \\
+\textbf{utils.py} This files contains config file class which creates and handles quickfix config file \\
+\textbf{test\_FILENAME} A testing file for the file with the name FILENAME. \\
 
 \subsubsection*{Database folder} 
 The folder contains the database MySQL workbench files as well as their documentation. Furthermore each client and the server has
@@ -81,7 +81,7 @@ executed. Additionally, there exist a mysql\_init\_server\_database.sql which ca
 needing to start the python files.
 
 \subsubsection*{GUI folder}
-This folder contains the files which are used for GUI. In folder static, there are some static files like css files, js files and some front end libraries. Folder templates contains the html files. At last, the file frontEnd.py is the init script of GUI which can be import to start a GUI. 
+%TODO yelinsheng
 
 \section*{Key Techniques}
 
@@ -100,71 +100,74 @@ It also support mandatory field checking for each type of message.
 For the database MySQL 5.7.15 was used. We created the diagrams and sql scripts creating the structure of the database with MySQL Workbench.
 As interface between python any MySQL we used MySQL-python version 1.2.5.
 \subsubsection*{Server}
-\includegraphics{../diagrams/server_database.pdf}
+
+\noindent
+\makebox[\textwidth]{\includegraphics{../diagrams/server_database.pdf}}
 
 \paragraph*{Account}
-Table to store user account is allowed to connect to the server
-\textbf{CompanyID:} the ID of the company when the company registered
-\textbf{CompanyName:} The name of the company with given companyID
-\textbf{Password:}The password of the company
-\textbf{RoleID:}The role of the user, if he is has admin rights (1) or no admin rights (0)
+Table to store user account is allowed to connect to the server \\
+\textbf{CompanyID:} The ID of the company when the company registered \\
+\textbf{CompanyName:} The name of the company with given companyID \\
+\textbf{Password:} The password of the company \\
+\textbf{RoleID:} The role of the user, if he is has admin rights (1) or no admin rights (0) 
 
 \paragraph*{Order}
-Table to store order sent by client to buy or sell stocks.
-\textbf{ClientOrderID:}The Order ID sent by the client 
-\textbf{Account\_CompanyID:}The ID of the company making the order
-\textbf{ReceivedDate:}The date when the order was first accepted
-\textbf{HandlingInstruction:}The way the order should be handled (supported values 1 = Automated execution order, private, no Broker intervention)
-\textbf{Stock\_Ticker:}The ticker symbol of the requested order
-\textbf{Side:}The side of an Order (1: Buy, 2: Sell)
-\textbf{OrderType:}The type of order (1: Market , 2: Limit)
-\textbf{OrderQuantity:} The total quantity of the order (be careful, it could be that the order is partially fulfilled, therefore it has to be checked if there exist
-\textbf{CashOrderQuantity:}The cash amount to represent the order for client (given the cash amount quantity of order will be computed separately) (is not supported)
-\textbf{Price:}The price of orderrequested by client
-\textbf{LastStatus:}The current status of order in server side(0:Done, 1:Pending, 2: Canceled, 3:Expired)
-\textbf{MsqSeqNum:}Message Sequence Number of Order sent by client, stored in case of robustness data needed
-\textbf{OnBehalfOfCompanyID:}The original sender of the order therefore if filled the current order is sent by intermediary to server 
-\textbf{SenderSubID	:}The additional information of sender given by client
+Table to store order sent by client to buy or sell stocks. \\
+\textbf{ClientOrderID:} The Order ID sent by the client  \\
+\textbf{Account\_CompanyID:} The ID of the company making the order \\
+\textbf{ReceivedDate:} The date when the order was first accepted \\
+\textbf{HandlingInstruction:} The way the order should be handled (supported values 1 = Automated execution order, private, no Broker intervention) \\
+\textbf{Stock\_Ticker:} The ticker symbol of the requested order \\
+\textbf{Side:} The side of an Order (1: Buy, 2: Sell) \\
+\textbf{OrderType:} The type of order (1: Market , 2: Limit) \\
+\textbf{OrderQuantity:}  The total quantity of the order (be careful, it could be that the order is partially fulfilled, therefore it has to be checked if there exist \\
+\textbf{CashOrderQuantity:} The cash amount to represent the order for client (given the cash amount quantity of order will be computed separately) (is not supported) \\
+\textbf{Price:} The price of orderrequested by client \\
+\textbf{LastStatus:} The current status of order in server side(0:Done, 1:Pending, 2: Canceled, 3:Expired) \\
+\textbf{MsqSeqNum:} Message Sequence Number of Order sent by client, stored in case of robustness data needed \\
+\textbf{OnBehalfOfCompanyID:} The original sender of the order therefore if filled the current order is sent by intermediary to server  \\
+\textbf{SenderSubID:} The additional information of sender given by client 
 
 \paragraph*{OrderCancel}
-Table to store order cancel sent by client
-\textbf{Side}The side of an Order to be cancelled (1: Buy, 2: Sell)
-\textbf{ReceivedTime}The time when the order cancel was first accepted by server
-\textbf{LastStatus}The current status of order cancel in server side(1:Pending, 2: Canceled)
-\textbf{MsgSeqNum}Message Sequence Number of Order Cancel sent by client, stored in case of robustness data needed
-\textbf{Order\_ClientOrderID}Represent The Order ID need to be cancelled by the client (same as OrigClientOrderID in FIX Cancel Order request)
-\textbf{Order\_Account\_CompanyID}The ID of the company making the order (same with ID of company making order cancel)
-\textbf{Order\_ReceivedDate}The date when the order was first accepted
-\textbf{OrderCancelID}Represent the Order Cancel ID sent by client (same as OrderID in FIX Cancel Order request)
-\textbf{CancelQuantity}The total amount of quantity which is cancelled related to the order
-\textbf{ExecutionTime}The time when the order cancel was executed by server
+Table to store order cancel sent by client \\
+\textbf{Side:} The side of an Order to be cancelled (1: Buy, 2: Sell) \\
+\textbf{ReceivedTime:} The time when the order cancel was first accepted by server \\
+\textbf{LastStatus:} The current status of order cancel in server side(1:Pending, 2: Canceled) \\
+\textbf{MsgSeqNum:} Message Sequence Number of Order Cancel sent by client, stored in case of robustness data needed \\
+\textbf{Order\_ClientOrderID:} Represent The Order ID need to be cancelled by the client (same as OrigClientOrderID in FIX Cancel Order request) \\
+\textbf{Order\_Account\_CompanyID:} The ID of the company making the order (same with ID of company making order cancel) \\
+\textbf{Order\_ReceivedDate:} The date when the order was first accepted \\
+\textbf{OrderCancelID:} Represent the Order Cancel ID sent by client (same as OrderID in FIX Cancel Order request) \\
+\textbf{CancelQuantity:} The total amount of quantity which is cancelled related to the order \\
+\textbf{ExecutionTime:} The time when the order cancel was executed by server 
    
 \paragraph*{Stock}
-Table to store information of trading stock supported by server
-\textbf{Ticker:}Stock Symbol represent the commodity/company in the market
-\textbf{CompanyName:}Increment quantity for buying/selling stock
-\textbf{LotSize:}The name of the company with given stock symbol
-\textbf{TickSize:}minimum price movement of a trading instrument
-\textbf{TotalVolume:}Total number of shares for the stock
- 	 
+Table to store information of trading stock supported by server \\
+\textbf{Ticker:} Stock Symbol represent the commodity/company in the market \\
+\textbf{CompanyName:} Increment quantity for buying/selling stock \\
+\textbf{LotSize:} The name of the company with given stock symbol \\
+\textbf{TickSize:} minimum price movement of a trading instrument \\
+\textbf{TotalVolume:} Total number of shares for the stock 
+
 \paragraph*{OrderExecution}
-Table to store executed/matched order including buying side and selling side
-\textbf{ExecutionID:}ID of executed order transaction generated by server
-\textbf{OrderExecutionQuantity:}Quantity of order in sell/buy side which is matched
-\textbf{OrderExecutionPrice:}Price of order in sell/buy side matched
-\textbf{ExecutionTime:}The time order executed is done
-\textbf{MsgSeqNum:}Message Sequence Number of Order Execution sent by server, stored in case of robustness data needed	
-\textbf{Order\_BuyClientOrderID:}The buyer Order ID sent by the client 
-\textbf{Order\_BuyCompanyID :}The buyer Company ID making the order	
-\textbf{Order\_BuyReceivedDateThe:}Date when the order sent by buyer 
-\textbf{Order\_SellClientOrderID:}The seller Order ID sent by the client
-\textbf{Order\_SellompanyID:}The seller Company ID making the order
-\textbf{Order\_SellReceivedDate:}Date when the order sent by seller 
+Table to store executed/matched order including buying side and selling side \\
+\textbf{ExecutionID:} ID of executed order transaction generated by server \\
+\textbf{OrderExecutionQuantity:} Quantity of order in sell/buy side which is matched \\
+\textbf{OrderExecutionPrice:} Price of order in sell/buy side matched \\
+\textbf{ExecutionTime:} The time order executed is done \\
+\textbf{MsgSeqNum:} Message Sequence Number of Order Execution sent by server, stored in case of robustness data needed	 \\
+\textbf{Order\_BuyClientOrderID:} The buyer Order ID sent by the client  \\
+\textbf{Order\_BuyCompanyID:} The buyer Company ID making the order	 \\
+\textbf{Order\_BuyReceivedDateThe:} Date when the order sent by buyer  \\
+\textbf{Order\_SellClientOrderID:} The seller Order ID sent by the client \\
+\textbf{Order\_SellompanyID:} The seller Company ID making the order \\
+\textbf{Order\_SellReceivedDate:} Date when the order sent by seller  
 
 \subsubsection*{Client}
-\includegraphics{../diagrams/client_database.pdf}
+\begin{center}\includegraphics{../diagrams/client_database.pdf}\end{center}
 \paragraph*{StockInformation}
 Table to store stock price and quantity at given time
+<<<<<<< 1068ef784d358b2fef63f107ba55a81e9e3c5485
 \textbf{Timestamp:}The date stock information is published
 \\
 \textbf{Price:}The price of the stock at given timestamp 
@@ -175,20 +178,27 @@ Table to store stock price and quantity at given time
 \\
 \textbf{Low:}The lowest price value of stock at given timestamp
 \\
+=======
+\textbf{Timestamp:} The date stock information is published\\
+\textbf{Price:} The price of the stock at given timestamp \\
+\textbf{Quantity:} The quantity of stock at given timestamp \\
+\textbf{High:} The highest price value of stock at given timestamp\\
+\textbf{Low:} The lowest price value of stock at given timestamp
+>>>>>>> changed database formatting and system architcture and file structure
 
 \paragraph*{Order}
-Table to store order created by client ,it record the progress and status of order
-\textbf{OrderID:} The id of an order from client side. In the FIX protocol this is named as ClientOrderID.
-\textbf{TransactionTime:} The time client sent order to server 
-\textbf{Side:} The side of Order (1: Buy, 2: Sell)
-\textbf{OrderType:} The type of Order (1: Market , 2: Limit)
-\textbf{OrderPrice:} The price of the order for one Lot size (for now standard lotsize is everywhere 1)
-\textbf{OrderQuantity:} The quantity of an order
-\textbf{LastStatus:} The current status of order in client side (0:DONE, 1:PENDING, 2: CANCELED, 3:EXPIRED, 4: NOT\_YET\_ACKNOWLEDGE, 5:REJECTED)
-\textbf{MaturityDate:} Final payment date for financial instrument type stock
-\textbf{QuantitiyFilled:} The quantity of this order which has been already filled agains the opposite side order
-\textbf{AveragePrice:} The average price the order was sold. This field is 0, if quantity has  not been sold.
-\textbf{StockTicker:}  Stock Symbol represent the commodity/company in the market
+Table to store order created by client ,it record the progress and status of order \\
+\textbf{OrderID:} The id of an order from client side. In the FIX protocol this is named as ClientOrderID. \\
+\textbf{TransactionTime:} The time client sent order to server  \\
+\textbf{Side:} The side of Order (1: Buy, 2: Sell) \\
+\textbf{OrderType:} The type of Order (1: Market , 2: Limit) \\
+\textbf{OrderPrice:} The price of the order for one Lot size (for now standard lotsize is everywhere 1) \\
+\textbf{OrderQuantity:} The quantity of an order \\
+\textbf{LastStatus:} The current status of order in client side (0:DONE, 1:PENDING, 2: CANCELED, 3:EXPIRED, 4: NOT\_YET\_ACKNOWLEDGE, 5:REJECTED) \\
+\textbf{MaturityDate:} Final payment date for financial instrument type stock \\
+\textbf{QuantitiyFilled:} The quantity of this order which has been already filled agains the opposite side order \\
+\textbf{AveragePrice:} The average price the order was sold. This field is 0, if quantity has  not been sold. \\
+\textbf{StockTicker:}  Stock Symbol represent the commodity/company in the market 
 
 \subsection*{GUI}
 \begin{itemize}
