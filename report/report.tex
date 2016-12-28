@@ -25,16 +25,11 @@ Alexander Goscinski 116030990050
 
 Ruth-Emely Pierau 116030990078
 
-Valentin Rothoft
- %TODO valentin 
-
 Valentin Rothoft 116030990082
 
-Yelinsheng(≤È∫π∞Õ“¿∂˚°§“∂¡÷…˙) 116033910057
+Yelinsheng(Êü•Ê±óÂ∑¥‰æùÂ∞î¬∑Âè∂ÊûóÁîü): 116033910057
 
 Husein Sulianto 116030990100
-
-\section*{System Architecture}
 
 \section*{System Structure}
 In this section we will talk the structure of our system including its architecture and file structure.
@@ -57,7 +52,7 @@ requirements for messages and invokes the to necessary database requests. It is 
 the Logic. It offers functions for the Logic to create the database, and insert, update or select data from the database. \\
 \textbf{GUIHandler:} The GUIHandler offers functions to control the GUI elements, it is mainly used for console input handling and to swap more
 logical GUI handling from the GUISignal to the GUIHandler. \\
-\textbf{GUISignal:} The GUISignal is invoked when a user interaction with a GUI happens. For example if a button or a key is pushed. \\
+\textbf{GUISignal:} The GUISignal is invoked when a user interaction with a GUI happens. For example if a button or a key is pushed. 
 
 Here an example how our server file is structured. You can see a automatic generated UML diagram with pyreverse. Sadly
 the types are mostly not recognized, even though we documented almost everything
@@ -73,7 +68,7 @@ related tasks. It also contains the DatabaseHandler parent class including funct
 \textbf{client.py} This files contains all client related class \\
 \textbf{matching\_algorithm.py} This files contains functions related to the matching algorithm \\
 \textbf{utils.py} This files contains config file class which creates and handles quickfix config file \\
-\textbf{test\_FILENAME} A testing file for the file with the name FILENAME. \\
+\textbf{test\_FILENAME} A testing file for the file with the name FILENAME. 
 
 \subsubsection*{Database folder} 
 The folder contains the database MySQL workbench files as well as their documentation. Furthermore each client and the server has
@@ -91,7 +86,6 @@ and some front end libraries. Folder templates contains the html files. At last,
 The project is mainly written in python. We used python 2.7. For some features like the matching algorithm the numpy library \cite{numpy} was used.
 For the FIX communication we used the quickfix library. For the database we use MySQL and use the library MySQL-python as interface between python and MySQL.
 As documentation standard for python we used pep-0008.
-\subsection*{Order Matching}
 
 \subsection*{Orders Matching}
 
@@ -239,7 +233,7 @@ Valentin Rothoft:
 \end{itemize}
 
 \section*{Conclusion}
-The usage of the quickfix library with pythos is recommended because the port is not fitted to python code. It is mostly Java code with python grabbers.
+The usage of the quickfix library with python is not recommended because the port is not fitted to python code. It is mostly Java code with python grabbers.
 
 \section*{Attachments}
 Project homepage with installation instructions: \url{https://github.com/agoscinski/fsc} \\
