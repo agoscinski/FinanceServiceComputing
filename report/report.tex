@@ -62,11 +62,11 @@ Table to store user account is allowed to connect to the server
 
 \paragraph*{Order}
 Table to store order sent by client to buy or sell stocks.
-\textbf{ClientOrderID:}The Order ID sent by the client 
-\textbf{Account_CompanyID:}The ID of the company making the order
+\textbf{ClientOrderID:}The Order ID sent by the client
+\textbf{Account\_CompanyID:}The ID of the company making the order
 \textbf{ReceivedDate:}The date when the order was first accepted
 \textbf{HandlingInstruction:}The way the order should be handled (supported values 1 = Automated execution order, private, no Broker intervention)
-\textbf{Stock_Ticker:}The ticker symbol of the requested order
+\textbf{Stock\_Ticker:}The ticker symbol of the requested order
 \textbf{Side:}The side of an Order (1: Buy, 2: Sell)
 \textbf{OrderType:}The type of order (1: Market , 2: Limit)
 \textbf{OrderQuantity:} The total quantity of the order (be careful, it could be that the order is partially fulfilled, therefore it has to be checked if there exist
@@ -83,9 +83,9 @@ Table to store order cancel sent by client
 \textbf{ReceivedTime}The time when the order cancel was first accepted by server
 \textbf{LastStatus}The current status of order cancel in server side(1:Pending, 2: Canceled)
 \textbf{MsgSeqNum}Message Sequence Number of Order Cancel sent by client, stored in case of robustness data needed
-\textbf{Order_ClientOrderID}Represent The Order ID need to be cancelled by the client (same as OrigClientOrderID in FIX Cancel Order request)
-\textbf{Order_Account_CompanyID}The ID of the company making the order (same with ID of company making order cancel)
-\textbf{Order_ReceivedDate}The date when the order was first accepted
+\textbf{Order\_ClientOrderID}Represent The Order ID need to be cancelled by the client (same as OrigClientOrderID in FIX Cancel Order request)
+\textbf{Order\_Account\_CompanyID}The ID of the company making the order (same with ID of company making order cancel)
+\textbf{Order\_ReceivedDate}The date when the order was first accepted
 \textbf{OrderCancelID}Represent the Order Cancel ID sent by client (same as OrderID in FIX Cancel Order request)
 \textbf{CancelQuantity}The total amount of quantity which is cancelled related to the order
 \textbf{ExecutionTime}The time when the order cancel was executed by server
@@ -105,12 +105,12 @@ Table to store executed/matched order including buying side and selling side
 \textbf{OrderExecutionPrice:}Price of order in sell/buy side matched
 \textbf{ExecutionTime:}The time order executed is done
 \textbf{MsgSeqNum:}Message Sequence Number of Order Execution sent by server, stored in case of robustness data needed	
-\textbf{Order_BuyClientOrderID:}The buyer Order ID sent by the client 
-\textbf{Order_BuyCompanyID :}The buyer Company ID making the order	
-\textbf{Order_BuyReceivedDateThe:}Date when the order sent by buyer 
-\textbf{Order_SellClientOrderID:}The seller Order ID sent by the client
-\textbf{Order_SellompanyID:}The seller Company ID making the order
-\textbf{Order_SellReceivedDate:}Date when the order sent by seller 
+\textbf{Order\_BuyClientOrderID:}The buyer Order ID sent by the client 
+\textbf{Order\_BuyCompanyID :}The buyer Company ID making the order	
+\textbf{Order\_BuyReceivedDateThe:}Date when the order sent by buyer 
+\textbf{Order\_SellClientOrderID:}The seller Order ID sent by the client
+\textbf{Order\_SellompanyID:}The seller Company ID making the order
+\textbf{Order\_SellReceivedDate:}Date when the order sent by seller 
 
 \subsubsection*{Client}
 \includegraphics{../diagrams/client_database.pdf}
@@ -130,7 +130,7 @@ Table to store order created by client ,it record the progress and status of ord
 \textbf{OrderType:}The type of Order (1: Market , 2: Limit)
 \textbf{OrderPrice:}The price of the order for one Lot size (for now standard lotsize is everywhere 1)
 \textbf{OrderQuantity:}The quantity of an order
-\textbf{LastStatus:}The current status of order in client side (0:DONE, 1:PENDING, 2: CANCELED, 3:EXPIRED, 4: NOT_YET_ACKNOWLEDGED, 5:REJECTED)
+\textbf{LastStatus:}The current status of order in client side (0:DONE, 1:PENDING, 2: CANCELED, 3:EXPIRED, 4: NOT\_YET\_ACKNOWLEDGED, 5:REJECTED)
 \textbf{MaturityDate:}Final payment date for financial instrument type stock
 \textbf{QuantitiyFilled:}The quantity of this order which has been already filled agains the opposite side order
 \textbf{AveragePrice:}The average price the order was sold. This field is 0, if quantity has  not been sold.
