@@ -8,7 +8,6 @@
 \usepackage{hyperref}
 \usepackage{graphicx}
 
-
 \begin{document}
 %Header-Make sure you update this information!!!!
 \noindent
@@ -29,11 +28,13 @@ Ruth-Emely Pierau 116030990078
 Valentin Rothoft
  %TODO valentin 
 
-Yelinsheng(Êü•Ê±óÂ∑¥‰æùÂ∞î¬∑Âè∂ÊûóÁîü) 116033910057
+Valentin Rothoft 116030990082
+
+Yelinsheng(≤È∫π∞Õ“¿∂˚°§“∂¡÷…˙) 116033910057
 
 Husein Sulianto 116030990100
 
-
+\section*{System Architecture}
 
 \section*{System Structure}
 In this section we will talk the structure of our system including its architecture and file structure.
@@ -92,11 +93,16 @@ For the FIX communication we used the quickfix library. For the database we use 
 As documentation standard for python we used pep-0008.
 \subsection*{Order Matching}
 
-%TODO Valentin
+\subsection*{Orders Matching}
+
+The Matching Algorithm distributes the shares between sale and buy orders. It musts ensure that the maximum quantity of it is indeed exchanged, giving priority to the first comers. To satisfy these requirements, we chose to implement the Pro-Rata Algorithm, as described in Janecek and Kabrhel paper \cite{paper}. \\
+The orders are indeed divided into individual shares. Once every buy order deserved quantity of sell shares is computed, the sell shares are distributed to them, allocating every sell order one by one. The oldest orders are prioritised, being on the top of the list. The output of the algorithm is a matrix indicating how many shares should be exchanged between which orders. 
+
 \subsection*{FIX}
 QuickFIX library is an Open Source FIX engine library, it support several programming language C++,Python,Ruby,Java and .NET. 
 In the current project, we use QuickFIX library version 1.14.3 (current latest version). QuickFix provide throughout fix message definition for every message which can be configured for each the project.
 It also support mandatory field checking for each type of message.
+
 \subsection*{Database}
 
 For the database MySQL 5.7.15 was used. We created the diagrams and sql scripts creating the structure of the database with MySQL Workbench.
@@ -196,9 +202,6 @@ Table to store order created by client ,it record the progress and status of ord
   \item Use JS library Jquery to add logic.
 \end{itemize}
 
-
-
-
 \section*{Task Allocation Among Members}
 
 Alexander Goscinski:
@@ -227,19 +230,13 @@ Husein Sulianto:
   \item Implementation of several basic data classes and fix message definition layout
   \item Code testing
 \end{itemize}
-Valentin
-%TODO Valentin
-
-% to comment sections out, use the command \ifx and \fi. Use this technique when writing your pre lab. For example, to comment something out I would do:
-%  \ifx
-%   \begin{itemize}
-%       \item item1
-%       \item item2
-%   \end{itemize}
-%  \fi
-
-\section*{Workload Allocations}
-Total 100\% \\
+Valentin Rothoft:
+\begin{itemize}
+  \item Implementation and testing of Matching Algorithm
+  \item Implementation of some client logic functions
+  \item Implementation of some server tests
+  \item Creation of some appropriate database inserts
+\end{itemize}
 
 \section*{Conclusion}
 The usage of the quickfix library with pythos is recommended because the port is not fitted to python code. It is mostly Java code with python grabbers.
@@ -247,12 +244,11 @@ The usage of the quickfix library with pythos is recommended because the port is
 \section*{Attachments}
 Project homepage with installation instructions: \url{https://github.com/agoscinski/fsc} \\
 Demo video (password: sjtu1896): \url{https://owncloud.tu-berlin.de/index.php/s/ihEUWxj8FvIAZhI} \\
-Demo video (password: sjtu1896): \url{https://owncloud.tu-berlin.de/index.php/s/ihEUWxj8FvIAZhI} \\
 Python coding guidelines: \url{https://www.python.org/dev/peps/pep-0008} \\
 Python documentation style demo: \url{http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html}
 
 \begin{thebibliography}{9}
 \bibitem{numpy} Developers, NumPy. "NumPy." NumPy Numpy. Scipy Developers (2013) \url{https://docs.scipy.org/doc/numpy-dev/numpy-ref.pdf}.
+\bibitem{paper} \textit{Matching Algorithms of International Exchanges}, Karel Janecek and Martin Kabrhel, 2007/12/01, RSJ Invest.
 \end{thebibliography}
-
 \end{document}
