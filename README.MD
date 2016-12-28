@@ -18,8 +18,12 @@ pip install quickfix
 ##Database
 
 ###mysql version: 5.7.15
-Install Mysql on ubuntu: 
-  use "sudo apt-get install mysql-client mysql-server" command in Terminal of Ubuntu
+
+Install Mysql on ubuntu use 
+```
+sudo apt-get install mysql-client mysql-server
+```
+command in terminal
 
 ###python version:2.7.12
 
