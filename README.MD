@@ -4,7 +4,15 @@ Python documentation style demo: http://sphinxcontrib-napoleon.readthedocs.io/en
 #Installation
 ##Requirements
 
-A linux OS, preferable Ubuntu
+A linux OS, preferable Ubuntu, or a Mac OX
+
+## FIX
+
+### quickfix 1.14.3
+
+```
+pip install quickfix
+```
 
 ##Database
 
@@ -18,6 +26,7 @@ Install Mysql on ubuntu:
 Install library: 
    1) sudo apt-get install libmysqlclient-dev
    2) sudo pip install MySQL-python  (you need to make sure that pip is installed)
+   
 ###Setting database up
 Set username and password to root, otherwise change default variables in ClientLogic.__init__ of ClientDatabaseHandler in client.py and in ServerLogic.__init__ of ServerDatabaseHandler in server.py
 
