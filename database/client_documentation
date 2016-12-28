@@ -8,13 +8,13 @@ Low 		: The lowest price value of stock at given timestamp
 
 Order
 	Table to store order created by client ,it record the progress and status of order
-OrderID 		: The id of an order from client side. In the FIX protocol this is named as ClientOrderID.
+OrderID 	: The id of an order from client side. In the FIX protocol this is named as ClientOrderID.
 TransactionTime	: The time client sent order to server 
-Side 			: The side of Order (1: Buy, 2: Sell)
-OrderType 		: The type of Order (1: Market , 2: Limit)
-OrderPrice 		: The price of the order for one Lot size (for now standard lotsize is everywhere 1)
+Side 		: The side of Order (1: Buy, 2: Sell)
+OrderType 	: The type of Order (1: Market , 2: Limit)
+OrderPrice 	: The price of the order for one Lot size (for now standard lotsize is everywhere 1)
 OrderQuantity	: The quantity of an order
-LastStatus		: The current status of order in client side (0:DONE, 1:PENDING, 2: CANCELED, 3:EXPIRED, 4: NOT_YET_ACKNOWLEDGED, 5:REJECTED)
+LastStatus	: The current status of order in client side (0:DONE, 1:PENDING, 2: CANCELED, 3:EXPIRED, 4: NOT_YET_ACKNOWLEDGED, 5:REJECTED)
 MaturityDate	: Final payment date for financial instrument type stock
 QuantitiyFilled	: The quantity of this order which has been already filled agains the opposite side order
 AveragePrice	: The average price the order was sold. This field is 0, if quantity has  not been sold.
