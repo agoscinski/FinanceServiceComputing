@@ -1,26 +1,21 @@
 StockInformation
-Timestamp (depends which needed to show the graph)
-Price (float)
-Quantity (float)
-High (float)
-Low (float)
+	Table to store stock price and quantity at given time
+Timestamp 	: The date stock information is published
+Price 		: The price of the stock at given timestamp 
+Quantity 	: The quantity of stock at given timestamp 
+High 		: The highest price value of stock at given timestamp
+Low 		: The lowest price value of stock at given timestamp
 
 Order
-OrderID: The id of an order from client side. In the FIX protocoll this is named as ClientOrderID.
-TransactionTime: The time an order has been preparted for sendind to the server.
-Side: Describes the type of Order (1: Buy, 2: Sell)
-OrderType: (1: Market, 2: Limit)
-OrderPrice: The price of the order for one Lotsize (for now standard lotsize is everywhere 1)
-OrderQuantity: The quantity of an order
-LastStatus: (0:DONE, 1:PENDING, 2: CANCELED, 3:EXPIRED, 4: NOT_YET_ACKNOWLEDGED, 5:REJECTED)
-QuantitiyFilled: The quantity of this order which has been already sold to other clients
-AveragePrice: The average price the order was sold. This field is 0, if no quantity has been sold yet.
-StockTicker
-
-
-Order_Result
-order_id
-order_transaction_time/order_transaction_date (if it's primary key)
-result_time
-quantity
-price
+	Table to store order created by client ,it record the progress and status of order
+OrderID 		: The id of an order from client side. In the FIX protocol this is named as ClientOrderID.
+TransactionTime	: The time client sent order to server 
+Side 			: The side of Order (1: Buy, 2: Sell)
+OrderType 		: The type of Order (1: Market , 2: Limit)
+OrderPrice 		: The price of the order for one Lot size (for now standard lotsize is everywhere 1)
+OrderQuantity	: The quantity of an order
+LastStatus		: The current status of order in client side (0:DONE, 1:PENDING, 2: CANCELED, 3:EXPIRED, 4: NOT_YET_ACKNOWLEDGED, 5:REJECTED)
+MaturityDate	: Final payment date for financial instrument type stock
+QuantitiyFilled	: The quantity of this order which has been already filled agains the opposite side order
+AveragePrice	: The average price the order was sold. This field is 0, if quantity has  not been sold.
+StockTicker 	: Stock Symbol represent the commodity/company in the market
