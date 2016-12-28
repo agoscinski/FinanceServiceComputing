@@ -35,7 +35,8 @@ class TestServerLogic:
 
     def test_create_execution_report_for_order_execution(self):
         # TODO Emely
-        pass
+        dummy_order = TradingClass.OrderExecution.create_dummy_order_execution()
+        fsc_server_logic.create_execution_report_for_order_execution(dummy_order)
 
 
     def test_create_execution_report_for_executed_order(self):
