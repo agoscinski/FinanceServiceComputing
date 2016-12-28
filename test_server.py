@@ -41,7 +41,9 @@ class TestServerLogic:
 
     def test_create_execution_report_for_executed_order(self):
         # TODO Emely
-        pass
+        dummy_order = TradingClass.OrderExecution.create_dummy_order_execution()
+        fsc_server_logic.create_execution_report_for_executed_order(GS, 0, dummy_order, 20161109)
+
 
     def test_check_if_order_cancel_is_valid(self):
         order = fsc_server_database_handler.fetch_latest_order_by_client_information('2', 'XX')
