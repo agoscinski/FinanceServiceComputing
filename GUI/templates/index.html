@@ -283,61 +283,32 @@
         $('#infoPrice').html(jsonData.stockInfo.price);
         $('#infoHigh').html(jsonData.stockInfo.high);
         $('#infoLow').html(jsonData.stockInfo.low);
-        $('#orderBook').html('\
-          <tr>\
-            <td>Sell-5</td>\
-            <td>'+jsonData.orderBook.sell[4].price+'$</td>\
-            <td>'+jsonData.orderBook.sell[4].quantity+'</td</tr>\
-          <tr>\
-            <td>Sell-4</td>\
-            <td>'+jsonData.orderBook.sell[3].price+'$</td>\
-            <td>'+jsonData.orderBook.sell[3].quantity+'</td>\
-          </tr>\
-          <tr>\
-            <td>Sell-3</td>\
-            <td>'+jsonData.orderBook.sell[2].price+'$</td>\
-            <td>'+jsonData.orderBook.sell[2].quantity+'</td>\
-          </tr>\
-          <tr>\
-            <td>Sell-2</td>\
-            <td>'+jsonData.orderBook.sell[1].price+'$</td>\
-            <td>'+jsonData.orderBook.sell[1].quantity+'</td>\
-          </tr>\
-          <tr>\
-            <td>Sell-1</td>\
-            <td>'+jsonData.orderBook.sell[0].price+'$</td>\
-            <td>'+jsonData.orderBook.sell[0].quantity+'</td>\
-          </tr>\
-          <tr>\
-            <td class="done">done</td>\
-            <td class="done">'+jsonData.price.content[0].price+'$</td>\
-            <td class="done">'+jsonData.quantity.content[0].quantity+'</td>\
-          </tr>\
-          <tr>\
-            <td>Buy-1</td>\
-            <td>'+jsonData.orderBook.buy[4].price+'$</td>\
-            <td>'+jsonData.orderBook.buy[4].quantity+'</td>\
-          </tr>\
-          <tr>\
-            <td>Buy-2</td>\
-            <td>'+jsonData.orderBook.buy[3].price+'$</td>\
-            <td>'+jsonData.orderBook.buy[3].quantity+'</td>\
-          </tr>\
-          <tr>\
-            <td>Buy-3</td>\
-            <td>'+jsonData.orderBook.buy[2].price+'$</td>\
-            <td>'+jsonData.orderBook.buy[2].quantity+'</td>\
-          </tr>\
-          <tr>\
-            <td>Buy-4</td>\
-            <td>'+jsonData.orderBook.buy[1].price+'$</td>\
-            <td>'+jsonData.orderBook.buy[1].quantity+'</td>\
-          </tr>\
-          <tr>\
-            <td>Buy-5</td>\
-            <td>'+jsonData.orderBook.buy[0].price+'$</td>\
-            <td>'+jsonData.orderBook.buy[0].quantity+'</td>\
-          </tr>');
+        var orderBookHtml=''
+        for(var i=0;i<jsonData.orderBook.sell.length;i++){
+          orderBookHtml += '<tr><td>Sell-'+(jsonData.orderBook.sell.length-i)+'</td>\
+            <td>'+jsonData.orderBook.sell[jsonData.orderBook.sell.length-1-i].price+'$</td>\
+            <td>'+jsonData.orderBook.sell[jsonData.orderBook.sell.length-1-i].quantity+'</td>\
+          </tr>';
+        }
+
+
+        orderBookHtml += '<tr>\
+          <td class="done">done</td>\
+          <td class="done">'+jsonData.price.content[jsonData.price.content.length-1].price+'$</td>\
+          <td class="done">'+jsonData.quantity.content[jsonData.price.content.length-1].quantity+'</td>\
+        </tr>';
+
+        for(var i=0;i<jsonData.orderBook.buy.length;i++){
+          orderBookHtml += '<tr>\
+            <td>Buy-'+(jsonData.orderBook.buy.length-i)+'</td>\
+            <td>'+jsonData.orderBook.buy[jsonData.orderBook.buy.length-1-i].price+'$</td>\
+            <td>'+jsonData.orderBook.buy[jsonData.orderBook.buy.length-1-i].quantity+'</td>\
+          </tr>';
+        }
+
+
+
+        $('#orderBook').html(orderBookHtml);
 
         var chartData = splitData(jsonData.price.content,jsonData.quantity.content);
 

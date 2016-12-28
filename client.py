@@ -28,11 +28,17 @@ class GUISignal(htmlPy.Object):
     def logIn(self):
         return self.gui_handler.button_login_actuated()
 
+
+
     @htmlPy.Slot()
     def logOut(self):
         self.gui_handler.client_logic.logout()
         transactionJson='{"content":[]}'
         self.refreshTransaction(transactionJson)
+
+    @htmlPy.Slot(str)
+    def consolePrint(self,content):
+        print content
 
     @htmlPy.Slot(str)
     def searchStock(self, stockCode):
@@ -62,7 +68,7 @@ class GUISignal(htmlPy.Object):
         order_book_json = self.gui_handler.extract_order_book_json(market_data)
 
         self.market_data_json = '{' + '"success":true' + ',"quantity":' + quantity_chart_json + ',"price":' + stock_course_chart_json + ',"stockInfo":' + stock_information_json + ',"orderBook":' + order_book_json + '}'
-
+        print self.market_data_json
 
 
     @htmlPy.Slot()
