@@ -6,6 +6,8 @@
 \usepackage{lipsum} %This package just generates Lorem Ipsum filler text.
 \usepackage{fullpage} % changes the margin
 \usepackage{hyperref}
+\usepackage{graphicx}
+
 
 \begin{document}
 %Header-Make sure you update this information!!!!
@@ -33,12 +35,59 @@ Husein Sulianto 116030990100
 
 
 
-\section*{System Architecture}
+\section*{System Structure}
+In this section we will talk the structure of our system including its architecture and file structure.
+
+\subsection*{System Architecture}
+The system architecture can be seen below.
+
+\includegraphics[scale=0.4]{../diagrams/Component_Diagram_final.pdf}
+
+We have a very similar structure on server and client side, because on both sides certain classes are responsible for the same job,
+we will explain the general concept of the classes. For example instead of explaining the use of the ServerFIXHandler and the ClientFIXHandler
+we will generally discuss the concept of the FIXHandler, since it handles on both sides the same thing.
+\paragraph*{FIXHandler:} The FIXHandler is responsible for receiving quickfix messages and packcking them into TradingClass objects 
+we then can use in the ServerLogic for processing. Furthermore it also does the reverse job and transforms TradingClass objects into
+and quickfix messages which then can be send. It also managas the tags of the quickfix configuration file.
+\paragraph*{FIXApplication:} The FIXApplication is invoked when a quickfix message is send or received.
+\paragraph*{Logic:} The Logic works as a bridge between all elements. It processes messages translated from the FIXHandler, checks the 
+requirements for messages and invokes the to necessary database requests. It is the first object which is startad and it starts every other object.
+\paragraph*{DatabaseHandler:} The DatabaseHandler works as an interface from python to MySQL database, so MySQL commands can be executeded through
+the Logic. It offers functions for the Logic to create the database, and insert, update or select data from the database.
+\paragraph*{GUIHandler:} The GUIHandler offers functions to control the GUI elements, it is mainly used for console input handling and to swap more
+logical GUI handling from the GUISignal to the GUIHandler.
+\paragraph*{GUISignal:} The GUISignal is invoked when a user interaction with a GUI happens. For example if a button or a key is pushed.
+
+Here an example how our server file is structured. You can see a automatic generated UML diagram with pyreverse. Sadly
+the types are mostly not recognized, even though we documented almost everything
+
+\noindent
+\makebox[\textwidth]{\includegraphics[scale=0.4]{../diagrams/classes_server_class_diagram.pdf}}
+
+\subsection*{File Structure}
+Here we will explain how we structured our file system.
+\paragraph*{TradingClass.py} This files contains all logical objects for the Logic and the DatabaseHandler as well as enums for database and fix
+related tasks. It also contains the DatabaseHandler parent class including functions parsing sql files.
+\paragraph*{server.py} This files contains all server related classes
+\paragraph*{client.py} This files contains all client related class
+\paragraph*{matching\_algorithm.py} This files contains functions related to the matching algorithm
+\paragraph*{utils.py} This files contains config file class which creates and handles quickfix config file 
+\paragraph*{test\_FILENAME} A testing file for the file with the name FILENAME.
+
+\subsubsection*{Database folder} 
+The folder contains the database MySQL workbench files as well as their documentation. Furthermore each client and the server has
+a folder with its name. Each of these folders has init\_database.sql file which is used for the parser to now which files should be
+executed. Additionally, there exist a mysql\_init\_server\_database.sql which can be used to create the database with MySQL without
+needing to start the python files.
+
+\subsubsection*{GUI folder}
+%TODO yelinsheng
 
 \section*{Key Techniques}
 
 The project is mainly written in python. We used python 2.7. For some features like the matching algorithm the numpy library \cite{numpy} was used.
 For the FIX communication we used the quickfix library. For the database we use MySQL and use the library MySQL-python as interface between python and MySQL.
+As documentation standard for python we used pep-0008.
 \subsection*{Order Matching}
 
 %TODO Valentin
@@ -62,7 +111,7 @@ Table to store user account is allowed to connect to the server
 
 \paragraph*{Order}
 Table to store order sent by client to buy or sell stocks.
-\textbf{ClientOrderID:}The Order ID sent by the client
+\textbf{ClientOrderID:}The Order ID sent by the client 
 \textbf{Account\_CompanyID:}The ID of the company making the order
 \textbf{ReceivedDate:}The date when the order was first accepted
 \textbf{HandlingInstruction:}The way the order should be handled (supported values 1 = Automated execution order, private, no Broker intervention)
@@ -188,15 +237,15 @@ Valentin
 \section*{Workload Allocations}
 Total 100\% \\
 
-\section*{Other}
-\lipsum[7]
-
 \section*{Conclusion}
 The usage of the quickfix library with pythos is recommended because the port is not fitted to python code. It is mostly Java code with python grabbers.
 
 \section*{Attachments}
 Project homepage with installation instructions: \url{https://github.com/agoscinski/fsc} \\
-Demo video (password: sjtu1896): \url{https://owncloud.tu-berlin.de/index.php/s/ihEUWxj8FvIAZhI}
+Demo video (password: sjtu1896): \url{https://owncloud.tu-berlin.de/index.php/s/ihEUWxj8FvIAZhI} \\
+Demo video (password: sjtu1896): \url{https://owncloud.tu-berlin.de/index.php/s/ihEUWxj8FvIAZhI} \\
+Python coding guidelines: \url{https://www.python.org/dev/peps/pep-0008} \\
+Python documentation style demo: \url{http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html}
 
 \begin{thebibliography}{9}
 \bibitem{numpy} Developers, NumPy. "NumPy." NumPy Numpy. Scipy Developers (2013) \url{https://docs.scipy.org/doc/numpy-dev/numpy-ref.pdf}.
