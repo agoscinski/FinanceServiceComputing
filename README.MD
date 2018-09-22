@@ -15,9 +15,9 @@ A linux OS, preferable Ubuntu, or a Mac OX
 pip install quickfix
 ```
 
-##Database
+## Database
 
-###mysql version: 5.7.15
+### mysql version: 5.7.15
 
 Install Mysql on ubuntu use 
 ```
@@ -25,9 +25,9 @@ sudo apt-get install mysql-client mysql-server
 ```
 command in terminal
 
-###python version:2.7.12
+### python version:2.7.12
 
-###library used: MySQL-python-1.2.5
+### library used: MySQL-python-1.2.5
 
 Install mysql library
 ```
@@ -38,12 +38,12 @@ Install MySQL-python library
 sudo pip install MySQL-python  (you need to make sure that pip is installed)
 ```
    
-###Setting database up
+### Setting database up
 Set username and password to root, otherwise change default variables in ClientLogic.__init__ of ClientDatabaseHandler in client.py and in ServerLogic.__init__ of ServerDatabaseHandler in server.py
 
-##GUI
+## GUI
 
-###htmlPy
+### htmlPy
 
 1) Installing python package manager: pip
 ```
@@ -75,7 +75,7 @@ sudo apt-get install python-qt4
 pip install -U pytest
 ```
 
-#Demo
+# Demo
 
 run server with
 ```
