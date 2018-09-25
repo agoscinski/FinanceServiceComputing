@@ -5,7 +5,7 @@ Python documentation style demo: http://sphinxcontrib-napoleon.readthedocs.io/en
 # Installation
 ## Requirements
 
-A linux OS, preferable Ubuntu, or a Mac OX
+A Linux based OS, preferable Ubuntu, or a Mac OX
 
 ## FIX
 
